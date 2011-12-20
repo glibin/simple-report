@@ -60,7 +60,7 @@ class SheetData(object):
 
         self._write_xml = copy.deepcopy(sheet_xml)
 
-        # Ссылка на тег данных строк и столюцов листа с очищенными значениями
+        # Ссылка на тег данных строк и столбцов листа с очищенными значениями
         self.write_data = self._write_xml.find(QName(self.ns, 'sheetData'))
         if not self.write_data is None:
             self.write_data.clear()
@@ -147,6 +147,7 @@ class SheetData(object):
         @param start_cell: Начало вывода секции
 
         """
+        # TODO: Отрефакторить и разбить на несколько методов. Так же приспособить для поиска параметров
         list_index = []
 
         range_rows, range_cols = self._range(begin, end)

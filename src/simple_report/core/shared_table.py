@@ -44,6 +44,13 @@ class SharedStringsTable(object):
             self.new_elements_dict[value] = len_list - 1
             return str(len_list - 1)
 
+    def get_value(self, index):
+        """
+        Возвращает значение ячейки по индексу
+        @type index: int
+        """
+        return self.elements[index]
+
     def to_xml(self):
         u"""
         Переводит таблицу в xml

@@ -35,7 +35,7 @@ class OOWrapper(object):
     def convert(self, inputFile, _outputExt):
         """
         """
-        outputFile, _ext = os.path.splitext(inputFile)
+        outputFile, _ = os.path.splitext(inputFile)
         outputFile = os.path.extsep.join((outputFile, _outputExt))
 
         inputUrl = self._toFileUrl(inputFile)

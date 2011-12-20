@@ -30,7 +30,6 @@ class Report(object):
 
         self.converter = None
         if converter is not None:
-
             assert issubclass(converter, FileConverter)
             self.converter = converter
 
@@ -74,6 +73,14 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
         Возвращает секцию по имени
         """
         return self._wrapper.get_section(section_name)
+
+    @property
+    def workbook(self):
+        return self._wrapper.workbook
+
+    @property
+    def sheets(self):
+        return self._wrapper.sheets
 
 
     def build(self, dst_file_path, file_type=XLSX):

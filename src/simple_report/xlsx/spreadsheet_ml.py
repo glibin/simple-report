@@ -273,7 +273,7 @@ class Workbook(ReletionOpenXMLFile):
 
         if self.sheets:
             # По-умолчанию активным считается первый лист
-            self.active_sheet = self.sheets[0]
+            self._active_sheet = self.sheets[0]
         else:
             raise Exception('Sheets not found')
 
@@ -324,13 +324,21 @@ class Workbook(ReletionOpenXMLFile):
     def get_section(self, name):
         """
         """
-        return self.active_sheet.get_section(name)
+        return self._active_sheet.get_section(name)
 
     def get_sections(self):
         """
         """
-        return self.active_sheet.get_sections()
+        return self._active_sheet.get_sections()
 
+    @property
+    def active_sheet(self):
+        return self._active_sheet
+
+    @active_sheet.setter
+    def active_sheet(self, value):
+        assert isinstance(value, int)
+        self._active_sheet = self.sheets[value]
 
     def build(self):
         """

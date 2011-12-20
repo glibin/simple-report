@@ -19,3 +19,4 @@ class OpenOfficeConverter(FileConverter):
         if to_format in (FileConverter.XLSX, FileConverter.DOCX):
             raise FileConverterException('Format "%s" not supported' % to_format)
         return OOWrapper().convert(self.file.get_path(), to_format)
+

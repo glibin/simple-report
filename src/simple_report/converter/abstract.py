@@ -59,5 +59,3 @@ class FileConverter(object):
             return func()
         else:
             raise FileConverterException('Converter %s not supported format "%s"' % (self.__class__.__name__, to_format))
-
-
