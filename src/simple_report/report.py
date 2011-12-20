@@ -7,10 +7,10 @@ Created on 24.11.2011
 
 import abc
 
-from interface import ISpreadsheetReport, IDocumentReport
+from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
 from simple_report.xlsx.document import DocumentXLSX
-from utils import FileProxy
+from simple_report.utils import FileProxy
 
 class ReportException(Exception):
     """
