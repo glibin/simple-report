@@ -100,6 +100,10 @@ class SheetData(object):
 
         self.write_dimension.set('ref', dimension)
 
+    def _get_merge_cells(self):
+        for cell in self.read_merge_cell:
+            yield cell.attrib['ref'].split(':')
+
     def set_merge_cells(self, section_begin, section_end, start_cell):
         """
         """
@@ -121,8 +125,7 @@ class SheetData(object):
 
         range_rows, range_cols = self._range(section_begin, section_end)
 
-        for cell in self.read_merge_cell:
-            begin, end = cell.attrib['ref'].split(':')
+        for begin, end in self._get_merge_cells():
 
             begin_col, begin_row = get_addr_cell(begin)
             end_col, end_row = get_addr_cell(end)
@@ -199,6 +202,14 @@ class SheetData(object):
     def _range(self, begin, end):
         """
         """
+
+        # Если есть объединенная ячейка, и она попадает на конец секции, то адресс конца секции записывается как начало
+        # объединенной ячейки
+        for begin_merge, end_merge in self._get_merge_cells():
+            addr = get_addr_cell(begin_merge)
+            if addr == end:
+                end = get_addr_cell(end_merge)
+                break
 
         rows = begin[1], end[1] + 1
         cols = begin[0], end[0]
