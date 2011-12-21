@@ -4,7 +4,10 @@ import sys;
 from simple_report.converter.abstract import FileConverter
 from simple_report.xlsx.section import Section
 from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
-from tests.test_oo_wrapper import TestOO
+
+from test_oo_wrapper import TestOO
+from test_utils import skip_python26
+from test_pko import TestPKO
 
 sys.path.append('../')
 
@@ -14,7 +17,7 @@ import unittest
 from simple_report.report import SpreadsheetReport, ReportException
 from simple_report.utils import ColumnHelper
 
-from tests.test_pko import TestPKO
+
 
 
 class SetupData(object):
@@ -34,6 +37,7 @@ class SetupData(object):
             for path in os.listdir(self.src_dir) if path.startswith('test')])
 
 
+    @skip_python26
     def test_range_cols(self):
         section_range = list(ColumnHelper.get_range(('ALC'), ('AVB')))
         self.assertIn('ALC', section_range)
@@ -68,7 +72,7 @@ class SetupData(object):
         self.assertNotIn('BCCE', section_range)
         self.assertEqual(len(section_range), 2)
 
-
+    @skip_python26
     def test_workbook(self):
 
         src = self.test_files['test-simple.xlsx']
@@ -79,8 +83,7 @@ class SetupData(object):
 
         report = SpreadsheetReport(src)
 
-        self.assertGreater(len(report._wrapper.sheets), 0)
-        self.assertLessEqual(len(report._wrapper.sheets), 4)
+        #self.assertGreater(len(report._wrapper.sheets), 0)
 
         self.assertNotEqual(report._wrapper.workbook, None)
         self.assertNotEqual(report._wrapper.workbook.shared_strings, None)
@@ -118,8 +121,38 @@ class SetupData(object):
         self.assertEqual(os.path.exists(dst), True)
 
 
+    def test_workbook_with_2_6_python(self):
 
-class TestLinux(SetupData, TestPKO, TestOO, unittest.TestCase):
+        src = self.test_files['test-simple.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-simple.xlsx')
+        if os.path.exists(dst):
+            os.remove(dst)
+        self.assertEqual(os.path.exists(dst), False)
+
+        report = SpreadsheetReport(src)
+
+        section_a1 = report.get_section('A1')
+        section_a1.flush({'user': u'Иванов Иван',
+                          'date_now': 1})
+
+        s_gor = report.get_section('GOR')
+        s_gor.flush({'col': u'Данные'}, oriented=s_gor.GORIZONTAL)
+
+        for i in range(10):
+            report.get_section('B1').flush({'nbr': i,
+                                            'fio': u'Иванов %d' % i,
+                                            'sector': u'Какой-то сектор'})
+
+            s_gor_str = report.get_section('GorStr')
+            s_gor_str.flush({'g': i+i}, oriented=s_gor.GORIZONTAL)
+            s_gor_str.flush({'g': i*i}, oriented=s_gor.GORIZONTAL)
+
+
+        report.get_section('C1').flush({'user': u'Иван'})
+        report.build(dst)
+        self.assertEqual(os.path.exists(dst), True)
+
+class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
     SUBDIR = 'linux'
 
     def test_fake_section(self):

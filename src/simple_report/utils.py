@@ -6,6 +6,7 @@ Created on 24.11.2011
 '''
 
 import os
+import sys
 import shutil
 from tempfile import gettempdir
 import uuid
@@ -15,6 +16,32 @@ import zipfile
 class FileException(Exception):
     pass
 
+
+class ZipFileAdapter(object):
+    """
+    Из-за того, что в версии начиная с 2.7 модуль zipfile умеет работать с менеджером контекста, а вот ниже версии - не умеет.
+     Будем поддерживать версию 2.6
+    """
+    def __init__(self, *args, **kwargs):
+
+        self.z_file = zipfile.ZipFile(*args, **kwargs)
+
+        self.old = False
+        # Проверка версии в питоне
+        if sys.version_info < (2, 7):
+            self.old = True
+
+    def __enter__(self):
+        if self.old:
+            return self.z_file
+        else:
+            return self.z_file.__enter__()
+
+    def __exit__(self, *args, **kwargs):
+        if self.old:
+            return self.z_file.close()
+        else:
+            return self.z_file.__exit__(*args, **kwargs)
 
 class ZipProxy(object):
     u"""
@@ -26,7 +53,7 @@ class ZipProxy(object):
         u"""
         Распоковывает zip файл
         """
-        with zipfile.ZipFile(src_file_path) as zip_file:
+        with ZipFileAdapter(src_file_path) as zip_file:
             zip_file.extractall(dst_files_path)
 
     @classmethod
@@ -34,7 +61,7 @@ class ZipProxy(object):
         u"""
         Запаковывает zip файл
         """
-        with zipfile.ZipFile(dst_file_path, 'w') as zip_file:
+        with ZipFileAdapter(dst_file_path, 'w') as zip_file:
             for root, _, file_names in os.walk(src_files_path):
                 for file_name in file_names:
                     # Абсолютный путь до файла
