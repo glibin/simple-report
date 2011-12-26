@@ -77,6 +77,7 @@ class SharedStringsTable(object):
                 for param in parameters:
                     text = params.get(param[1:-1])
                     if text is not None:
-                        self.new_elements_list[i] = value.replace(param, unicode(text))
+                        value = value.replace(param, unicode(text))
+                        self.new_elements_list[i] = value
                     else:
                         self.new_elements_list[i] = ''

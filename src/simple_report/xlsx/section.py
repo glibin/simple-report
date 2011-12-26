@@ -74,11 +74,11 @@ class SheetData(object):
             self.write_merge_cell.clear()
 
 
-    def __str__(self):
-        return 'Cursor %s' % self.cursor
-
-    def __repr__(self, ):
-        return self.__str__()
+#    def __str__(self):
+#        return 'Cursor %s' % self.cursor
+#
+#    def __repr__(self, ):
+#        return self.__str__()
 
     def flush(self, begin, end, start_cell, params):
         """
