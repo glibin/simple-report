@@ -2,9 +2,8 @@
 
 import sys;
 from simple_report.converter.abstract import FileConverter
-from simple_report.core.shared_table import SharedStringsTable
 from simple_report.xlsx.section import Section
-from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException, WorkbookSheet
+from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
 
 from test_oo_wrapper import TestOO
 from test_utils import skip_python26
@@ -160,7 +159,7 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         src = self.test_files['test-simple-fake-section.xlsx']
         with self.assertRaises(SectionException):
             report = SpreadsheetReport(src)
-
+            report.build(src)
 
     def test_merge_cells(self):
         src = self.test_files['test-merge-cells.xlsx']
@@ -176,6 +175,23 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
 
         report.get_section('foot').flush({'glavbuh':u'Иван'})
+
+        report.build(dst)
+
+
+    def test_383_value(self):
+        src = self.test_files['test-383.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-383.xlsx')
+
+        report = SpreadsheetReport(src)
+
+        report.get_section('header').flush({'period':u'Ноябрь'})
+
+        for i in range(10):
+            report.get_section('row').flush({'begin_year_debet': -i})
+
+
+        report.get_section('footer').flush({'glavbuh':u'Иван'})
 
         report.build(dst)
 

@@ -10,6 +10,10 @@ from simple_report.xlsx.cursor import Cursor
 __author__ = 'prefer'
 
 
+class SheetDataException(Exception):
+    """
+    """
+
 class SheetData(object):
     u"""
     self.read_data:
@@ -83,11 +87,9 @@ class SheetData(object):
     def flush(self, begin, end, start_cell, params):
         """
         """
-        indexes = self.set_section(begin, end, start_cell)
+        self.set_section(begin, end, start_cell, params)
         self.set_merge_cells(begin, end, start_cell)
         self.set_dimension()
-
-        self.set_params(indexes, params)
 
     def set_dimension(self):
         """
@@ -143,7 +145,7 @@ class SheetData(object):
         if count_merge_cells:
             self.write_merge_cell.set('count', str(count_merge_cells))
 
-    def set_section(self, begin, end, start_cell):
+    def set_section(self, begin, end, start_cell, params):
         """
         @param begin: Начала секции
         @param end: Конец секции
@@ -151,8 +153,6 @@ class SheetData(object):
 
         """
         # TODO: Отрефакторить и разбить на несколько методов. Так же приспособить для поиска параметров
-        list_index = []
-
         range_rows, range_cols = self._range(begin, end)
 
         start_column, start_row = start_cell
@@ -187,16 +187,61 @@ class SheetData(object):
                         self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
 
                         value = cell.find(QName(self.ns, 'v'))
+
                         if not value is None:
-                            # Только если есть значения в ячейках
 
                             value_el = SubElement(cell_el, 'v')
-                            index = self.shared_table.get_new_index(value.text)
-                            value_el.text = index
 
-                            list_index.append(int(index))
+                            if attrib_cell.get('t') == 'n': # number
 
-        return list_index
+                                value_el.text = value.text
+
+                            elif attrib_cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+
+                                index_value = int(value.text)
+                                value_string = self.shared_table.get_value(index_value)
+
+                                who_found_params = self.shared_table.FIND_PARAMS.findall(value_string)
+
+                                is_int = False
+                                if who_found_params:
+                                    for found_param in who_found_params:
+                                        param_name = found_param[1:-1]
+
+                                        param_value = params.get(param_name)
+
+                                        if isinstance(param_value, int) and found_param == value_string:
+                                            # В первую очередь добавляем числовые значения
+                                            is_int = True
+
+                                            cell_el.attrib['t'] = 'n' # type - number
+                                            value_el.text = unicode(param_value)
+
+                                        elif param_value:
+                                            # Строковые параметры
+
+                                            value_string = value_string.replace(found_param, unicode(param_value))
+
+                                        else:
+                                            # Не передано значение параметра
+                                            value_string = value_string.replace(found_param, '')
+
+                                    if not is_int:
+                                        # Добавим данные в shared strings
+
+                                        new_index = self.shared_table.get_new_index(index_value)
+                                        value_el.text = new_index
+                                        self.shared_table.new_elements_list[int(new_index)] = value_string
+
+
+                                else:
+                                    # Параметры в поле не найдены
+
+                                    index = self.shared_table.get_new_index(index_value)
+                                    value_el.text = index
+
+                            elif attrib_cell.get('t'):
+                                raise SheetDataException("Unknown value '%s' for tag t" % attrib_cell.get('t'))
 
 
     def _range(self, begin, end):
@@ -224,11 +269,6 @@ class SheetData(object):
         """
         """
         return self._write_xml
-
-    def set_params(self, indexes, params):
-        """
-        """
-        self.shared_table.set_params(indexes, params)
 
 
 

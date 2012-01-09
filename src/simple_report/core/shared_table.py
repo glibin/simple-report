@@ -66,18 +66,3 @@ class SharedStringsTable(object):
             t.text = unicode(elem)
 
         return root
-
-    def set_params(self, indexes, params):
-        """
-        """
-        if indexes:
-            for i in indexes:
-                value = self.new_elements_list[i]
-                parameters = self.FIND_PARAMS.findall(value)
-                for param in parameters:
-                    text = params.get(param[1:-1])
-                    if text is not None:
-                        value = value.replace(param, unicode(text))
-                        self.new_elements_list[i] = value
-                    else:
-                        self.new_elements_list[i] = ''
