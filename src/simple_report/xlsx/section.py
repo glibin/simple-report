@@ -193,7 +193,7 @@ class SheetData(object):
 
                             value_el = SubElement(cell_el, 'v')
 
-                            if attrib_cell.get('t') in  ('n', None): # number
+                            if attrib_cell.get('t') in ('n', None): # number
 
                                 value_el.text = value.text
 
