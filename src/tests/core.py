@@ -195,6 +195,22 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         report.build(dst)
 
+    def test_383_value_too(self):
+        src = self.test_files['test-main_book.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-main_book.xlsx')
+
+        report = SpreadsheetReport(src)
+
+        report.get_section('header').flush({'period':u'Ноябрь'})
+
+        for i in range(10):
+            report.get_section('row').flush({'begin_year_debet': -i})
+
+
+        report.get_section('footer').flush({'glavbuh':u'Иван'})
+
+        report.build(dst)
+
 class TestWindows(SetupData, unittest.TestCase):
     SUBDIR = 'win'
 

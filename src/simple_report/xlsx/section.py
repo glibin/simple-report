@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import copy
+from decimal import Decimal
 from lxml.etree import QName, SubElement
 from simple_report.core.shared_table import SharedStringsTable
 from simple_report.interface import ISpreadsheetSection
@@ -192,7 +193,7 @@ class SheetData(object):
 
                             value_el = SubElement(cell_el, 'v')
 
-                            if attrib_cell.get('t') == 'n': # number
+                            if attrib_cell.get('t') in  ('n', None): # number
 
                                 value_el.text = value.text
 
@@ -210,7 +211,7 @@ class SheetData(object):
 
                                         param_value = params.get(param_name)
 
-                                        if isinstance(param_value, int) and found_param == value_string:
+                                        if isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
                                             # В первую очередь добавляем числовые значения
                                             is_int = True
 
