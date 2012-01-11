@@ -30,10 +30,8 @@ class FileConverter(object):
     ODS = 'ods'
     ODF = 'odf'
 
-    def __init__(self, src_file):
-        assert isinstance(src_file, FileProxy)
-        self.file = src_file
-        self.ext = src_file.get_file_name().split(os.path.extsep)[-1] # Расширение файла
+    def __init__(self):
+        self.file = self.ext = None
 
     def build(self, to_format):
         u"""
@@ -41,8 +39,10 @@ class FileConverter(object):
         найти метод у себя и вызвать его. Если этого метода нет - должно
         генериться исключение.
         """
+        assert self.ext and self.file, 'File and extension must be define'
+
         if self.ext == to_format:
-            return self.file
+            return self.file.get_path()
         else:
             return self.convert(to_format)
 
@@ -59,3 +59,11 @@ class FileConverter(object):
             return func()
         else:
             raise FileConverterException('Converter %s not supported format "%s"' % (self.__class__.__name__, to_format))
+
+    def set_src_file(self, src_file):
+        """
+
+        """
+        assert isinstance(src_file, FileProxy)
+        self.file = src_file
+        self.ext = src_file.get_file_name().split(os.path.extsep)[-1] # Расширение файла

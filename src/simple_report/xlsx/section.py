@@ -146,104 +146,154 @@ class SheetData(object):
         if count_merge_cells:
             self.write_merge_cell.set('count', str(count_merge_cells))
 
-    def set_section(self, begin, end, start_cell, params):
+
+    def _find_rows(self, range_rows):
         """
-        @param begin: Начала секции
-        @param end: Конец секции
-        @param start_cell: Начало вывода секции
 
         """
-        # TODO: Отрефакторить и разбить на несколько методов. Так же приспособить для поиска параметров
-        range_rows, range_cols = self._range(begin, end)
-
-        start_column, start_row = start_cell
 
         for i, num_row in enumerate(range_rows):
             row = self.read_data.find(self.XPATH_TEMPLATE_ROW % num_row)
             if not row is None:
-                # Только если есть строки
-                attrib_row = dict(row.items())
+                yield i, num_row, row
 
-                row_index = str(start_row + i)
-                attrib_row['r'] = row_index
+    def _find_cells(self, range_cols, num_row, row):
+        """
 
-                row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
+        """
+        for j, col in enumerate(range_cols):
+            cell = row.find(self.XPATH_TEMPLATE_CELL % (col + str(num_row)))
+            if not cell is None:
+                yield j, col, cell
 
-                self.cursor.row = ('A', start_row + i + 1)
 
-                for j, col in enumerate(range_cols):
-                    # Столбцы начинают выводится каждый раз от начала курсора
+    def _get_tag_value(self, cell):
+        """
 
-                    cell = row.find(self.XPATH_TEMPLATE_CELL % (col + str(num_row)))
-                    if not cell is None:
-                    # Только если есть ячейки
-                        attrib_cell = dict(cell.items())
+        """
+        return cell.find(QName(self.ns, 'v'))
 
-                        col_index = ColumnHelper.add(start_column, j)
+    def _get_params(self, cell):
+        """
 
-                        attrib_cell['r'] = col_index + row_index
-                        cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
+        """
+        value = self._get_tag_value(cell)
 
-                        # Установка курсора
-                        self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
+        if not value is None and cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+            index_value = int(value.text)
+            value_string = self.shared_table.get_value(index_value)
 
-                        value = cell.find(QName(self.ns, 'v'))
+            return self._get_param_iterator(value_string)
+        else:
+            return []
 
-                        if not value is None:
+    def _get_param_iterator(self, value_string):
+        """
+        """
+        who_found_params = self.shared_table.FIND_PARAMS.findall(value_string)
+        if who_found_params:
+            return [found_param for found_param in who_found_params]
+        else:
+            return []
 
-                            value_el = SubElement(cell_el, 'v')
 
-                            if attrib_cell.get('t') in ('n', None): # number
 
-                                value_el.text = value.text
+    def find_all_parameters(self, begin, end):
+        """
 
-                            elif attrib_cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+        """
+        range_rows, range_cols = self._range(begin, end)
+        for i, num_row, row in self._find_rows(range_rows):
+            for j, col, cell in self._find_cells(range_cols, num_row, row):
+                for param in self._get_params(cell):
+                    yield param
 
-                                index_value = int(value.text)
-                                value_string = self.shared_table.get_value(index_value)
 
-                                who_found_params = self.shared_table.FIND_PARAMS.findall(value_string)
+    def set_section(self, begin, end, start_cell, params):
+        """
 
-                                is_int = False
-                                if who_found_params:
-                                    for found_param in who_found_params:
-                                        param_name = found_param[1:-1]
+        """
+        range_rows, range_cols = self._range(begin, end)
+        start_column, start_row = start_cell
 
-                                        param_value = params.get(param_name)
 
-                                        if isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
-                                            # В первую очередь добавляем числовые значения
-                                            is_int = True
+        for i, num_row, row in self._find_rows(range_rows):
 
-                                            cell_el.attrib['t'] = 'n' # type - number
-                                            value_el.text = unicode(param_value)
+            attrib_row = dict(row.items())
 
-                                        elif param_value:
-                                            # Строковые параметры
+            row_index = str(start_row + i)
+            attrib_row['r'] = row_index
 
-                                            value_string = value_string.replace(found_param, unicode(param_value))
+            row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
 
-                                        else:
-                                            # Не передано значение параметра
-                                            value_string = value_string.replace(found_param, '')
+            self.cursor.row = ('A', start_row + i + 1)
 
-                                    if not is_int:
-                                        # Добавим данные в shared strings
+            for j, col, cell in self._find_cells(range_cols, num_row, row):
 
-                                        new_index = self.shared_table.get_new_index(index_value)
-                                        value_el.text = new_index
-                                        self.shared_table.new_elements_list[int(new_index)] = value_string
+                attrib_cell = dict(cell.items())
 
+                col_index = ColumnHelper.add(start_column, j)
+
+                attrib_cell['r'] = col_index + row_index
+                cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
+
+                # Установка курсора
+                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
+
+                value = self._get_tag_value(cell)
+                if not value is  None:
+                    value_el = SubElement(cell_el, 'v')
+
+                    if attrib_cell.get('t') in ('n', None): # number
+
+                        value_el.text = value.text
+
+                    elif attrib_cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+
+                        index_value = int(value.text)
+                        value_string = self.shared_table.get_value(index_value)
+
+                        who_found_params = self._get_param_iterator(value_string)
+
+                        is_int = False
+                        if who_found_params:
+                            for found_param in who_found_params:
+                                param_name = found_param[1:-1]
+
+                                param_value = params.get(param_name)
+
+                                if isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
+                                    # В первую очередь добавляем числовые значения
+                                    is_int = True
+
+                                    cell_el.attrib['t'] = 'n' # type - number
+                                    value_el.text = unicode(param_value)
+
+                                elif param_value:
+                                    # Строковые параметры
+
+                                    value_string = value_string.replace(found_param, unicode(param_value))
 
                                 else:
-                                    # Параметры в поле не найдены
+                                    # Не передано значение параметра
+                                    value_string = value_string.replace(found_param, '')
 
-                                    index = self.shared_table.get_new_index(index_value)
-                                    value_el.text = index
+                            if not is_int:
+                                # Добавим данные в shared strings
 
-                            elif attrib_cell.get('t'):
-                                raise SheetDataException("Unknown value '%s' for tag t" % attrib_cell.get('t'))
+                                new_index = self.shared_table.get_new_index(index_value)
+                                value_el.text = new_index
+                                self.shared_table.new_elements_list[int(new_index)] = value_string
 
+
+                        else:
+                            # Параметры в поле не найдены
+
+                            index = self.shared_table.get_new_index(value.text)
+                            value_el.text = index
+
+                    elif attrib_cell.get('t'):
+                        raise SheetDataException("Unknown value '%s' for tag t" % attrib_cell.get('t'))
 
     def _range(self, begin, end):
         """
@@ -320,4 +370,4 @@ class Section(ISpreadsheetSection):
         u"""
         Возвращает все параметры секции
         """
-
+        return self.sheet_data.find_all_parameters(self.begin, self.end)

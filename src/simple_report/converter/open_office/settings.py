@@ -47,6 +47,9 @@ EXPORT_FILTER_MAP = {
     "doc": {
         FAMILY_TEXT: {"FilterName": "MS Word 97"}
     },
+    "docx": {
+        FAMILY_TEXT: {"FilterName": 'MS Word 2007 XML'}
+    },
     "rtf": {
         FAMILY_TEXT: {"FilterName": "Rich Text Format"}
     },
@@ -61,6 +64,9 @@ EXPORT_FILTER_MAP = {
     },
     "xls": {
         FAMILY_SPREADSHEET: {"FilterName": "MS Excel 97"}
+    },
+    "xlsx":{
+        FAMILY_SPREADSHEET: {"FilterName": "Calc MS Excel 2007 XML"}
     },
     "csv": {
         FAMILY_SPREADSHEET: {

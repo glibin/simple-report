@@ -14,10 +14,8 @@ sys.path.append('../')
 import os
 import unittest
 
-from simple_report.report import SpreadsheetReport, ReportException
+from simple_report.report import SpreadsheetReport, ReportGeneratorException
 from simple_report.utils import ColumnHelper
-
-
 
 
 class SetupData(object):
@@ -113,7 +111,7 @@ class SetupData(object):
 
         report.get_section('C1').flush({'user': u'Иван'})
 
-        with self.assertRaises(ReportException):
+        with self.assertRaises(ReportGeneratorException):
             report.build(dst, FileConverter.XLS)
 
         report.build(dst)
@@ -195,21 +193,27 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         report.build(dst)
 
-    def test_383_value_too(self):
+    def test_main_parameters(self):
         src = self.test_files['test-main_book.xlsx']
         dst = os.path.join(self.dst_dir, 'res-main_book.xlsx')
 
         report = SpreadsheetReport(src)
 
-        report.get_section('header').flush({'period':u'Ноябрь'})
-
-        for i in range(10):
-            report.get_section('row').flush({'begin_year_debet': -i})
+        params_header = list(report.get_section('header').get_all_parameters())
+        self.assertEqual(0, len(params_header))
 
 
-        report.get_section('footer').flush({'glavbuh':u'Иван'})
+        params_row = list(report.get_section('row').get_all_parameters())
+        self.assertEqual(13, len(params_row))
+        self.assertIn(u'#num#', params_row)
+        self.assertIn(u'#account_name#', params_row)
+        self.assertIn(u'#journal_num#', params_row)
 
-        report.build(dst)
+        params_footer = list(report.get_section('footer').get_all_parameters())
+        self.assertEqual(12, len(params_footer))
+        self.assertIn(u'#begin_year_debet_sum#', params_footer)
+        self.assertIn(u'#glavbuh#', params_footer)
+        self.assertIn(u'#username#', params_footer)
 
 class TestWindows(SetupData, unittest.TestCase):
     SUBDIR = 'win'

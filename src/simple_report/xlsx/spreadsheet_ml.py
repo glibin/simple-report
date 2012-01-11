@@ -124,7 +124,7 @@ class Comments(OpenXMLFile):
     def get_sections(self):
         """
         """
-        return self.sections.values()
+        return self.sections
 
     @classmethod
     def create(cls, cursor, *args, **kwargs):

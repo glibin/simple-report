@@ -23,6 +23,7 @@ class OOWrapper(object):
     """
 
     def __init__(self, port=st.DEFAULT_OPENOFFICE_PORT):
+
         localContext = uno.getComponentContext()
         resolver = localContext.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver",
                                                                          localContext)
@@ -32,11 +33,13 @@ class OOWrapper(object):
             raise OOWrapperException("failed to connect to OpenOffice.org on port %s" % port)
         self.desktop = context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", context)
 
-    def convert(self, inputFile, _outputExt):
+    def convert(self, inputFile, _outputExt, outputFile=None):
         """
         """
-        outputFile, _ = os.path.splitext(inputFile)
-        outputFile = os.path.extsep.join((outputFile, _outputExt))
+
+        if not outputFile:
+            outputFile, _ = os.path.splitext(inputFile)
+            outputFile = os.path.extsep.join((outputFile, _outputExt))
 
         inputUrl = self._toFileUrl(inputFile)
         outputUrl = self._toFileUrl(outputFile)

@@ -8,12 +8,13 @@ from simple_report.xlsx.section import Section
 
 class TestOO(object):
     def test_connection(self):
+        port = 2002
         try:
-            OOWrapper()
+            OOWrapper(port)
         except OOWrapperException as e:
             # self.fail('OOWrapper() raised OOWrapperException - %s ' % str(e))
             print u'Тесты для OpenOffice не были запущены, '\
-                  u'т.к. нет запущенного сервера OpenOffice на порту %s ' % settings.DEFAULT_OPENOFFICE_PORT
+                  u'т.к. нет запущенного сервера OpenOffice на порту %s ' % port
 
             return False
         else:
@@ -29,30 +30,43 @@ class TestOO(object):
         src = self.test_files['test-PF_PKO.xlsx']
 
         converter = OOWrapper()
-        file_path = converter.convert(src, 'xls')
+        file_path = converter.convert(src, 'xls', )
         self.assertEqual(os.path.exists(file_path), True)
 
         with  self.assertRaises(OOWrapperException):
             converter.convert(src, 'odt') # Для Writera
+
+    def test_oo_wrapper(self):
+        """
+        Тестирование OpenOffice конвертера
+        """
+        if not self.test_connection():
+            return
+
+        src = self.test_files['test-simple-converter.xls']
+
+        dst = os.path.join(self.dst_dir, 'res-convert-simple-too.xlsx')
+
+        converter = OOWrapper(2002)
+        file_path = converter.convert(src, 'xlsx', dst)
+        self.assertEqual(os.path.exists(file_path), True)
 
 
     def test_work_document(self):
         if not self.test_connection():
             return
 
-        with self.assertRaises(FileConverterException):
-            src = self.test_files['test-simple.xls']
-            report = SpreadsheetReport(src, converter=OpenOfficeConverter)
+#        with self.assertRaises(FileConverterException):
+#            src = self.test_files['test-simple-converter.xls']
+#            report = SpreadsheetReport(src, converter=OpenOfficeConverter(port=8100))
 
-        src = self.test_files['test-simple.xlsx']
-        report = SpreadsheetReport(src, converter=OpenOfficeConverter)
-        dst = os.path.join(self.dst_dir, 'res-simple.xlsx')
+        src = self.test_files['test-simple-converter.xls']
+        report = SpreadsheetReport(src, converter=OpenOfficeConverter(port=2002))
+        dst = os.path.join(self.dst_dir, 'res-convert-simple.xlsx')
 
         if os.path.exists(dst):
             os.remove(dst)
         self.assertEqual(os.path.exists(dst), False)
-
-
 
         self.assertGreater(len(report._wrapper.sheets), 0)
         self.assertLessEqual(len(report._wrapper.sheets), 4)

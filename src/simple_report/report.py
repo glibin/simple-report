@@ -6,13 +6,14 @@ Created on 24.11.2011
 '''
 
 import abc
+import os
 
 from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
 from simple_report.xlsx.document import DocumentXLSX
 from simple_report.utils import FileProxy
 
-class ReportException(Exception):
+class ReportGeneratorException(Exception):
     """
     """
 
@@ -30,15 +31,15 @@ class Report(object):
 
         self.converter = None
         if converter is not None:
-            assert issubclass(converter, FileConverter)
+            assert isinstance(converter, FileConverter)
             self.converter = converter
-
 
     def convert(self, src_file, to_format):
         """
         """
         if self.converter is not None:
-            return FileProxy(self.converter(src_file).build(to_format))
+            self.converter.set_src_file(src_file)
+            return FileProxy(self.converter.build(to_format))
         else:
             return src_file
 
@@ -60,6 +61,10 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
 
         xlsx_file = self.convert(self.file, self.XLSX)
         self._wrapper = DocumentXLSX(xlsx_file)
+
+    @property
+    def sections(self):
+        return self.get_sections()
 
     def get_sections(self):
         u"""
@@ -86,10 +91,25 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
     def build(self, dst_file_path, file_type=XLSX):
         u"""
         Генерирует выходной файл в нужном формате
+
+        @param dst_file_path: По этому пути будет находится результирующий файл
+        @param file_type: Тип результирующего файла
+
         """
         if self.converter is None and file_type != self.XLSX:
-            raise ReportException('Converter is not defined')
+            raise ReportGeneratorException('Converter is not defined')
 
-        dst_file = FileProxy(dst_file_path, new_file=True)
-        self._wrapper.pack(dst_file)
-        return self.convert(dst_file, file_type)
+        file_name, file_extension = os.path.splitext(dst_file_path)
+
+
+        xlsx_path = os.path.extsep.join((file_name, self.XLSX))
+        xlsx_file = FileProxy(xlsx_path, new_file=True)
+
+        # Всегда вернет файл с расширением open office (xlsx, docx, etc.)
+
+        self._wrapper.pack(xlsx_file)
+
+        if file_type == self.XLSX:
+            return xlsx_path
+        else:
+            return self.convert(xlsx_file, file_type)
