@@ -12,8 +12,10 @@ class DocumentOpenXML(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, src_file):
+    def __init__(self, src_file, tags):
         self.extract_folder = ZipProxy.extract(src_file)
+
+        self._tags = tags # Ссылка на тэги
 
     def pack(self, dst_file):
         """

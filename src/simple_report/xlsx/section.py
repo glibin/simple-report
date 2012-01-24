@@ -1,11 +1,15 @@
 # coding: utf-8
 
 import copy
+from datetime import datetime
 from decimal import Decimal
+import locale
+import re
 from lxml.etree import QName, SubElement
 from simple_report.core.shared_table import SharedStringsTable
+from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
-from simple_report.utils import ColumnHelper, get_addr_cell
+from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
 from simple_report.xlsx.cursor import Cursor
 
 __author__ = 'prefer'
@@ -47,9 +51,18 @@ class SheetData(object):
     XPATH_TEMPLATE_ROW = '*[@r="%d"]'
     XPATH_TEMPLATE_CELL = '*[@r="%s"]'
 
-    def __init__(self, sheet_xml, cursor, ns, shared_table):
+    PREFIX_TAG = '%'
+
+    FIND_PARAMS = re.compile('#\w+#')
+    FIND_TEMPLATE_TAGS = re.compile('#{0}\w+{0}#'.format(PREFIX_TAG))
+
+    def __init__(self, sheet_xml, tags, cursor, ns, shared_table):
         # namespace
         self.ns = ns
+
+        # Шаблонные теги
+        assert isinstance(tags, TemplateTags)
+        self.tags = tags
 
         assert isinstance(cursor, Cursor)
         self.cursor = cursor
@@ -183,19 +196,23 @@ class SheetData(object):
             index_value = int(value.text)
             value_string = self.shared_table.get_value(index_value)
 
-            return self._get_param_iterator(value_string)
+            return self._get_values_by_re(value_string, FIND_PARAMS)
         else:
             return []
 
-    def _get_param_iterator(self, value_string):
+    def _get_values_by_re(self, value_string, what_found=None):
         """
         """
-        who_found_params = self.shared_table.FIND_PARAMS.findall(value_string)
+        if what_found is None:
+            # Если значение поиска неопределено выводим поиск для всех параметров
+            return self._get_values_by_re(value_string, self.FIND_PARAMS) + \
+                    self._get_values_by_re(value_string, self.FIND_TEMPLATE_TAGS)
+
+        who_found_params = what_found.findall(value_string)
         if who_found_params:
             return [found_param for found_param in who_found_params]
         else:
             return []
-
 
 
     def find_all_parameters(self, begin, end):
@@ -253,7 +270,7 @@ class SheetData(object):
                         index_value = int(value.text)
                         value_string = self.shared_table.get_value(index_value)
 
-                        who_found_params = self._get_param_iterator(value_string)
+                        who_found_params = self._get_values_by_re(value_string)
 
                         is_int = False
                         if who_found_params:
@@ -262,7 +279,27 @@ class SheetData(object):
 
                                 param_value = params.get(param_name)
 
-                                if isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
+                                # Находим теги шаблонов, если есть таковые
+                                if param_name[0] == self.PREFIX_TAG and param_name[-1] == self.PREFIX_TAG:
+                                    param_value = self.tags.get(param_name[1:-1])
+
+                                if isinstance(param_value, datetime) and found_param == value_string:
+
+                                    # В OpenXML хранится дата относительно 1900 года
+                                    days = date_to_float(param_value)
+                                    if days > 0:
+                                        # Дата конвертируется в int, начиная с 31.12.1899
+                                        is_int = True
+                                        cell_el.attrib['t'] = 'n' # type - number
+                                        value_el.text = unicode(days)
+                                    else:
+                                        date_less_1900 = '%s.%s.%s' % (param_value.date().day,
+                                                                       param_value.date().month, param_value.date().year,)
+                                        # strftime(param_value, locale.nl_langinfo(locale.D_FMT)) - неработает для 1900 и ниже
+                                        value_string = value_string.replace(found_param, unicode(date_less_1900))
+
+
+                                elif isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
                                     # В первую очередь добавляем числовые значения
                                     is_int = True
 

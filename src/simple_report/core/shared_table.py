@@ -9,8 +9,6 @@ class SharedStringsTable(object):
     """
     """
 
-    FIND_PARAMS = re.compile('#\w+#')
-
     def __init__(self, root):
         """
         """

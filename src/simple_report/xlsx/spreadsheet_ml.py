@@ -174,7 +174,7 @@ class WorkbookSheet(ReletionOpenXMLFile):
     NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 
 
-    def __init__(self, shared_table, name, sheet_id, *args, **kwargs):
+    def __init__(self, shared_table, tags, name, sheet_id, *args, **kwargs):
         super(WorkbookSheet, self).__init__(*args, **kwargs)
         self.name = name
         self.sheet_id = sheet_id
@@ -183,7 +183,8 @@ class WorkbookSheet(ReletionOpenXMLFile):
         self.sheet_data = SheetData(self._root,
                                     cursor=Cursor(),
                                     ns=self.NS,
-                                    shared_table=shared_table)
+                                    shared_table=shared_table,
+                                    tags=tags,)
 
         self.drawing, self.comments = self.walk_reletion()
 
@@ -262,11 +263,12 @@ class Workbook(ReletionOpenXMLFile):
     NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     NS_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, tags, *args, **kwargs):
         """
         """
-
         super(Workbook, self).__init__(*args, **kwargs)
+
+        self.tags = tags
 
         self.workbook_style, tmp_sheets, self.shared_strings = self.walk_reletions()
         self.sheets = self.walk(tmp_sheets)
@@ -315,7 +317,7 @@ class Workbook(ReletionOpenXMLFile):
         """
 
     def _get_worksheet(self, rel_id, target, name, sheet_id):
-        worksheet = WorkbookSheet.create(self.shared_table, name, sheet_id, rel_id, *self._get_path(target))
+        worksheet = WorkbookSheet.create(self.shared_table, self.tags, name, sheet_id, rel_id, *self._get_path(target))
         return worksheet
 
     def _get_shared_strings(self, _id, target):
@@ -377,8 +379,10 @@ class CommonProperties(ReletionOpenXMLFile):
 
     NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, tags, *args, **kwargs):
         super(CommonProperties, self).__init__(*args, **kwargs)
+
+        self.tags = tags
 
         self.core = self.app = self.workbook = None
         self.walk()
@@ -412,11 +416,11 @@ class CommonProperties(ReletionOpenXMLFile):
     def _get_workbook(self, _id, target):
         """
         """
-        return Workbook.create(_id, *self._get_path(target))
+        return Workbook.create(self.tags, _id, *self._get_path(target))
 
     @classmethod
-    def create(cls, folder):
+    def create(cls, folder, tags):
         reletion_path = os.path.join(folder, cls.RELETION_FOLDER, cls.RELETION_EXT)
         rel_id = None # Корневой файл связей
         file_name = '' # Не имеет названия, т.к. состоит из расширения .rels
-        return cls(rel_id, folder, file_name, reletion_path, )
+        return cls(tags, rel_id, folder, file_name, reletion_path, )

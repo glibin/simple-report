@@ -2,6 +2,7 @@
 
 import sys;
 from simple_report.converter.abstract import FileConverter
+from simple_report.core.tags import TemplateTags
 from simple_report.xlsx.section import Section
 from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
 
@@ -79,7 +80,7 @@ class SetupData(object):
             os.remove(dst)
         self.assertEqual(os.path.exists(dst), False)
 
-        report = SpreadsheetReport(src)
+        report = SpreadsheetReport(src, tags=TemplateTags(test_tag=222))
 
         #self.assertGreater(len(report._wrapper.sheets), 0)
 

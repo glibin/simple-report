@@ -7,6 +7,7 @@ Created on 24.11.2011
 
 import abc
 import os
+from simple_report.core.tags import TemplateTags
 
 from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
@@ -24,9 +25,13 @@ class Report(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, src_file, converter=None):
+    def __init__(self, src_file, converter=None, tags=None):
         """
         """
+
+        self.tags = tags or TemplateTags()
+        assert isinstance(self.tags, TemplateTags)
+
         self.file = FileProxy(src_file)
 
         self.converter = None
@@ -60,7 +65,8 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
         super(SpreadsheetReport, self).__init__(*args, **kwargs)
 
         xlsx_file = self.convert(self.file, self.XLSX)
-        self._wrapper = DocumentXLSX(xlsx_file)
+        self._wrapper = DocumentXLSX(xlsx_file, self.tags)
+
 
     @property
     def sections(self):

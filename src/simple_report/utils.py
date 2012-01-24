@@ -4,14 +4,16 @@ Created on 24.11.2011
 
 @author: prefer
 '''
+from datetime import datetime
 
 import os
+import re
 import sys
 import shutil
 from tempfile import gettempdir
 import uuid
 import zipfile
-
+import time
 
 class FileException(Exception):
     pass
@@ -202,3 +204,31 @@ def get_addr_cell(text):
             return text[:i], int(text[i:])
     else:
         raise ValueError('Addr cell is bad format value "%s"' % text)
+
+def date_to_float(date):
+    """
+    Конвертирует дату в число с плавающей точкой относительно 1900 года
+
+    Значение даты OLE-автоматизации реализовано как число с плавающей запятой,
+    равное количеству дней, прошедших с полуночи 30 декабря 1899 г.
+    Например, полночь 31 декабря 1899 г. представляется числом 1,0; 06:00
+    1 января 1900 г. — числом 2,25; полночь
+    29 декабря 1899 г. — числом 1,0 и 06:00
+    29 декабря 1899 г. — числом 1,25.
+
+    http://msdn.microsoft.com/ru-ru/library/system.datetime.tooadate%28v=vs.90%29.aspx
+
+    ps: Спасибо Вадиму, который предотвратил распространение кастылей,
+    типо кастомного форматирования параметров
+    """
+    assert isinstance(date, datetime)
+
+    date_1900 = datetime(1900, 1, 1)
+
+    days = (date - date_1900).days
+
+    hours = date.time().hour - date_1900.time().hour
+
+    minute = date.time().minute - date_1900.time().minute
+
+    return days + (hours + minute/60.0)/24.0

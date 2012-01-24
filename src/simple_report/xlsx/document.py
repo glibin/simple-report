@@ -10,7 +10,7 @@ class DocumentXLSX(DocumentOpenXML):
 
     def __init__(self, *args, **kwargs):
         super(DocumentXLSX, self).__init__(*args, **kwargs)
-        self.common_properties = CommonProperties.create(self.extract_folder)
+        self.common_properties = CommonProperties.create(self.extract_folder, self._tags)
 
     def get_sections(self):
         u"""
