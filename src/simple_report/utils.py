@@ -7,13 +7,11 @@ Created on 24.11.2011
 from datetime import datetime
 
 import os
-import re
 import sys
 import shutil
 from tempfile import gettempdir
 import uuid
 import zipfile
-import time
 
 class FileException(Exception):
     pass

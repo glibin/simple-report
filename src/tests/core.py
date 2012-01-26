@@ -128,7 +128,7 @@ class SetupData(object):
             os.remove(dst)
         self.assertEqual(os.path.exists(dst), False)
 
-        report = SpreadsheetReport(src)
+        report = SpreadsheetReport(src, tags=TemplateTags(test_tag=11))
 
         section_a1 = report.get_section('A1')
         section_a1.flush({'user': u'Иванов Иван',

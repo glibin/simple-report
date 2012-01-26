@@ -196,7 +196,7 @@ class SheetData(object):
             index_value = int(value.text)
             value_string = self.shared_table.get_value(index_value)
 
-            return self._get_values_by_re(value_string, FIND_PARAMS)
+            return self._get_values_by_re(value_string, self.FIND_PARAMS)
         else:
             return []
 
@@ -225,6 +225,11 @@ class SheetData(object):
                 for param in self._get_params(cell):
                     yield param
 
+
+    def _get_tag_formula(self, cell):
+        """
+        """
+        return cell.find(QName(self.ns, 'f'))
 
     def set_section(self, begin, end, start_cell, params):
         """
@@ -256,6 +261,15 @@ class SheetData(object):
 
                 # Установка курсора
                 self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
+
+                # Перенос формул
+                formula = self._get_tag_formula(cell)
+                if formula is not None:
+                    formula_el = SubElement(cell_el, 'f')
+                    formula_el.text = formula.text
+
+                    # Если есть формула, то значение является вычисляемым параметром и не сильно интересует
+                    continue
 
                 value = self._get_tag_value(cell)
                 if not value is  None:
