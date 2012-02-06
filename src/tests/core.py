@@ -3,6 +3,7 @@
 import sys;
 from simple_report.converter.abstract import FileConverter
 from simple_report.core.tags import TemplateTags
+from simple_report.interface import ISpreadsheetSection
 from simple_report.xlsx.section import Section
 from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
 
@@ -98,7 +99,7 @@ class SetupData(object):
                           'date_now': 1})
 
         s_gor = report.get_section('GOR')
-        s_gor.flush({'col': u'Данные'}, oriented=s_gor.GORIZONTAL)
+        s_gor.flush({'col': u'Данные'}, oriented=s_gor.HORIZONTAL)
 
         for i in range(10):
             report.get_section('B1').flush({'nbr': i,
@@ -106,8 +107,8 @@ class SetupData(object):
                                             'sector': u'Какой-то сектор'})
 
             s_gor_str = report.get_section('GorStr')
-            s_gor_str.flush({'g': i+i}, oriented=s_gor.GORIZONTAL)
-            s_gor_str.flush({'g': i*i}, oriented=s_gor.GORIZONTAL)
+            s_gor_str.flush({'g': i+i}, oriented=s_gor.HORIZONTAL)
+            s_gor_str.flush({'g': i*i}, oriented=s_gor.HORIZONTAL)
 
 
         report.get_section('C1').flush({'user': u'Иван'})
@@ -135,7 +136,7 @@ class SetupData(object):
                           'date_now': 1})
 
         s_gor = report.get_section('GOR')
-        s_gor.flush({'col': u'Данные'}, oriented=s_gor.GORIZONTAL)
+        s_gor.flush({'col': u'Данные'}, oriented=s_gor.HORIZONTAL)
 
         for i in range(10):
             report.get_section('B1').flush({'nbr': i,
@@ -143,8 +144,8 @@ class SetupData(object):
                                             'sector': u'Какой-то сектор'})
 
             s_gor_str = report.get_section('GorStr')
-            s_gor_str.flush({'g': i+i}, oriented=s_gor.GORIZONTAL)
-            s_gor_str.flush({'g': i*i}, oriented=s_gor.GORIZONTAL)
+            s_gor_str.flush({'g': i+i}, oriented=s_gor.HORIZONTAL)
+            s_gor_str.flush({'g': i*i}, oriented=s_gor.HORIZONTAL)
 
 
         report.get_section('C1').flush({'user': u'Иван'})
@@ -215,6 +216,43 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         self.assertIn(u'#begin_year_debet_sum#', params_footer)
         self.assertIn(u'#glavbuh#', params_footer)
         self.assertIn(u'#username#', params_footer)
+
+
+
+    def _test_report(self, file_name):
+        """
+        """
+        template_name =  self.test_files[file_name]
+        report = SpreadsheetReport(template_name)
+
+        header = report.get_section(u'row')
+        header.flush({})
+        #header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        header.flush({})
+        header.flush({})
+
+        #result_file, result_url = create_office_template_tempnames(template_name)
+        res_file_name = 'res-' + file_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+        report.build(dst)
+
+        return res_file_name
+
+    def test_empty_cell(self):
+        """
+
+        """
+        return self._test_report('test-empty-section.xlsx')
+
+    def test_wide_cell_1(self):
+        """
+
+        """
+        return self._test_report('test-wide-section-1.xlsx')
+
+
+    def test_wide_cell_2(self):
+        return self._test_report('test-wide-section-2.xlsx')
 
 class TestWindows(SetupData, unittest.TestCase):
     SUBDIR = 'win'

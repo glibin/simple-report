@@ -73,8 +73,16 @@ class SheetData(object):
         self._read_xml = sheet_xml
 
         self.read_data = sheet_xml.find(QName(self.ns, 'sheetData'))
+        if self.read_data is None:
+            self.read_data = []
+
         self.read_dimension = sheet_xml.find(QName(self.ns, 'dimension'))
+        if self.read_dimension is None:
+            self.read_dimension = []
+
         self.read_merge_cell = sheet_xml.find(QName(self.ns, 'mergeCells'))
+        if self.read_merge_cell is None:
+            self.read_merge_cell = []
 
         self._write_xml = copy.deepcopy(sheet_xml)
 
@@ -88,7 +96,7 @@ class SheetData(object):
 
         # Ссылка на объединенные ячейки листа с очищенными значениями
         self.write_merge_cell = self._write_xml.find(QName(self.ns, 'mergeCells'))
-        if not self.write_merge_cell is None:
+        if self.write_merge_cell is not None:
             self.write_merge_cell.clear()
 
 
@@ -155,8 +163,8 @@ class SheetData(object):
                 attrib = {'ref': ':'.join((begin_merge, end_merge))}
                 SubElement(self.write_merge_cell, 'mergeCell', attrib)
 
-        count_merge_cells = len(self.write_merge_cell)
-        if count_merge_cells:
+        if self.write_merge_cell is not None:
+            count_merge_cells = len(self.write_merge_cell)
             self.write_merge_cell.set('count', str(count_merge_cells))
 
 
@@ -209,7 +217,7 @@ class SheetData(object):
                     self._get_values_by_re(value_string, self.FIND_TEMPLATE_TAGS)
 
         who_found_params = what_found.findall(value_string)
-        if who_found_params:
+        if who_found_params is not None:
             return [found_param for found_param in who_found_params]
         else:
             return []
@@ -239,6 +247,23 @@ class SheetData(object):
         start_column, start_row = start_cell
 
 
+        #print begin, end, start_cell
+
+        # Установка курсора в зависимости от размера секции
+        #self.cursor.row = \
+        #\
+        #print ('A', start_row + end[1] - begin[1])
+        #self.cursor.column =
+        #
+        #print 'e', end, 'b', begin
+
+        #self.cursor.row = (start_column, start_row)
+        #self.cursor.column = (ColumnHelper.add(start_column, ColumnHelper.difference(end[0], begin[0]) ), start_row + end[1] - begin[1])
+
+        #print self.cursor.row
+
+        #print (ColumnHelper.add(col_index, 1), start_row)
+
         for i, num_row, row in self._find_rows(range_rows):
 
             attrib_row = dict(row.items())
@@ -248,6 +273,7 @@ class SheetData(object):
 
             row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
 
+            # Установка курсора для колонок
             self.cursor.row = ('A', start_row + i + 1)
 
             for j, col, cell in self._find_cells(range_cols, num_row, row):
@@ -259,7 +285,7 @@ class SheetData(object):
                 attrib_cell['r'] = col_index + row_index
                 cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
 
-                # Установка курсора
+                # Установка курсора для колонок
                 self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
 
                 # Перенос формул
@@ -408,12 +434,32 @@ class Section(ISpreadsheetSection):
         """
         """
         assert isinstance(params, dict)
-        assert oriented in (Section.VERTICAL, Section.GORIZONTAL)
+        assert oriented in (Section.VERTICAL, Section.HORIZONTAL)
 
         # Тут смещение курсора, копирование данных из листа и общих строк
         # Генерация новых данных и новых общих строк
 
+        # TODO: Здесь сделать установку параметров курсора, а не set_section!
+
         start_cell = self.sheet_data.cursor.row if oriented == Section.VERTICAL else self.sheet_data.cursor.column
+
+
+        #print begin, end, start_cell
+
+        # Установка курсора в зависимости от размера секции
+        #self.cursor.row = \
+        #\
+        #print ('A', start_row + end[1] - begin[1])
+        #self.cursor.column =
+        #
+        #print 'e', end, 'b', begin
+
+        #self.cursor.row = (start_column, start_row)
+        #self.cursor.column = (ColumnHelper.add(start_column, ColumnHelper.difference(end[0], begin[0]) ), start_row + end[1] - begin[1])
+
+        #print self.cursor.row
+
+        #print (ColumnHelper.add(col_index, 1), start_row)
 
         self.sheet_data.flush(self.begin, self.end, start_cell, params)
 

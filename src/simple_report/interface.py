@@ -64,7 +64,7 @@ class ISpreadsheetSection(object):
 
     # Тип разворота секции
     VERTICAL = 0
-    GORIZONTAL = 1
+    HORIZONTAL = 1
 
     @abstractmethod
     def flush(self, params, oriented=VERTICAL):

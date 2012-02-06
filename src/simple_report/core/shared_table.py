@@ -17,8 +17,8 @@ class SharedStringsTable(object):
         self.new_elements_list = []
 
         assert isinstance(root, _Element)
-        assert 'count' in root.attrib
-        assert 'uniqueCount' in root.attrib
+        #assert 'count' in root.attrib # TODO: Разобраться почему нет в виндовых шаблонах
+        #assert 'uniqueCount' in root.attrib # TODO: Разобраться почему нет в виндовых шаблонах
         assert  hasattr(root, 'nsmap')
 
         self.nsmap = root.nsmap
