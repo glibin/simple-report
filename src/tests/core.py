@@ -1,4 +1,5 @@
 #coding: utf-8
+from datetime import datetime
 
 import sys;
 from simple_report.converter.abstract import FileConverter
@@ -253,6 +254,35 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
     def test_wide_cell_2(self):
         return self._test_report('test-wide-section-2.xlsx')
+
+
+    def test_purchases_book(self):
+        """
+
+        """
+
+        enterprise_name = u'Мегаэнтерпрайз'
+        inn = 123123123
+        kpp = 123123
+        date_start = datetime.now()
+        date_end = datetime.now()
+
+        file_name = 'test-purchases_book.xlsx'
+        template_name =  self.test_files[file_name]
+        report = SpreadsheetReport(template_name)
+
+        header = report.get_section('header')
+        header.flush({
+            'enterprise_name': enterprise_name,
+            'inn': inn,
+            'kpp': kpp,
+            'date_start': date_start,
+            'date_end': date_end
+        })
+
+        res_file_name = 'res-' + file_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+        report.build(dst)
 
 class TestWindows(SetupData, unittest.TestCase):
     SUBDIR = 'win'

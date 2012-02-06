@@ -24,7 +24,7 @@ class SharedStringsTable(object):
         self.nsmap = root.nsmap
         self.uniq_elements = self.count = 0
 
-        self.elements = [t.text for si in root for t in si]
+        self.elements = [''.join(t.text or '' for t in si) for si in root]
 
     def get_new_index(self, index):
         """

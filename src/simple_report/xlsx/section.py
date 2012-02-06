@@ -3,7 +3,6 @@
 import copy
 from datetime import datetime
 from decimal import Decimal
-import locale
 import re
 from lxml.etree import QName, SubElement
 from simple_report.core.shared_table import SharedStringsTable
