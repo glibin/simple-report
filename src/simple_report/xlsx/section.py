@@ -360,6 +360,7 @@ class SheetData(object):
                                 new_index = self.shared_table.get_new_index(index_value)
                                 value_el.text = new_index
                                 self.shared_table.new_elements_list[int(new_index)] = value_string
+                                self.shared_table.new_elements_dict[value_string] = new_index
 
 
                         else:
