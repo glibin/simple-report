@@ -344,7 +344,6 @@ class SheetData(object):
                                 self.shared_table.new_elements_list[int(new_index)] = value_string
                                 self.shared_table.new_elements_dict[value_string] = new_index
 
-
                         else:
                             # Параметры в поле не найдены
 
@@ -378,6 +377,11 @@ class SheetData(object):
     def new_sheet(self):
         """
         """
+
+        if self.write_merge_cell is not None:
+            childs = self.write_merge_cell.getchildren()
+            if not childs:
+                self._write_xml.remove(self.write_merge_cell)
         return self._write_xml
 
 

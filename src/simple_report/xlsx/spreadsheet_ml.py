@@ -16,6 +16,8 @@ from simple_report.xlsx.cursor import Cursor
 from simple_report.xlsx.section import Section, SheetData
 
 
+XML_DEFINITION =  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+
 class SectionException(Exception):
     """
     """
@@ -137,7 +139,7 @@ class Comments(OpenXMLFile):
             self.comment_list.clear()
 
         with open(self.file_path, 'w') as f:
-            f.write(tostring(self._root))
+            f.write(XML_DEFINITION + tostring(self._root))
 
 
 class SharedStrings(OpenXMLFile):
@@ -154,7 +156,7 @@ class SharedStrings(OpenXMLFile):
         """
         new_root = self.table.to_xml()
         with open(self.file_path, 'w') as f:
-            f.write(tostring(new_root))
+            f.write(XML_DEFINITION + tostring(new_root))
 
 
 class App(OpenXMLFile):
@@ -245,8 +247,9 @@ class WorkbookSheet(ReletionOpenXMLFile):
         """
         """
         new_root = self.sheet_data.new_sheet()
+
         with open(self.file_path, 'w') as f:
-            f.write(tostring(new_root))
+            f.write(XML_DEFINITION + tostring(new_root))
 
         if self.comments:
             self.comments.build()

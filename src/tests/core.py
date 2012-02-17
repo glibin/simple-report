@@ -11,6 +11,7 @@ from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundE
 from test_oo_wrapper import TestOO
 from test_utils import skip_python26
 from test_pko import TestPKO
+from oborot import OperationsJournalReportFactory
 
 sys.path.append('../')
 
@@ -339,6 +340,23 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         return res_file_name
 
+    def test_without_merge_cells(self):
+
+        file_name = 'test-main_template.xlsx'
+        template_name =  self.test_files[file_name]
+        report = SpreadsheetReport(template_name)
+
+        head_section = report.get_section('head')
+        for head in range(10):
+            head_section.flush({'head_name':str(head)},1)
+
+        #result_file, result_url = create_office_template_tempnames(template_name)
+        res_file_name = 'res-' + file_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+        report.build(dst)
+
+        return res_file_name
+
 
     def test_purchases_book(self):
         """
@@ -367,6 +385,21 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         res_file_name = 'res-' + file_name
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
+
+
+    def test_operations_journal(self):
+        """
+
+        """
+        template_name = "test-operations_journal.xlsx"
+        path = self.test_files[template_name]
+
+        report = OperationsJournalReportFactory(path).generate()
+
+        res_file_name = 'res-' + template_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+
+        return report.build(dst)
 
 class TestWindows(SetupData, unittest.TestCase):
     SUBDIR = 'win'
