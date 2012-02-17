@@ -245,24 +245,6 @@ class SheetData(object):
         range_rows, range_cols = self._range(begin, end)
         start_column, start_row = start_cell
 
-
-        #print begin, end, start_cell
-
-        # Установка курсора в зависимости от размера секции
-        #self.cursor.row = \
-        #\
-        #print ('A', start_row + end[1] - begin[1])
-        #self.cursor.column =
-        #
-        #print 'e', end, 'b', begin
-
-        #self.cursor.row = (start_column, start_row)
-        #self.cursor.column = (ColumnHelper.add(start_column, ColumnHelper.difference(end[0], begin[0]) ), start_row + end[1] - begin[1])
-
-        #print self.cursor.row
-
-        #print (ColumnHelper.add(col_index, 1), start_row)
-
         for i, num_row, row in self._find_rows(range_rows):
 
             attrib_row = dict(row.items())
@@ -273,7 +255,7 @@ class SheetData(object):
             row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
 
             # Установка курсора для колонок
-            self.cursor.row = ('A', start_row + i + 1)
+#            self.cursor.row = ('A', start_row + i + 1)
 
             for j, col, cell in self._find_cells(range_cols, num_row, row):
 
@@ -285,7 +267,7 @@ class SheetData(object):
                 cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
 
                 # Установка курсора для колонок
-                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
+#                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
 
                 # Перенос формул
                 formula = self._get_tag_formula(cell)
@@ -439,29 +421,23 @@ class Section(ISpreadsheetSection):
         # Тут смещение курсора, копирование данных из листа и общих строк
         # Генерация новых данных и новых общих строк
 
-        # TODO: Здесь сделать установку параметров курсора, а не set_section!
+        cursor = self.sheet_data.cursor
 
-        start_cell = self.sheet_data.cursor.row if oriented == Section.VERTICAL else self.sheet_data.cursor.column
+        begin_col, begin_row = self.begin
+        end_col, end_row = self.end
 
+        if oriented == Section.VERTICAL:
+            current_col, current_row = self.sheet_data.cursor.row
 
-        #print begin, end, start_cell
+            cursor.row = ('A', current_row + end_row - begin_row + 1)
 
-        # Установка курсора в зависимости от размера секции
-        #self.cursor.row = \
-        #\
-        #print ('A', start_row + end[1] - begin[1])
-        #self.cursor.column =
-        #
-        #print 'e', end, 'b', begin
+        else:
+            current_col, current_row = self.sheet_data.cursor.column
 
-        #self.cursor.row = (start_column, start_row)
-        #self.cursor.column = (ColumnHelper.add(start_column, ColumnHelper.difference(end[0], begin[0]) ), start_row + end[1] - begin[1])
+        cursor.column = (ColumnHelper.add(current_col,
+            ColumnHelper.difference(end_col, begin_col) + 1), current_row)
 
-        #print self.cursor.row
-
-        #print (ColumnHelper.add(col_index, 1), start_row)
-
-        self.sheet_data.flush(self.begin, self.end, start_cell, params)
+        self.sheet_data.flush(self.begin, self.end, (current_col, current_row), params)
 
     def get_all_parameters(self):
         u"""

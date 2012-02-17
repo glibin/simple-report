@@ -220,17 +220,117 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
 
 
-    def _test_report(self, file_name):
+    def test_empty_cell(self):
         """
+
         """
+        file_name = 'test-empty-section.xlsx'
         template_name =  self.test_files[file_name]
         report = SpreadsheetReport(template_name)
 
         header = report.get_section(u'row')
+
         header.flush({})
-        #header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 2))
+        self.assertEqual(header.sheet_data.cursor.column, ('B', 1))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 2))
+        self.assertEqual(header.sheet_data.cursor.column, ('C', 1))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 2))
+        self.assertEqual(header.sheet_data.cursor.column, ('D', 1))
+
         header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 3))
+        self.assertEqual(header.sheet_data.cursor.column, ('B', 2))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 3))
+        self.assertEqual(header.sheet_data.cursor.column, ('C', 2))
+
         header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
+        self.assertEqual(header.sheet_data.cursor.column, ('B', 3))
+
+        #result_file, result_url = create_office_template_tempnames(template_name)
+        res_file_name = 'res-' + file_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+        report.build(dst)
+
+
+    def test_wide_cell_1(self):
+        """
+
+        """
+        file_name = 'test-wide-section-1.xlsx'
+        template_name =  self.test_files[file_name]
+        report = SpreadsheetReport(template_name)
+
+        header = report.get_section(u'row')
+
+        header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 2))
+        self.assertEqual(header.sheet_data.cursor.column, ('B', 1))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 2))
+        self.assertEqual(header.sheet_data.cursor.column, ('C', 1))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 2))
+        self.assertEqual(header.sheet_data.cursor.column, ('D', 1))
+
+        header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 3))
+        self.assertEqual(header.sheet_data.cursor.column, ('B', 2))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 3))
+        self.assertEqual(header.sheet_data.cursor.column, ('C', 2))
+
+        header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
+        self.assertEqual(header.sheet_data.cursor.column, ('B', 3))
+
+        #result_file, result_url = create_office_template_tempnames(template_name)
+        res_file_name = 'res-' + file_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+        report.build(dst)
+
+
+    def test_wide_cell_2(self):
+
+        file_name = 'test-wide-section-2.xlsx'
+        template_name =  self.test_files[file_name]
+        report = SpreadsheetReport(template_name)
+
+        header = report.get_section(u'row')
+
+        header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
+        self.assertEqual(header.sheet_data.cursor.column, ('D', 1))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
+        self.assertEqual(header.sheet_data.cursor.column, ('G', 1))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
+        self.assertEqual(header.sheet_data.cursor.column, ('J', 1))
+
+        header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 7))
+        self.assertEqual(header.sheet_data.cursor.column, ('D', 4))
+
+        header.flush({}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 7))
+        self.assertEqual(header.sheet_data.cursor.column, ('G', 4))
+
+        header.flush({})
+        self.assertEqual(header.sheet_data.cursor.row, ('A', 10))
+        self.assertEqual(header.sheet_data.cursor.column, ('D', 7))
 
         #result_file, result_url = create_office_template_tempnames(template_name)
         res_file_name = 'res-' + file_name
@@ -238,22 +338,6 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         report.build(dst)
 
         return res_file_name
-
-    def test_empty_cell(self):
-        """
-
-        """
-        return self._test_report('test-empty-section.xlsx')
-
-    def test_wide_cell_1(self):
-        """
-
-        """
-        return self._test_report('test-wide-section-1.xlsx')
-
-
-    def test_wide_cell_2(self):
-        return self._test_report('test-wide-section-2.xlsx')
 
 
     def test_purchases_book(self):
