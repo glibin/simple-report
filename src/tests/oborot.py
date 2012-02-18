@@ -16,9 +16,9 @@ class OperationsJournalReportFactory(object):
         """
         Формирует заголовок отчета
         """
-#        period = u'%s %s года' % (MonthsEnum.values.get(self.date_start.month).lower(), self.date_start.year)
-#        ent = get_current_user_enterprise()
-#        ent_name = ent.name if ent else u'Облако'
+        #        period = u'%s %s года' % (MonthsEnum.values.get(self.date_start.month).lower(), self.date_start.year)
+        #        ent = get_current_user_enterprise()
+        #        ent_name = ent.name if ent else u'Облако'
 
         header = self._report.get_section('header')
         header.flush({
@@ -31,70 +31,70 @@ class OperationsJournalReportFactory(object):
         })
 
     def _fetch_main_rows(self):
-#        qf = OperationsJournalQueryFactory()
-#
-#        if self.config_object.is_reverse_mode():
-#            query = qf.create_reverse_query(self.date_start, self.date_end, self.config_object)
-#        else:
-#            query = qf.create_query(self.date_start, self.date_end, self.config_object)
-#
-#        #noinspection PyUnresolvedReferences
-#        query = query.order_by('operation_date', 'document_date', 'document_number', 'document_type__name').\
-#        select_related('debet_kbk', 'credit_kbk', 'operation', 'document_type', 'debet_account',
-#            'credit_account', 'kvd', 'debet_kosgu', 'credit_kosgu')
+    #        qf = OperationsJournalQueryFactory()
+    #
+    #        if self.config_object.is_reverse_mode():
+    #            query = qf.create_reverse_query(self.date_start, self.date_end, self.config_object)
+    #        else:
+    #            query = qf.create_query(self.date_start, self.date_end, self.config_object)
+    #
+    #        #noinspection PyUnresolvedReferences
+    #        query = query.order_by('operation_date', 'document_date', 'document_number', 'document_type__name').\
+    #        select_related('debet_kbk', 'credit_kbk', 'operation', 'document_type', 'debet_account',
+    #            'credit_account', 'kvd', 'debet_kosgu', 'credit_kosgu')
 
-#        # Сворачивание по операциям
-#        if self.group_operations:
-#            fields4group = ['debet_account', 'credit_account', 'operation_date', 'document_date',
-#                            'document_number', 'document_type', 'operation', 'kvd', 'debet_kosgu', 'credit_kosgu',
-#                            'debet_kbk', 'credit_kbk', 'document_type', 'document_id']
-#            for i in range(1, ANALYTIC_COUNT + 1):
-#                fields4group.append('credit_analytic' + str(i) + '_id')
-#                fields4group.append('debet_analytic' + str(i) + '_id')
-#
-#            query = query.values(*fields4group).annotate(summa=Sum('summa'))
-#
-#        data = []
-#        if self.group_operations:
-#            for i, d in enumerate(query):
-#                data.append(BitchyRow(d))
-#        else:
-#            data = list(query)
-#
-#        dict_code = self.config_object.get_dict_code()
-#        debet_accounts, credit_accounts = qf.get_accounts_by_analytic_code(self.config_object, dict_code)
+    #        # Сворачивание по операциям
+    #        if self.group_operations:
+    #            fields4group = ['debet_account', 'credit_account', 'operation_date', 'document_date',
+    #                            'document_number', 'document_type', 'operation', 'kvd', 'debet_kosgu', 'credit_kosgu',
+    #                            'debet_kbk', 'credit_kbk', 'document_type', 'document_id']
+    #            for i in range(1, ANALYTIC_COUNT + 1):
+    #                fields4group.append('credit_analytic' + str(i) + '_id')
+    #                fields4group.append('debet_analytic' + str(i) + '_id')
+    #
+    #            query = query.values(*fields4group).annotate(summa=Sum('summa'))
+    #
+    #        data = []
+    #        if self.group_operations:
+    #            for i, d in enumerate(query):
+    #                data.append(BitchyRow(d))
+    #        else:
+    #            data = list(query)
+    #
+    #        dict_code = self.config_object.get_dict_code()
+    #        debet_accounts, credit_accounts = qf.get_accounts_by_analytic_code(self.config_object, dict_code)
 
-#        result = []
-#        random_ppp = ''
-#        for d in data:
-#
-#            # Извлекаем наименование аналитики, сначала по дебету, затем по кредиту
-#            value = None
-#            if d.debet_account in debet_accounts:
-#                value = get_analytic_value_by_code(d, dict_code, False)
-#            elif d.credit_account in credit_accounts:
-#                value = get_analytic_value_by_code(d, dict_code, True)
-#            analytic_name = value.name if value else ''
-#
-#            result.append({
-#                'doc_date': d.document_date.strftime("%d.%m.%Y"), # Потому что у генератора летит дата
-#                'doc_num': d.document_number,
-#                'doc_name': d.document_type.name,
-#                'analytic_name': analytic_name,
-#                'description': d.operation.name,
-#                'debet_account': get_account_presentation_for_report(d.debet_account, d.kvd, d.debet_kosgu, d.debet_kbk),
-#                'credit_account': get_account_presentation_for_report(d.credit_account, d.kvd, d.credit_kosgu, d.credit_kbk),
-#                'summa': d.summa,
-#                # Надо для определения журнала
-#                'debet_account_id': d.debet_account.id if d.debet_account else -1,
-#                'credit_account_id': d.credit_account.id if d.credit_account else -1,
-#                })
-#
-#            # Ну надо так, что ;)
-#            if d.debet_kbk and not random_ppp:
-#                random_ppp = d.debet_kbk.code[:3]
-#
-#        return result, random_ppp
+    #        result = []
+    #        random_ppp = ''
+    #        for d in data:
+    #
+    #            # Извлекаем наименование аналитики, сначала по дебету, затем по кредиту
+    #            value = None
+    #            if d.debet_account in debet_accounts:
+    #                value = get_analytic_value_by_code(d, dict_code, False)
+    #            elif d.credit_account in credit_accounts:
+    #                value = get_analytic_value_by_code(d, dict_code, True)
+    #            analytic_name = value.name if value else ''
+    #
+    #            result.append({
+    #                'doc_date': d.document_date.strftime("%d.%m.%Y"), # Потому что у генератора летит дата
+    #                'doc_num': d.document_number,
+    #                'doc_name': d.document_type.name,
+    #                'analytic_name': analytic_name,
+    #                'description': d.operation.name,
+    #                'debet_account': get_account_presentation_for_report(d.debet_account, d.kvd, d.debet_kosgu, d.debet_kbk),
+    #                'credit_account': get_account_presentation_for_report(d.credit_account, d.kvd, d.credit_kosgu, d.credit_kbk),
+    #                'summa': d.summa,
+    #                # Надо для определения журнала
+    #                'debet_account_id': d.debet_account.id if d.debet_account else -1,
+    #                'credit_account_id': d.credit_account.id if d.credit_account else -1,
+    #                })
+    #
+    #            # Ну надо так, что ;)
+    #            if d.debet_kbk and not random_ppp:
+    #                random_ppp = d.debet_kbk.code[:3]
+    #
+    #        return result, random_ppp
         return True
 
     def _create_main(self, main_rows):
@@ -119,35 +119,35 @@ class OperationsJournalReportFactory(object):
         middle = self._report.get_section('middle')
         middle.flush({})
 
-#        # Вычисляем сумму исходных данных по паре: счет дебета и счет кредита
-#        aggr = defaultdict(lambda: 0)
-#        for row in main_rows:
-#            key = (row['debet_account'], row['credit_account'], row['debet_account_id'], row['credit_account_id'])
-#            aggr[key] += row['summa']
-#
-#        # Проставляет в строки номер журнала, к которому принадлежит сумма.
-#        # Выбор журнала происходит исходя из его приоритера.
-#        priority_journal_configs = []
-#        for config in OperJournalConfig.objects.order_by('priority', 'number'):
-#            temp_config_object = ConfigObject(config)
-#            priority_journal_configs.append({
-#                'number': config.number,
-#                'debet_account_ids': temp_config_object.get_debet_accounts(),
-#                'credit_account_ids': temp_config_object.get_credit_accounts(),
-#                })
-#
-#        middle = self._report.get_section('middle_line')
+        #        # Вычисляем сумму исходных данных по паре: счет дебета и счет кредита
+        #        aggr = defaultdict(lambda: 0)
+        #        for row in main_rows:
+        #            key = (row['debet_account'], row['credit_account'], row['debet_account_id'], row['credit_account_id'])
+        #            aggr[key] += row['summa']
+        #
+        #        # Проставляет в строки номер журнала, к которому принадлежит сумма.
+        #        # Выбор журнала происходит исходя из его приоритера.
+        #        priority_journal_configs = []
+        #        for config in OperJournalConfig.objects.order_by('priority', 'number'):
+        #            temp_config_object = ConfigObject(config)
+        #            priority_journal_configs.append({
+        #                'number': config.number,
+        #                'debet_account_ids': temp_config_object.get_debet_accounts(),
+        #                'credit_account_ids': temp_config_object.get_credit_accounts(),
+        #                })
+        #
+        #        middle = self._report.get_section('middle_line')
         total = 0
-        aggr = {'a':1, }
+        aggr = {'a': 1, }
         for key, value in aggr.iteritems():
-#            debet_account, credit_account, debet_account_id, credit_account_id = key
-#
-#            # Определяем к какому журналу принадлежит строка
-#            number = ''
-#            for config in priority_journal_configs:
-#                if debet_account_id in config['debet_account_ids'] or credit_account_id in config['credit_account_ids']:
-#                    number = config['number']
-#                    break
+        #            debet_account, credit_account, debet_account_id, credit_account_id = key
+        #
+        #            # Определяем к какому журналу принадлежит строка
+        #            number = ''
+        #            for config in priority_journal_configs:
+        #                if debet_account_id in config['debet_account_ids'] or credit_account_id in config['credit_account_ids']:
+        #                    number = config['number']
+        #                    break
 
             middle.flush({
                 'debet_account': key,
@@ -169,8 +169,8 @@ class OperationsJournalReportFactory(object):
         Причем первой строкой для кждого счета выводится общая сумма без КОСГУ.
         """
         account_ids = set()
-        account_ids.update( self.config_object.get_credit_accounts() )
-        account_ids.update( self.config_object.get_debet_accounts() )
+        account_ids.update(self.config_object.get_credit_accounts())
+        account_ids.update(self.config_object.get_debet_accounts())
 
         oborotka = OborotkaSQLGenerator()
         data = oborotka.get_data(
@@ -257,11 +257,11 @@ class OperationsJournalReportFactory(object):
         """
         Формирует подвал отчета
         """
-#        mol = get_enterprise_official(self.ent_id, EnterpriseOfficialType.CHIEF_ACCOUNTANT)
-#        glavbuh = mol.person.get_short_fio() if mol else ''
-#
-#        profile = get_current_user_profile()
-#        username = profile.get_short_fio()
+        #        mol = get_enterprise_official(self.ent_id, EnterpriseOfficialType.CHIEF_ACCOUNTANT)
+        #        glavbuh = mol.person.get_short_fio() if mol else ''
+        #
+        #        profile = get_current_user_profile()
+        #        username = profile.get_short_fio()
 
         footer = self._report.get_section('footer')
         footer.flush({

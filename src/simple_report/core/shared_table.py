@@ -1,5 +1,4 @@
 #coding: utf-8
-import re
 from lxml.etree import _Element, Element, SubElement
 
 __author__ = 'prefer'
@@ -56,7 +55,7 @@ class SharedStringsTable(object):
         """
         root = Element('sst', {'count': str(len(self.new_elements_list)),
                                'uniqueCount': str(self.uniq_elements)},
-                       nsmap=self.nsmap)
+            nsmap=self.nsmap)
 
         for elem in self.new_elements_list:
             si = SubElement(root, 'si')

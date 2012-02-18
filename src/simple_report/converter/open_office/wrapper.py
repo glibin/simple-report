@@ -17,16 +17,16 @@ class OOWrapperException(Exception):
 
     """
 
+
 class OOWrapper(object):
     u"""
     Для работы с OpenOffice
     """
 
     def __init__(self, port=st.DEFAULT_OPENOFFICE_PORT):
-
         localContext = uno.getComponentContext()
         resolver = localContext.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver",
-                                                                         localContext)
+            localContext)
         try:
             context = resolver.resolve("uno:socket,host=localhost,port=%s;urp;StarOffice.ComponentContext" % port)
         except NoConnectException:
@@ -50,7 +50,7 @@ class OOWrapper(object):
             loadProperties.update(st.IMPORT_FILTER_MAP[inputExt])
 
         document = self.desktop.loadComponentFromURL(inputUrl, "_blank", 0,
-                                                     self._toProperties(loadProperties))
+            self._toProperties(loadProperties))
         try:
             document.refresh()
         except AttributeError:
@@ -89,7 +89,7 @@ class OOWrapper(object):
         try:
             return propertiesByFamily[family]
         except KeyError:
-            raise OOWrapperException("unsupported conversion: from '%s' to '%s'" % (family, outputExt) )
+            raise OOWrapperException("unsupported conversion: from '%s' to '%s'" % (family, outputExt))
 
     def _detectFamily(self, document):
         if document.supportsService("com.sun.star.text.WebDocument"):

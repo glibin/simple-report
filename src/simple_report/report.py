@@ -7,7 +7,9 @@ Created on 24.11.2011
 
 import abc
 import os
+from simple_report.core.document_wrap import DocumentOpenXML
 from simple_report.core.tags import TemplateTags
+from simple_report.docx.document import DocumentDOCX
 
 from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
@@ -18,12 +20,19 @@ class ReportGeneratorException(Exception):
     """
     """
 
+
 class Report(object):
     u"""
     Абстрактный класс отчета
     """
 
     __metaclass__ = abc.ABCMeta
+
+    # Тип документа: XLSX, DOCX, etc.
+    TYPE = None
+
+    # Класс-делегат черной работы
+    _wrapper = None
 
     def __init__(self, src_file, converter=None, tags=None):
         """
@@ -39,6 +48,11 @@ class Report(object):
             assert isinstance(converter, FileConverter)
             self.converter = converter
 
+        ffile = self.convert(self.file, self.TYPE)
+
+        assert issubclass(self._wrapper, DocumentOpenXML)
+        self._wrapper = self._wrapper(ffile, self.tags)
+
     def convert(self, src_file, to_format):
         """
         """
@@ -48,24 +62,59 @@ class Report(object):
         else:
             return src_file
 
+    def build(self, dst_file_path, file_type=None):
+        """
+
+        """
+        assert self.TYPE, 'Document Type is not defined'
+
+        if file_type is None:
+            file_type = self.TYPE
+
+        if self.converter is None and file_type != self.TYPE:
+            raise ReportGeneratorException('Converter is not defined')
+
+        file_name, file_extension = os.path.splitext(dst_file_path)
+
+        xlsx_path = os.path.extsep.join((file_name, self.TYPE))
+        xlsx_file = FileProxy(xlsx_path, new_file=True)
+
+        # Всегда вернет файл с расширением open office (xlsx, docx, etc.)
+
+
+        self._wrapper.pack(xlsx_file)
+
+        if file_type == self.TYPE:
+            return xlsx_path
+        else:
+            return self.convert(xlsx_file, file_type)
+
 
 class DocumentReport(Report, IDocumentReport):
-    DOCX = FileConverter.DOCX
+    #
+    TYPE = FileConverter.DOCX
 
-    def build(self, dst_file_path, params, file_type=DOCX):
+    _wrapper = DocumentDOCX
+
+
+    def build(self, dst_file_path, params, file_type=TYPE):
         u"""
         Генерирует выходной файл в нужном формате
         """
+        self._wrapper.set_params(params)
+        return super(DocumentReport, self).build(dst_file_path, file_type)
+
+    def get_all_parameters(self):
+        """
+
+        """
+        #TODO: Реализовать!!
 
 
 class SpreadsheetReport(Report, ISpreadsheetReport):
-    XLSX = FileConverter.XLSX
+    TYPE = FileConverter.XLSX
 
-    def __init__(self, *args, **kwargs):
-        super(SpreadsheetReport, self).__init__(*args, **kwargs)
-
-        xlsx_file = self.convert(self.file, self.XLSX)
-        self._wrapper = DocumentXLSX(xlsx_file, self.tags)
+    _wrapper = DocumentXLSX
 
 
     @property
@@ -92,30 +141,3 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
     @property
     def sheets(self):
         return self._wrapper.sheets
-
-
-    def build(self, dst_file_path, file_type=XLSX):
-        u"""
-        Генерирует выходной файл в нужном формате
-
-        @param dst_file_path: По этому пути будет находится результирующий файл
-        @param file_type: Тип результирующего файла
-
-        """
-        if self.converter is None and file_type != self.XLSX:
-            raise ReportGeneratorException('Converter is not defined')
-
-        file_name, file_extension = os.path.splitext(dst_file_path)
-
-
-        xlsx_path = os.path.extsep.join((file_name, self.XLSX))
-        xlsx_file = FileProxy(xlsx_path, new_file=True)
-
-        # Всегда вернет файл с расширением open office (xlsx, docx, etc.)
-
-        self._wrapper.pack(xlsx_file)
-
-        if file_type == self.XLSX:
-            return xlsx_path
-        else:
-            return self.convert(xlsx_file, file_type)

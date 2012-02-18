@@ -58,7 +58,8 @@ class FileConverter(object):
         if callable(func):
             return func()
         else:
-            raise FileConverterException('Converter %s not supported format "%s"' % (self.__class__.__name__, to_format))
+            raise FileConverterException(
+                'Converter %s not supported format "%s"' % (self.__class__.__name__, to_format))
 
     def set_src_file(self, src_file):
         """

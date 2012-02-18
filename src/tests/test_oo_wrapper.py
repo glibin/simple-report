@@ -1,7 +1,7 @@
 # coding: utf-8
 import os
-from simple_report.converter.abstract import FileConverterException, FileConverter
-from simple_report.converter.open_office import OOWrapper, settings, OpenOfficeConverter
+from simple_report.converter.abstract import  FileConverter
+from simple_report.converter.open_office import OOWrapper, OpenOfficeConverter
 from simple_report.converter.open_office.wrapper import OOWrapperException
 from simple_report.report import SpreadsheetReport
 from simple_report.xlsx.section import Section
@@ -25,7 +25,7 @@ class TestOO(object):
         Тестирование OpenOffice конвертера
         """
         if not self.test_connection():
-             return
+            return
 
         src = self.test_files['test-PF_PKO.xlsx']
 
@@ -56,9 +56,9 @@ class TestOO(object):
         if not self.test_connection():
             return
 
-#        with self.assertRaises(FileConverterException):
-#            src = self.test_files['test-simple-converter.xls']
-#            report = SpreadsheetReport(src, converter=OpenOfficeConverter(port=8100))
+        #        with self.assertRaises(FileConverterException):
+        #            src = self.test_files['test-simple-converter.xls']
+        #            report = SpreadsheetReport(src, converter=OpenOfficeConverter(port=8100))
 
         src = self.test_files['test-simple-converter.xls']
         report = SpreadsheetReport(src, converter=OpenOfficeConverter(port=2002))

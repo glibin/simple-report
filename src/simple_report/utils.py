@@ -22,8 +22,8 @@ class ZipFileAdapter(object):
     Из-за того, что в версии начиная с 2.7 модуль zipfile умеет работать с менеджером контекста, а вот ниже версии - не умеет.
      Будем поддерживать версию 2.6
     """
-    def __init__(self, *args, **kwargs):
 
+    def __init__(self, *args, **kwargs):
         self.z_file = zipfile.ZipFile(*args, **kwargs)
 
         self.old = False
@@ -42,6 +42,7 @@ class ZipFileAdapter(object):
             return self.z_file.close()
         else:
             return self.z_file.__exit__(*args, **kwargs)
+
 
 class ZipProxy(object):
     u"""
@@ -78,7 +79,7 @@ class ZipProxy(object):
 
         # Распаковываем zip архив во временную папку
         extract_folder = os.path.join(gettempdir(),
-                                           '_'.join([str(uuid.uuid4())[:8], src_file.get_file_name()]))
+            '_'.join([str(uuid.uuid4())[:8], src_file.get_file_name()]))
 
         cls._extract(src_file.get_path(), extract_folder)
 
@@ -99,7 +100,6 @@ class FileProxy(object):
     """
 
     def __init__(self, file_like_object, new_file=False):
-
         if isinstance(file_like_object, FileProxy):
             file_like_object = file_like_object.file
 
@@ -203,6 +203,7 @@ def get_addr_cell(text):
     else:
         raise ValueError('Addr cell is bad format value "%s"' % text)
 
+
 def date_to_float(date):
     """
     Конвертирует дату в число с плавающей точкой относительно 1900 года
@@ -229,4 +230,4 @@ def date_to_float(date):
 
     minute = date.time().minute - date_1900.time().minute
 
-    return days + (hours + minute/60.0)/24.0
+    return days + (hours + minute / 60.0) / 24.0

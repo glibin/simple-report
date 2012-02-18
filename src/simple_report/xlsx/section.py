@@ -18,6 +18,7 @@ class SheetDataException(Exception):
     """
     """
 
+
 class SheetData(object):
     u"""
     self.read_data:
@@ -99,11 +100,11 @@ class SheetData(object):
             self.write_merge_cell.clear()
 
 
-#    def __str__(self):
-#        return 'Cursor %s' % self.cursor
-#
-#    def __repr__(self, ):
-#        return self.__str__()
+        #    def __str__(self):
+        #        return 'Cursor %s' % self.cursor
+        #
+        #    def __repr__(self, ):
+        #        return self.__str__()
 
     def flush(self, begin, end, start_cell, params):
         """
@@ -149,7 +150,6 @@ class SheetData(object):
         range_rows, range_cols = self._range(section_begin, section_end)
 
         for begin, end in self._get_merge_cells():
-
             begin_col, begin_row = get_addr_cell(begin)
             end_col, end_row = get_addr_cell(end)
 
@@ -212,8 +212,8 @@ class SheetData(object):
         """
         if what_found is None:
             # Если значение поиска неопределено выводим поиск для всех параметров
-            return self._get_values_by_re(value_string, self.FIND_PARAMS) + \
-                    self._get_values_by_re(value_string, self.FIND_TEMPLATE_TAGS)
+            return self._get_values_by_re(value_string, self.FIND_PARAMS) +\
+                   self._get_values_by_re(value_string, self.FIND_TEMPLATE_TAGS)
 
         who_found_params = what_found.findall(value_string)
         if who_found_params is not None:
@@ -246,7 +246,6 @@ class SheetData(object):
         start_column, start_row = start_cell
 
         for i, num_row, row in self._find_rows(range_rows):
-
             attrib_row = dict(row.items())
 
             row_index = str(start_row + i)
@@ -255,10 +254,9 @@ class SheetData(object):
             row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
 
             # Установка курсора для колонок
-#            self.cursor.row = ('A', start_row + i + 1)
+            #            self.cursor.row = ('A', start_row + i + 1)
 
             for j, col, cell in self._find_cells(range_cols, num_row, row):
-
                 attrib_cell = dict(cell.items())
 
                 col_index = ColumnHelper.add(start_column, j)
@@ -267,7 +265,7 @@ class SheetData(object):
                 cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
 
                 # Установка курсора для колонок
-#                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
+                #                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
 
                 # Перенос формул
                 formula = self._get_tag_formula(cell)
@@ -305,7 +303,6 @@ class SheetData(object):
                                     param_value = self.tags.get(param_name[1:-1])
 
                                 if isinstance(param_value, datetime) and found_param == value_string:
-
                                     # В OpenXML хранится дата относительно 1900 года
                                     days = date_to_float(param_value)
                                     if days > 0:
@@ -315,7 +312,8 @@ class SheetData(object):
                                         value_el.text = unicode(days)
                                     else:
                                         date_less_1900 = '%s.%s.%s' % (param_value.date().day,
-                                                                       param_value.date().month, param_value.date().year,)
+                                                                       param_value.date().month, param_value.date().year
+                                                                       ,)
                                         # strftime(param_value, locale.nl_langinfo(locale.D_FMT)) - неработает для 1900 и ниже
                                         value_string = value_string.replace(found_param, unicode(date_less_1900))
 
@@ -383,7 +381,6 @@ class SheetData(object):
             if not childs:
                 self._write_xml.remove(self.write_merge_cell)
         return self._write_xml
-
 
 
 class Section(ISpreadsheetSection):

@@ -65,7 +65,7 @@ EXPORT_FILTER_MAP = {
     "xls": {
         FAMILY_SPREADSHEET: {"FilterName": "MS Excel 97"}
     },
-    "xlsx":{
+    "xlsx": {
         FAMILY_SPREADSHEET: {"FilterName": "Calc MS Excel 2007 XML"}
     },
     "csv": {

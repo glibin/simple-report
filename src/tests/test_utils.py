@@ -1,6 +1,5 @@
 #coding: utf-8
 import sys
-import unittest
 
 __author__ = 'prefer'
 

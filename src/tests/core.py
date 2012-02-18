@@ -18,11 +18,11 @@ sys.path.append('../')
 import os
 import unittest
 
-from simple_report.report import SpreadsheetReport, ReportGeneratorException
+from simple_report.report import SpreadsheetReport, ReportGeneratorException, DocumentReport
 from simple_report.utils import ColumnHelper
 
 
-class SetupData(object):
+class TestXLSX(object):
     """
 
     """
@@ -32,11 +32,11 @@ class SetupData(object):
 
     def setUp(self):
         assert self.SUBDIR
-        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR)
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xlsx', )
         self.dst_dir = self.src_dir
 
         self.test_files = dict([(path, os.path.join(self.src_dir, path))
-            for path in os.listdir(self.src_dir) if path.startswith('test')])
+        for path in os.listdir(self.src_dir) if path.startswith('test')])
 
 
     @skip_python26
@@ -76,7 +76,6 @@ class SetupData(object):
 
     @skip_python26
     def test_workbook(self):
-
         src = self.test_files['test-simple.xlsx']
         dst = os.path.join(self.dst_dir, 'res-simple.xlsx')
         if os.path.exists(dst):
@@ -109,9 +108,8 @@ class SetupData(object):
                                             'sector': u'Какой-то сектор'})
 
             s_gor_str = report.get_section('GorStr')
-            s_gor_str.flush({'g': i+i}, oriented=s_gor.HORIZONTAL)
-            s_gor_str.flush({'g': i*i}, oriented=s_gor.HORIZONTAL)
-
+            s_gor_str.flush({'g': i + i}, oriented=s_gor.HORIZONTAL)
+            s_gor_str.flush({'g': i * i}, oriented=s_gor.HORIZONTAL)
 
         report.get_section('C1').flush({'user': u'Иван'})
 
@@ -124,7 +122,6 @@ class SetupData(object):
 
 
     def test_workbook_with_2_6_python(self):
-
         src = self.test_files['test-simple.xlsx']
         dst = os.path.join(self.dst_dir, 'res-simple.xlsx')
         if os.path.exists(dst):
@@ -146,15 +143,15 @@ class SetupData(object):
                                             'sector': u'Какой-то сектор'})
 
             s_gor_str = report.get_section('GorStr')
-            s_gor_str.flush({'g': i+i}, oriented=s_gor.HORIZONTAL)
-            s_gor_str.flush({'g': i*i}, oriented=s_gor.HORIZONTAL)
-
+            s_gor_str.flush({'g': i + i}, oriented=s_gor.HORIZONTAL)
+            s_gor_str.flush({'g': i * i}, oriented=s_gor.HORIZONTAL)
 
         report.get_section('C1').flush({'user': u'Иван'})
         report.build(dst)
         self.assertEqual(os.path.exists(dst), True)
 
-class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
+
+class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, unittest.TestCase):
     SUBDIR = 'linux'
 
     def test_fake_section(self):
@@ -167,16 +164,14 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         src = self.test_files['test-merge-cells.xlsx']
         dst = os.path.join(self.dst_dir, 'res-merge-cells.xlsx')
 
-
         report = SpreadsheetReport(src)
 
-        report.get_section('head').flush({'kassa_za':u'Ноябрь'})
+        report.get_section('head').flush({'kassa_za': u'Ноябрь'})
 
         for i in range(10):
             report.get_section('table_dyn').flush({'doc_num': i})
 
-
-        report.get_section('foot').flush({'glavbuh':u'Иван'})
+        report.get_section('foot').flush({'glavbuh': u'Иван'})
 
         report.build(dst)
 
@@ -187,13 +182,12 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         report = SpreadsheetReport(src)
 
-        report.get_section('header').flush({'period':u'Ноябрь'})
+        report.get_section('header').flush({'period': u'Ноябрь'})
 
         for i in range(10):
             report.get_section('row').flush({'begin_year_debet': -i})
 
-
-        report.get_section('footer').flush({'glavbuh':u'Иван'})
+        report.get_section('footer').flush({'glavbuh': u'Иван'})
 
         report.build(dst)
 
@@ -205,7 +199,6 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         params_header = list(report.get_section('header').get_all_parameters())
         self.assertEqual(0, len(params_header))
-
 
         params_row = list(report.get_section('row').get_all_parameters())
         self.assertEqual(13, len(params_row))
@@ -220,13 +213,12 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         self.assertIn(u'#username#', params_footer)
 
 
-
     def test_empty_cell(self):
         """
 
         """
         file_name = 'test-empty-section.xlsx'
-        template_name =  self.test_files[file_name]
+        template_name = self.test_files[file_name]
         report = SpreadsheetReport(template_name)
 
         header = report.get_section(u'row')
@@ -266,7 +258,7 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         """
         file_name = 'test-wide-section-1.xlsx'
-        template_name =  self.test_files[file_name]
+        template_name = self.test_files[file_name]
         report = SpreadsheetReport(template_name)
 
         header = report.get_section(u'row')
@@ -302,9 +294,8 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
 
     def test_wide_cell_2(self):
-
         file_name = 'test-wide-section-2.xlsx'
-        template_name =  self.test_files[file_name]
+        template_name = self.test_files[file_name]
         report = SpreadsheetReport(template_name)
 
         header = report.get_section(u'row')
@@ -341,14 +332,13 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         return res_file_name
 
     def test_without_merge_cells(self):
-
         file_name = 'test-main_template.xlsx'
-        template_name =  self.test_files[file_name]
+        template_name = self.test_files[file_name]
         report = SpreadsheetReport(template_name)
 
         head_section = report.get_section('head')
         for head in range(10):
-            head_section.flush({'head_name':str(head)},1)
+            head_section.flush({'head_name': str(head)}, 1)
 
         #result_file, result_url = create_office_template_tempnames(template_name)
         res_file_name = 'res-' + file_name
@@ -370,7 +360,7 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
         date_end = datetime.now()
 
         file_name = 'test-purchases_book.xlsx'
-        template_name =  self.test_files[file_name]
+        template_name = self.test_files[file_name]
         report = SpreadsheetReport(template_name)
 
         header = report.get_section('header')
@@ -401,9 +391,38 @@ class TestLinux(SetupData, TestOO, TestPKO,  unittest.TestCase):
 
         return report.build(dst)
 
-class TestWindows(SetupData, unittest.TestCase):
+
+class TestWindowsXLSX(TestXLSX, unittest.TestCase):
     SUBDIR = 'win'
 
+
+class TestLinuxDOCX(unittest.TestCase):
+    """
+
+    """
+
+    def setUp(self):
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'linux', 'docx', )
+        self.dst_dir = self.src_dir
+
+        self.test_files = dict([(path, os.path.join(self.src_dir, path))
+        for path in os.listdir(self.src_dir) if path.startswith('test')])
+
+
+    def test_simple_docx(self):
+        """
+
+        """
+
+        template_name = 'test-sluzh.docx'
+        path = self.test_files[template_name]
+        doc = DocumentReport(path)
+
+        res_file_name = 'res-' + template_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+
+        doc.build(dst, {'Employee_name': u'Иванов И.И.', 'region_name': u'Казань'})
+        self.assertEqual(os.path.exists(dst), True)
 
 if __name__ == '__main__':
     unittest.main()
