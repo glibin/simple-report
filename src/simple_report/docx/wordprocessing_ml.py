@@ -37,7 +37,7 @@ class Wordprocessing(ReletionOpenXMLFile):
         for node in text_nodes:
             for key_param, value in params.items():
                 if key_param in node.text:
-                    node.text = node.text.replace('#%s#' % key_param, value)
+                    node.text = node.text.replace('#%s#' % key_param, unicode(value))
 
 
 class CommonPropertiesDOCX(CommonProperties):
