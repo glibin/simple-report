@@ -2,7 +2,7 @@
 
 import os
 from exceptions import AttributeError, KeyError, Exception
-from simple_report.converter.open_office import settings as st
+import settings as st
 
 import uno
 from com.sun.star.beans import PropertyValue
