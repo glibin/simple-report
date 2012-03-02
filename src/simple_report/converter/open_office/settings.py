@@ -24,8 +24,12 @@ IMPORT_FILTER_MAP = {
     },
     "xls": {
         "FilterName": "MS Excel 97",
-        },
-    }
+    },
+    "doc": {
+        "FilterName": "MS Word 97",
+    },
+}
+
 
 EXPORT_FILTER_MAP = {
     "pdf": {
