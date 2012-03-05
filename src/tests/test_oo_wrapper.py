@@ -1,13 +1,20 @@
 # coding: utf-8
 import os
 from simple_report.converter.abstract import  FileConverter
-from simple_report.converter.open_office import OOWrapper, OpenOfficeConverter
-from simple_report.converter.open_office.wrapper import OOWrapperException
 from simple_report.report import SpreadsheetReport
 from simple_report.xlsx.section import Section
 
 class TestOO(object):
     def test_connection(self):
+
+        try:
+            from simple_report.converter.open_office import OOWrapper, OpenOfficeConverter
+            from simple_report.converter.open_office.wrapper import OOWrapperException
+        except ImportError:
+            print u'Тесты для OpenOffice не были запущены, '\
+                  u'т.к. не установленн пакет python-uno'
+            return False
+
         port = 2002
         try:
             OOWrapper(port)
