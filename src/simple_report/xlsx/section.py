@@ -238,6 +238,22 @@ class SheetData(object):
         """
         return cell.find(QName(self.ns, 'f'))
 
+    def _create_or_get_output_row(self, row_index, attrib_row):
+        # найдем существующую строку в результирующих данных
+        row_el = self.write_data.find(self.XPATH_TEMPLATE_ROW % row_index)
+        if row_el is None:
+            # если не нашли - создадим
+            row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
+        return row_el
+
+    def _create_or_get_output_cell(self, row_el, cell_index, attrib_cell):
+        # найдем существующую ячейку в строке
+        cell_el = row_el.find(self.XPATH_TEMPLATE_CELL % cell_index)
+        if cell_el is None:
+            # если не нашли - создадим
+            cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
+        return cell_el
+
     def set_section(self, begin, end, start_cell, params):
         """
 
@@ -248,10 +264,10 @@ class SheetData(object):
         for i, num_row, row in self._find_rows(range_rows):
             attrib_row = dict(row.items())
 
-            row_index = str(start_row + i)
-            attrib_row['r'] = row_index
+            row_index = start_row + i
+            attrib_row['r'] = str(row_index)
 
-            row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
+            row_el = self._create_or_get_output_row(row_index, attrib_row)
 
             # Установка курсора для колонок
             #            self.cursor.row = ('A', start_row + i + 1)
@@ -261,8 +277,9 @@ class SheetData(object):
 
                 col_index = ColumnHelper.add(start_column, j)
 
-                attrib_cell['r'] = col_index + row_index
-                cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
+                attrib_cell['r'] = col_index + str(row_index)
+
+                cell_el = self._create_or_get_output_cell(row_el, col_index + str(row_index), attrib_cell)
 
                 # Установка курсора для колонок
                 #                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
@@ -355,13 +372,9 @@ class SheetData(object):
         """
         """
 
-        # Если есть объединенная ячейка, и она попадает на конец секции, то адресс конца секции записывается как начало
+        # Если есть объединенная ячейка, и она попадает на конец секции, то адресс конца секции записывается как конец
         # объединенной ячейки
-        for begin_merge, end_merge in self._get_merge_cells():
-            addr = get_addr_cell(begin_merge)
-            if addr == end:
-                end = get_addr_cell(end_merge)
-                break
+        end = self.get_cell_end(end)
 
         rows = begin[1], end[1] + 1
         cols = begin[0], end[0]
@@ -371,6 +384,29 @@ class SheetData(object):
 
         return range_rows, range_cols
 
+    def _addr_in_range(self, addr, begin, end):
+        """
+        Проверяет, попадает ли адрес в диапазон
+        """
+        col, row = addr
+        rows = xrange(begin[1], end[1]+1)
+        cols = list(ColumnHelper.get_range(begin[0], end[0]))
+        return all([col in cols, row in rows])
+
+    def get_cell_end(self, cell_addr):
+        """
+        Получение (правого нижнего) конца ячейки
+        """
+        cell_end = cell_addr
+        # Если указанный адрес пападает в объединенную ячейку, то адресс конца ячейки указывается как конец
+        # объединенной ячейки
+        for begin_merge, end_merge in self._get_merge_cells():
+            begin_addr = get_addr_cell(begin_merge)
+            end_addr = get_addr_cell(end_merge)
+            if self._addr_in_range(cell_addr, begin_addr, end_addr):
+                cell_end = end_addr
+                break
+        return cell_end
 
     def new_sheet(self):
         """
@@ -425,16 +461,23 @@ class Section(ISpreadsheetSection):
         cursor = self.sheet_data.cursor
 
         begin_col, begin_row = self.begin
-        end_col, end_row = self.end
+        #end_col, end_row = self.end
+        end_col, end_row = self.sheet_data.get_cell_end(self.end)
 
-        if oriented == Section.VERTICAL:
+        # если это первый вывод
+        if self.sheet_data.cursor.row == self.sheet_data.cursor.column:
             current_col, current_row = self.sheet_data.cursor.row
-
+            # вычислим следующую строку
             cursor.row = ('A', current_row + end_row - begin_row + 1)
-
         else:
-            current_col, current_row = self.sheet_data.cursor.column
+            if oriented == Section.VERTICAL:
+                current_col, current_row = self.sheet_data.cursor.row
+                # вычислим следующую строку
+                cursor.row = ('A', current_row + end_row - begin_row + 1)
+            else:
+                current_col, current_row = self.sheet_data.cursor.column
 
+        # вычислим следующую колонку
         cursor.column = (ColumnHelper.add(current_col,
             ColumnHelper.difference(end_col, begin_col) + 1), current_row)
 
