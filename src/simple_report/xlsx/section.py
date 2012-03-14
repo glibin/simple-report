@@ -99,6 +99,8 @@ class SheetData(object):
         if self.write_merge_cell is not None:
             self.write_merge_cell.clear()
 
+        # Ссылка на ширины столбцов
+        self.write_cols = self._write_xml.find(QName(self.ns, 'cols'))
 
         #    def __str__(self):
         #        return 'Cursor %s' % self.cursor
@@ -108,10 +110,16 @@ class SheetData(object):
 
     def flush(self, begin, end, start_cell, params):
         """
+        Вывод секции
+        @param begin: Начало секции, пример ('A', 1)
+        @param end: Конец секции, пример ('E', 6)
+        @param start_cell: ячейка с которой надо выводить
+        @param params: данные для вывода
         """
         self.set_section(begin, end, start_cell, params)
         self.set_merge_cells(begin, end, start_cell)
         self.set_dimension()
+        self.set_columns_width(begin, end, start_cell)
 
     def set_dimension(self):
         """
@@ -418,6 +426,83 @@ class SheetData(object):
                 self._write_xml.remove(self.write_merge_cell)
         return self._write_xml
 
+    def _create_or_get_output_col(self, col_index, attrib_col=None):
+        # найдем существующую колонку в результирующих данных
+
+        # найдем интервал, в который попадаем искомый индекс
+        col_index = ColumnHelper.column_to_number(col_index)+1
+        col_el = None
+        for col in self.write_cols.getchildren():
+            begin_col = int(col.attrib['min'])
+            end_col = int(col.attrib['max'])
+            if begin_col <= col_index <= end_col:
+                col_el = col
+                break
+        if col_el is None:
+            # если не нашли - создадим
+            if attrib_col is None:
+                attrib_col = {"style": "1", "customWidth": "1", "width":"1"}
+            attrib_col["min"] = str(col_index)
+            attrib_col["max"] = str(col_index)
+            col_el = SubElement(self.write_cols, 'col', attrib=attrib_col)
+        return col_el
+
+    def _set_new_column_width(self, col_index, src_col, dst_col):
+        """
+        Установка новой ширины колонки
+        Особенность в том, что нужно разбивать интервалы, если потребуется
+        """
+        col_index = ColumnHelper.column_to_number(col_index)+1
+        # если ширина колонок отличается и колонка-приемник является интервалом,
+        # то нужно разбить интервал на части с разной шириной колонок
+        if dst_col.attrib["width"] != src_col.attrib["width"]:
+            begin_col = int(dst_col.attrib['min'])
+            end_col = int(dst_col.attrib['max'])
+            # если задано интервалом, то будем разбивать
+            if end_col-begin_col > 0:
+                if col_index > begin_col:
+                    # предыдущий интервал: max = col-1
+                    prev_attrib_col = dict(dst_col.items())
+                    prev_attrib_col['max'] = str(col_index-1)
+                    prev_col_el = SubElement(self.write_cols, 'col', attrib=prev_attrib_col)
+
+                if col_index < end_col:
+                    # следующий интервал: min = col+1
+                    next_attrib_col = dict(dst_col.items())
+                    next_attrib_col["min"] = str(col_index+1)
+                    next_col_el = SubElement(self.write_cols, 'col', attrib=next_attrib_col)
+
+                # интервал для текущей колонки: min = max = col
+                dst_col.attrib["min"] = str(col_index)
+                dst_col.attrib["max"] = str(col_index)
+
+            dst_col.attrib["width"] = src_col.attrib["width"]
+
+    def set_columns_width(self, begin, end, start_cell):
+        """
+        Копирование ширины колонок
+        @param begin: начало секции, пример ('A', 1)
+        @param end: конец секции, пример ('E', 6)
+        @param start_cell: ячейка с которой выводилась секция
+        """
+        # определим интервал столбцов из которых надо взять ширину
+        end = self.get_cell_end(end)
+        cols = list(ColumnHelper.get_range(begin[0], end[0]))
+
+        # определим интервал столбцов, начинаемый со столбца начальной ячейки, куда надо прописать ширину
+        end_col = ColumnHelper.add(start_cell[0], ColumnHelper.difference(end[0], begin[0]))
+        new_cols = list(ColumnHelper.get_range(start_cell[0], end_col))
+
+        # запишем ширину столбцов в интервал
+        for index, src_col in enumerate(cols):
+            dst_col = new_cols[index]
+            src_col_el = self._create_or_get_output_col(src_col)
+            # копируем данные
+            attrib_col = dict(src_col_el.items())
+            dst_col_el = self._create_or_get_output_col(dst_col, attrib_col)
+            # записываем в новую колонку
+            self._set_new_column_width(dst_col, src_col_el, dst_col_el)
+
 
 class Section(ISpreadsheetSection):
     """
@@ -461,22 +546,19 @@ class Section(ISpreadsheetSection):
         cursor = self.sheet_data.cursor
 
         begin_col, begin_row = self.begin
-        #end_col, end_row = self.end
         end_col, end_row = self.sheet_data.get_cell_end(self.end)
 
         # если это первый вывод
         if self.sheet_data.cursor.row == self.sheet_data.cursor.column:
             current_col, current_row = self.sheet_data.cursor.row
-            # вычислим следующую строку
-            cursor.row = ('A', current_row + end_row - begin_row + 1)
         else:
             if oriented == Section.VERTICAL:
                 current_col, current_row = self.sheet_data.cursor.row
-                # вычислим следующую строку
-                cursor.row = ('A', current_row + end_row - begin_row + 1)
             else:
                 current_col, current_row = self.sheet_data.cursor.column
 
+        # вычислим следующую строку
+        cursor.row = ('A', current_row + end_row - begin_row + 1)
         # вычислим следующую колонку
         cursor.column = (ColumnHelper.add(current_col,
             ColumnHelper.difference(end_col, begin_col) + 1), current_row)
