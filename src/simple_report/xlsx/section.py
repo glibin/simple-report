@@ -101,6 +101,18 @@ class SheetData(object):
 
         # Ссылка на ширины столбцов
         self.write_cols = self._write_xml.find(QName(self.ns, 'cols'))
+        if self.write_cols is None:
+            self.write_cols = SubElement(self._write_xml, 'cols', attrib={})
+
+        # Строчные разделители страниц
+        self.write_rowbreaks = self._write_xml.find(QName(self.ns, 'rowBreaks'))
+        if self.write_rowbreaks is None:
+            self.write_rowbreaks = SubElement(self._write_xml, 'rowBreaks', attrib={})
+
+        # Колоночные разделители страниц
+        self.write_colbreaks = self._write_xml.find(QName(self.ns, 'colBreaks'))
+        if self.write_colbreaks is None:
+            self.write_colbreaks = SubElement(self._write_xml, 'colBreaks', attrib={})
 
         #    def __str__(self):
         #        return 'Cursor %s' % self.cursor
@@ -120,6 +132,7 @@ class SheetData(object):
         self.set_merge_cells(begin, end, start_cell)
         self.set_dimension()
         self.set_columns_width(begin, end, start_cell)
+        self.set_pagebreaks(begin, end, start_cell)
 
     def set_dimension(self):
         """
@@ -179,7 +192,6 @@ class SheetData(object):
         """
 
         """
-
         for i, num_row in enumerate(range_rows):
             row = self.read_data.find(self.XPATH_TEMPLATE_ROW % num_row)
             if not row is None:
@@ -427,8 +439,10 @@ class SheetData(object):
         return self._write_xml
 
     def _create_or_get_output_col(self, col_index, attrib_col=None):
-        # найдем существующую колонку в результирующих данных
-
+        """
+        Найдем существующую колонку в результирующих данных
+        Если не передали начальные данные, то колонка не создается если не найдена,
+        """
         # найдем интервал, в который попадаем искомый индекс
         col_index = ColumnHelper.column_to_number(col_index)+1
         col_el = None
@@ -441,7 +455,7 @@ class SheetData(object):
         if col_el is None:
             # если не нашли - создадим
             if attrib_col is None:
-                attrib_col = {"style": "1", "customWidth": "1", "width":"1"}
+                return None
             attrib_col["min"] = str(col_index)
             attrib_col["max"] = str(col_index)
             col_el = SubElement(self.write_cols, 'col', attrib=attrib_col)
@@ -497,12 +511,96 @@ class SheetData(object):
         for index, src_col in enumerate(cols):
             dst_col = new_cols[index]
             src_col_el = self._create_or_get_output_col(src_col)
-            # копируем данные
-            attrib_col = dict(src_col_el.items())
-            dst_col_el = self._create_or_get_output_col(dst_col, attrib_col)
-            # записываем в новую колонку
-            self._set_new_column_width(dst_col, src_col_el, dst_col_el)
+            # если нет исходной колонки, то не надо копировать
+            if not src_col_el is None:
+                # копируем данные
+                attrib_col = dict(src_col_el.items())
+                dst_col_el = self._create_or_get_output_col(dst_col, attrib_col)
+                # записываем в новую колонку
+                self._set_new_column_width(dst_col, src_col_el, dst_col_el)
 
+    def get_rowbreaks(self):
+        breaks = [elem.attrib['id'] for elem in self.write_rowbreaks.getchildren()]
+        return tuple(breaks)
+
+    def get_colbreaks(self):
+        breaks = [elem.attrib['id'] for elem in self.write_colbreaks.getchildren()]
+        return tuple(breaks)
+
+
+    def _set_colpagebreaks(self, colbreaks_list):
+        """
+        Добавление разделителей страниц по колонкам
+        """
+        # добавим разделители
+        for new_col_index in colbreaks_list:
+            # проверим что такого разделителя еще нет
+            found = False
+            for elem in self.write_colbreaks.getchildren():
+                index = int(elem.attrib['id'])
+                if index == new_col_index:
+                    found = True
+                    break
+            # добавим
+            if not found:
+                col_break_attr = {'id': str(new_col_index), 'max': '1048575', 'man':'1'}
+                elem = SubElement(self.write_colbreaks, 'brk', attrib=col_break_attr)
+                self.write_colbreaks.attrib['count'] = str(int(self.write_colbreaks.attrib['count'])+1)
+                self.write_colbreaks.attrib['manualBreakCount'] = str(int(self.write_colbreaks.attrib['manualBreakCount'])+1)
+
+    def _set_rowpagebreaks(self, rowbreaks_list):
+        """
+        Добавление разделителей страниц по строкам
+        """
+        # добавим разделители
+        for new_row_index in rowbreaks_list:
+            # проверим что такого разделителя еще нет
+            found = False
+            for elem in self.write_rowbreaks.getchildren():
+                index = int(elem.attrib['id'])
+                if index == new_row_index:
+                    found = True
+                    break
+                    # добавим
+            if not found:
+                row_break_attr = {'id': str(new_row_index), 'max': '16383', 'man':'1'}
+                elem = SubElement(self.write_rowbreaks, 'brk', attrib=row_break_attr)
+                self.write_rowbreaks.attrib['count'] = str(int(self.write_rowbreaks.attrib['count'])+1)
+                self.write_rowbreaks.attrib['manualBreakCount'] = str(int(self.write_rowbreaks.attrib['manualBreakCount'])+1)
+
+    def set_pagebreaks(self, begin, end, start_cell):
+        """
+        Копирование разделителей страниц
+        @param begin: начало секции, пример ('A', 1)
+        @param end: конец секции, пример ('E', 6)
+        @param start_cell: ячейка с которой выводилась секция
+        """
+        # определим интервал столбцов и колонок из которых надо взять разделители
+        end = self.get_cell_end(end)
+        begin_col = ColumnHelper.column_to_number(begin[0])
+        end_col = ColumnHelper.column_to_number(end[0])
+        begin_row = int(begin[1])
+        end_row = int(end[1])
+        # определим интервал столбцов и колонок, начинаемый с начальной ячейки, куда надо добавить разделители
+        new_begin_col = ColumnHelper.column_to_number(start_cell[0])
+        new_begin_row = int(start_cell[1])
+        # вытащим смещение индексов столбцов у которых есть разделители и которые попали в этот интервал
+        colbreaks = []
+        for elem in self.write_colbreaks.getchildren():
+            col_index = int(elem.attrib['id'])
+            if begin_col <= col_index <= end_col:
+                colbreaks.append(col_index-begin_col+new_begin_col)
+
+        self._set_colpagebreaks(colbreaks)
+
+        # вытащим смещение индексов строк у которых есть разделители и которые попали в этот интервал
+        rowbreaks = []
+        for elem in self.write_rowbreaks.getchildren():
+            row_index = int(elem.attrib['id'])
+            if begin_row <= row_index <= end_row:
+                rowbreaks.append(row_index-begin_row+new_begin_row)
+
+        self._set_rowpagebreaks(rowbreaks)
 
 class Section(ISpreadsheetSection):
     """

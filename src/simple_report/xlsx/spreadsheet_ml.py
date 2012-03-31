@@ -245,6 +245,12 @@ class WorkbookSheet(ReletionOpenXMLFile):
         if self.comments:
             self.comments.build()
 
+    def get_rowbreaks(self):
+        return self.sheet_data.get_rowbreaks()
+
+    def get_colbreaks(self):
+        return self.sheet_data.get_colbreaks()
+
 
 class WorkbookStyles(OpenXMLFile):
     """
@@ -348,6 +354,11 @@ class Workbook(ReletionOpenXMLFile):
     def shared_table(self):
         return self.shared_strings.table
 
+    def get_rowbreaks(self):
+        return self._active_sheet.get_rowbreaks()
+
+    def get_colbreaks(self):
+        return self._active_sheet.get_colbreaks()
 
 class CommonPropertiesXLSX(CommonProperties):
     """

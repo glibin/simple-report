@@ -12,6 +12,7 @@ from test_oo_wrapper import TestOO
 from test_utils import skip_python26
 from test_pko import TestPKO
 from oborot import OperationsJournalReportFactory
+from test_pagebreaks import TestPagebreaks
 
 sys.path.append('../')
 
@@ -151,7 +152,7 @@ class TestXLSX(object):
         self.assertEqual(os.path.exists(dst), True)
 
 
-class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, unittest.TestCase):
+class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase):
     SUBDIR = 'linux'
 
     def test_fake_section(self):
