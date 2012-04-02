@@ -84,6 +84,16 @@ class SheetData(object):
         if self.read_merge_cell is None:
             self.read_merge_cell = []
 
+        # Строчные разделители страниц
+        self.read_rowbreaks = self._read_xml.find(QName(self.ns, 'rowBreaks'))
+        if self.read_rowbreaks is None:
+            self.read_rowbreaks = SubElement(self._read_xml, 'rowBreaks', attrib={})
+
+        # Колоночные разделители страниц
+        self.read_colbreaks = self._read_xml.find(QName(self.ns, 'colBreaks'))
+        if self.read_colbreaks is None:
+            self.read_colbreaks = SubElement(self._read_xml, 'colBreaks', attrib={})
+
         self._write_xml = copy.deepcopy(sheet_xml)
 
         # Ссылка на тег данных строк и столбцов листа с очищенными значениями
@@ -106,13 +116,19 @@ class SheetData(object):
 
         # Строчные разделители страниц
         self.write_rowbreaks = self._write_xml.find(QName(self.ns, 'rowBreaks'))
+        # очистим, т.к. будем заполнять при копировании
         if self.write_rowbreaks is None:
-            self.write_rowbreaks = SubElement(self._write_xml, 'rowBreaks', attrib={})
+            self.write_rowbreaks = SubElement(self._write_xml, 'rowBreaks', attrib={"count":"0", "manualBreakCount":"0"})
+        else:
+            self.write_rowbreaks.clear()
 
         # Колоночные разделители страниц
         self.write_colbreaks = self._write_xml.find(QName(self.ns, 'colBreaks'))
+        # очистим, т.к. будем заполнять при копировании
         if self.write_colbreaks is None:
-            self.write_colbreaks = SubElement(self._write_xml, 'colBreaks', attrib={})
+            self.write_colbreaks = SubElement(self._write_xml, 'colBreaks', attrib={"count":"0", "manualBreakCount":"0"})
+        else:
+            self.write_colbreaks.clear()
 
         #    def __str__(self):
         #        return 'Cursor %s' % self.cursor
@@ -545,8 +561,10 @@ class SheetData(object):
             if not found:
                 col_break_attr = {'id': str(new_col_index), 'max': '1048575', 'man':'1'}
                 elem = SubElement(self.write_colbreaks, 'brk', attrib=col_break_attr)
-                self.write_colbreaks.attrib['count'] = str(int(self.write_colbreaks.attrib['count'])+1)
-                self.write_colbreaks.attrib['manualBreakCount'] = str(int(self.write_colbreaks.attrib['manualBreakCount'])+1)
+                count = int(self.write_colbreaks.get('count', 0))
+                man_count = int(self.write_colbreaks.get('manualBreakCount', 0))
+                self.write_colbreaks.attrib['count'] = str(count+1)
+                self.write_colbreaks.attrib['manualBreakCount'] = str(man_count+1)
 
     def _set_rowpagebreaks(self, rowbreaks_list):
         """
@@ -565,8 +583,10 @@ class SheetData(object):
             if not found:
                 row_break_attr = {'id': str(new_row_index), 'max': '16383', 'man':'1'}
                 elem = SubElement(self.write_rowbreaks, 'brk', attrib=row_break_attr)
-                self.write_rowbreaks.attrib['count'] = str(int(self.write_rowbreaks.attrib['count'])+1)
-                self.write_rowbreaks.attrib['manualBreakCount'] = str(int(self.write_rowbreaks.attrib['manualBreakCount'])+1)
+                count = int(self.write_rowbreaks.get('count', 0))
+                man_count = int(self.write_rowbreaks.get('manualBreakCount', 0))
+                self.write_rowbreaks.attrib['count'] = str(count+1)
+                self.write_rowbreaks.attrib['manualBreakCount'] = str(man_count+1)
 
     def set_pagebreaks(self, begin, end, start_cell):
         """
@@ -586,18 +606,18 @@ class SheetData(object):
         new_begin_row = int(start_cell[1])
         # вытащим смещение индексов столбцов у которых есть разделители и которые попали в этот интервал
         colbreaks = []
-        for elem in self.write_colbreaks.getchildren():
+        for elem in self.read_colbreaks.getchildren():
             col_index = int(elem.attrib['id'])
-            if begin_col <= col_index <= end_col:
+            if begin_col <= col_index-1 <= end_col:
                 colbreaks.append(col_index-begin_col+new_begin_col)
 
         self._set_colpagebreaks(colbreaks)
 
         # вытащим смещение индексов строк у которых есть разделители и которые попали в этот интервал
         rowbreaks = []
-        for elem in self.write_rowbreaks.getchildren():
+        for elem in self.read_rowbreaks.getchildren():
             row_index = int(elem.attrib['id'])
-            if begin_row <= row_index <= end_row:
+            if begin_row <= row_index-1 <= end_row:
                 rowbreaks.append(row_index-begin_row+new_begin_row)
 
         self._set_rowpagebreaks(rowbreaks)
