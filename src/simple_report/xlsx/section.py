@@ -86,13 +86,9 @@ class SheetData(object):
 
         # Строчные разделители страниц
         self.read_rowbreaks = self._read_xml.find(QName(self.ns, 'rowBreaks'))
-        if self.read_rowbreaks is None:
-            self.read_rowbreaks = SubElement(self._read_xml, 'rowBreaks', attrib={})
 
         # Колоночные разделители страниц
         self.read_colbreaks = self._read_xml.find(QName(self.ns, 'colBreaks'))
-        if self.read_colbreaks is None:
-            self.read_colbreaks = SubElement(self._read_xml, 'colBreaks', attrib={})
 
         self._write_xml = copy.deepcopy(sheet_xml)
 
@@ -121,6 +117,8 @@ class SheetData(object):
             self.write_rowbreaks = SubElement(self._write_xml, 'rowBreaks', attrib={"count":"0", "manualBreakCount":"0"})
         else:
             self.write_rowbreaks.clear()
+            self.write_rowbreaks.set("count", "0")
+            self.write_rowbreaks.set("manualBreakCount", "0")
 
         # Колоночные разделители страниц
         self.write_colbreaks = self._write_xml.find(QName(self.ns, 'colBreaks'))
@@ -129,6 +127,8 @@ class SheetData(object):
             self.write_colbreaks = SubElement(self._write_xml, 'colBreaks', attrib={"count":"0", "manualBreakCount":"0"})
         else:
             self.write_colbreaks.clear()
+            self.write_colbreaks.set("count", "0")
+            self.write_colbreaks.set("manualBreakCount", "0")
 
         #    def __str__(self):
         #        return 'Cursor %s' % self.cursor
@@ -452,6 +452,13 @@ class SheetData(object):
             childs = self.write_merge_cell.getchildren()
             if not childs:
                 self._write_xml.remove(self.write_merge_cell)
+
+        # если небыло разделителей страниц, то удалим раздел
+        if not self.write_colbreaks.getchildren():
+            self._write_xml.remove(self.write_colbreaks)
+        if not self.write_rowbreaks.getchildren():
+            self._write_xml.remove(self.write_rowbreaks)
+
         return self._write_xml
 
     def _create_or_get_output_col(self, col_index, attrib_col=None):
@@ -606,19 +613,21 @@ class SheetData(object):
         new_begin_row = int(start_cell[1])
         # вытащим смещение индексов столбцов у которых есть разделители и которые попали в этот интервал
         colbreaks = []
-        for elem in self.read_colbreaks.getchildren():
-            col_index = int(elem.attrib['id'])
-            if begin_col <= col_index-1 <= end_col:
-                colbreaks.append(col_index-begin_col+new_begin_col)
+        if self.read_colbreaks is not None:
+            for elem in self.read_colbreaks.getchildren():
+                col_index = int(elem.attrib['id'])
+                if begin_col <= col_index-1 <= end_col:
+                    colbreaks.append(col_index-begin_col+new_begin_col)
 
         self._set_colpagebreaks(colbreaks)
 
         # вытащим смещение индексов строк у которых есть разделители и которые попали в этот интервал
         rowbreaks = []
-        for elem in self.read_rowbreaks.getchildren():
-            row_index = int(elem.attrib['id'])
-            if begin_row <= row_index-1 <= end_row:
-                rowbreaks.append(row_index-begin_row+new_begin_row)
+        if self.read_rowbreaks is not None:
+            for elem in self.read_rowbreaks.getchildren():
+                row_index = int(elem.attrib['id'])
+                if begin_row <= row_index <= end_row:
+                    rowbreaks.append(row_index-begin_row+new_begin_row)
 
         self._set_rowpagebreaks(rowbreaks)
 
