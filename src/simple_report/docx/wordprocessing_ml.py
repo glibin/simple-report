@@ -16,7 +16,6 @@ class Wordprocessing(ReletionOpenXMLFile):
 
     XPATH_TEXT = '/{0}:document/{0}:body/{0}:p/{0}:r/{0}:t'
 
-
     def __init__(self, tags, *args, **kwargs):
         super(Wordprocessing, self).__init__(*args, **kwargs)
 
@@ -37,7 +36,10 @@ class Wordprocessing(ReletionOpenXMLFile):
         for node in text_nodes:
             for key_param, value in params.items():
                 if key_param in node.text:
-                    node.text = node.text.replace('#%s#' % key_param, unicode(value))
+                    if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
+                        node.text = node.text.replace('#%s#' % key_param, unicode(value))
+                    else:
+                        node.text = node.text.replace(key_param, unicode(value))
 
 
 class CommonPropertiesDOCX(CommonProperties):
