@@ -107,8 +107,8 @@ class SheetData(object):
 
         # Ссылка на ширины столбцов
         self.write_cols = self._write_xml.find(QName(self.ns, 'cols'))
-        if self.write_cols is None:
-            self.write_cols = SubElement(self._write_xml, 'cols', attrib={})
+#        if self.write_cols is None:
+#            self.write_cols = SubElement(self._write_xml, 'cols', attrib={})
 
         # Строчные разделители страниц
         self.write_rowbreaks = self._write_xml.find(QName(self.ns, 'rowBreaks'))
@@ -130,12 +130,6 @@ class SheetData(object):
             self.write_colbreaks.set("count", "0")
             self.write_colbreaks.set("manualBreakCount", "0")
 
-        #    def __str__(self):
-        #        return 'Cursor %s' % self.cursor
-        #
-        #    def __repr__(self, ):
-        #        return self.__str__()
-
     def flush(self, begin, end, start_cell, params):
         """
         Вывод секции
@@ -147,7 +141,10 @@ class SheetData(object):
         self.set_section(begin, end, start_cell, params)
         self.set_merge_cells(begin, end, start_cell)
         self.set_dimension()
-        self.set_columns_width(begin, end, start_cell)
+
+        if self.write_cols is not None:
+            self.set_columns_width(begin, end, start_cell)
+
         self.set_pagebreaks(begin, end, start_cell)
 
     def set_dimension(self):
@@ -305,9 +302,6 @@ class SheetData(object):
 
             row_el = self._create_or_get_output_row(row_index, attrib_row)
 
-            # Установка курсора для колонок
-            #            self.cursor.row = ('A', start_row + i + 1)
-
             for j, col, cell in self._find_cells(range_cols, num_row, row):
                 attrib_cell = dict(cell.items())
 
@@ -316,9 +310,6 @@ class SheetData(object):
                 attrib_cell['r'] = col_index + str(row_index)
 
                 cell_el = self._create_or_get_output_cell(row_el, col_index + str(row_index), attrib_cell)
-
-                # Установка курсора для колонок
-                #                self.cursor.column = (ColumnHelper.add(col_index, 1), start_row)
 
                 # Перенос формул
                 formula = self._get_tag_formula(cell)
@@ -475,6 +466,7 @@ class SheetData(object):
             if begin_col <= col_index <= end_col:
                 col_el = col
                 break
+
         if col_el is None:
             # если не нашли - создадим
             if attrib_col is None:
@@ -678,14 +670,16 @@ class Section(ISpreadsheetSection):
         # если это первый вывод
         if self.sheet_data.cursor.row == self.sheet_data.cursor.column:
             current_col, current_row = self.sheet_data.cursor.row
+            # вычислим следующую строку
+            cursor.row = ('A', current_row + end_row - begin_row + 1)
         else:
             if oriented == Section.VERTICAL:
                 current_col, current_row = self.sheet_data.cursor.row
+                # вычислим следующую строку
+                cursor.row = ('A', current_row + end_row - begin_row + 1)
             else:
                 current_col, current_row = self.sheet_data.cursor.column
 
-        # вычислим следующую строку
-        cursor.row = ('A', current_row + end_row - begin_row + 1)
         # вычислим следующую колонку
         cursor.column = (ColumnHelper.add(current_col,
             ColumnHelper.difference(end_col, begin_col) + 1), current_row)

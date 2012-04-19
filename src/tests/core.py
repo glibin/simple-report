@@ -8,6 +8,8 @@ from simple_report.interface import ISpreadsheetSection
 from simple_report.xlsx.section import Section
 from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
 
+sys.path.append('.')
+
 from test_oo_wrapper import TestOO
 from test_utils import skip_python26
 from test_pko import TestPKO
@@ -151,10 +153,10 @@ class TestXLSX(object):
         report.build(dst)
         self.assertEqual(os.path.exists(dst), True)
 
-
 class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase):
     SUBDIR = 'linux'
 
+    @skip_python26
     def test_fake_section(self):
         src = self.test_files['test-simple-fake-section.xlsx']
         with self.assertRaises(SectionException):
@@ -192,6 +194,7 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
         report.build(dst)
 
+    @skip_python26
     def test_main_parameters(self):
         src = self.test_files['test-main_book.xlsx']
         dst = os.path.join(self.dst_dir, 'res-main_book.xlsx')
@@ -392,6 +395,58 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
         return report.build(dst)
 
+    def test_cursor(self):
+        """
+        """
+
+        src = self.test_files['test-simple.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-simple.xlsx')
+        if os.path.exists(dst):
+            os.remove(dst)
+        self.assertEqual(os.path.exists(dst), False)
+
+        report = SpreadsheetReport(src, tags=TemplateTags(test_tag=222))
+
+        section_a1 = report.get_section('A1')
+        section_a1.flush({'user': u'Иванов Иван',
+                          'date_now': 1})
+
+        # Проверяем курсор для колонки
+        self.assertEqual(section_a1.sheet_data.cursor.row, ('A', 5))
+        # Проверяем курсор для строки
+        self.assertEqual(section_a1.sheet_data.cursor.column, ('D', 1))
+
+        s_gor = report.get_section('GOR')
+        s_gor.flush({'col': u'Данные'}, oriented=s_gor.HORIZONTAL)
+
+        # Проверяем курсор для колонки
+        self.assertEqual(s_gor.sheet_data.cursor.row, ('A', 5))
+        # Проверяем курсор для строки
+        self.assertEqual(s_gor.sheet_data.cursor.column, ('E', 1))
+
+        for i in range(10):
+            report.get_section('B1').flush({'nbr': i,
+                                            'fio': u'Иванов %d' %i,
+                                            'sectior': u'Какой-то сектор'})
+
+            self.assertEqual(s_gor.sheet_data.cursor.row, ('A', i + 6))
+            self.assertEqual(s_gor.sheet_data.cursor.column, ('D', i + 5))
+
+            s_gor_str = report.get_section('GorStr')
+            s_gor_str.flush({'g': i + 1}, oriented=s_gor.HORIZONTAL)
+
+            self.assertEqual(s_gor.sheet_data.cursor.row, ('A', i + 6))
+            self.assertEqual(s_gor.sheet_data.cursor.column, ('E', i + 5))
+
+            s_gor_str.flush({'g': i * i}, oriented=s_gor.HORIZONTAL)
+
+            self.assertEqual(s_gor.sheet_data.cursor.row, ('A', i + 6))
+            self.assertEqual(s_gor.sheet_data.cursor.column, ('F', i + 5))
+
+        section_last = report.get_section('C1')
+        section_last.flush({'user': u'Иван'})
+        self.assertEqual(section_last.sheet_data.cursor.row, ('A', 16))
+        self.assertEqual(section_last.sheet_data.cursor.column, ('D', 15))
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):
     SUBDIR = 'win'
