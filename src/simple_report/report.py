@@ -106,9 +106,9 @@ class DocumentReport(Report, IDocumentReport):
 
     def get_all_parameters(self):
         """
-
+        Возвращаем параметры отчета.
         """
-        #TODO: Реализовать!!
+        return self._wrapper.get_all_parameters()
 
 
 class SpreadsheetReport(Report, ISpreadsheetReport):

@@ -30,3 +30,9 @@ class DocumentDOCX(DocumentOpenXML):
 
         """
         self.word.set_params(*args, **kwargs)
+
+    def get_all_parameters(self):
+        """
+
+        """
+        return self.word.get_all_parameters()

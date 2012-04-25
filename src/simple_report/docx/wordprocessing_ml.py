@@ -41,6 +41,14 @@ class Wordprocessing(ReletionOpenXMLFile):
                     else:
                         node.text = node.text.replace(key_param, unicode(value))
 
+    def get_all_parameters(self):
+        """
+        """
+        text_nodes =self._root.xpath(self.XPATH_TEXT.format('w'), namespaces={'w': self.NS_W})
+        for node in text_nodes:
+            if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
+                yield node.text
+
 
 class CommonPropertiesDOCX(CommonProperties):
     """
