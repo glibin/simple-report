@@ -65,7 +65,9 @@ class SheetData(object):
         self.tags = tags
 
         assert isinstance(cursor, Cursor)
-        self.cursor = cursor
+        self._cursor = cursor
+
+        self._last_section = Cursor()
 
         assert isinstance(shared_table, SharedStringsTable)
         self.shared_table = shared_table
@@ -129,6 +131,24 @@ class SheetData(object):
             self.write_colbreaks.clear()
             self.write_colbreaks.set("count", "0")
             self.write_colbreaks.set("manualBreakCount", "0")
+
+    @property
+    def cursor(self):
+        return self._cursor
+
+    @cursor.setter
+    def cursor(self, value):
+        assert isinstance(value, Cursor)
+        self._cursor = value
+
+    @property
+    def last_section(self):
+        return self._last_section
+
+    @last_section.setter
+    def last_section(self, value):
+        assert isinstance(value, Cursor)
+        self._last_section = value
 
     def flush(self, begin, end, start_cell, params):
         """
@@ -444,6 +464,9 @@ class SheetData(object):
             if not childs:
                 self._write_xml.remove(self.write_merge_cell)
 
+        if self.write_cols is not None:
+            self._write_xml.remove(self.write_cols)
+
         # если небыло разделителей страниц, то удалим раздел
         if not self.write_colbreaks.getchildren():
             self._write_xml.remove(self.write_colbreaks)
@@ -653,11 +676,11 @@ class Section(ISpreadsheetSection):
         return self.__str__()
 
 
-    def flush(self, params, oriented=ISpreadsheetSection.VERTICAL):
+    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
         """
         """
         assert isinstance(params, dict)
-        assert oriented in (Section.VERTICAL, Section.HORIZONTAL)
+        assert oriented in (Section.VERTICAL, Section.HORIZONTAL, Section.LEFT_DOWN, Section.RIGHT_UP)
 
         # Тут смещение курсора, копирование данных из листа и общих строк
         # Генерация новых данных и новых общих строк
@@ -672,17 +695,33 @@ class Section(ISpreadsheetSection):
             current_col, current_row = self.sheet_data.cursor.row
             # вычислим следующую строку
             cursor.row = ('A', current_row + end_row - begin_row + 1)
+            cursor.column = (ColumnHelper.add(current_col,
+                ColumnHelper.difference(end_col, begin_col) + 1), current_row)
         else:
-            if oriented == Section.VERTICAL:
-                current_col, current_row = self.sheet_data.cursor.row
+            if oriented == Section.LEFT_DOWN:
+                current_col, current_row = 'A', self.sheet_data.cursor.row[1]
                 # вычислим следующую строку
                 cursor.row = ('A', current_row + end_row - begin_row + 1)
-            else:
+                cursor.column = (ColumnHelper.add(current_col,
+                    ColumnHelper.difference(end_col, begin_col) + 1), current_row)
+            elif oriented == Section.HORIZONTAL:
                 current_col, current_row = self.sheet_data.cursor.column
+                cursor.column = (ColumnHelper.add(current_col,
+                    ColumnHelper.difference(end_col, begin_col) + 1), current_row)
+            elif oriented == Section.RIGHT_UP:
+                current_col, current_row = self.sheet_data.cursor.column[0], 1
+                cursor.row = (current_col, current_row + end_row - begin_row + 1)
+                cursor.column = (ColumnHelper.add(current_col,
+                    ColumnHelper.difference(end_col, begin_col) + 1), 1)
+            else:
+                current_col, current_row = self.sheet_data.cursor.row
+                cursor.column = (ColumnHelper.add(current_col,
+                    ColumnHelper.difference(end_col, begin_col) + 1), current_row)
+                cursor.row = (current_col, current_row + end_row - begin_row + 1)
 
-        # вычислим следующую колонку
-        cursor.column = (ColumnHelper.add(current_col,
-            ColumnHelper.difference(end_col, begin_col) + 1), current_row)
+        self.sheet_data.last_section.row = (current_col, current_row)
+        self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
+            ColumnHelper.difference(end_col, begin_col) ), current_row + end_row - begin_row)
 
         self.sheet_data.flush(self.begin, self.end, (current_col, current_row), params)
 

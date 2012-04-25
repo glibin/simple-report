@@ -397,6 +397,7 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
     def test_cursor(self):
         """
+        Правильность вычисления курсора
         """
 
         src = self.test_files['test-simple.xlsx']
@@ -447,6 +448,83 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         section_last.flush({'user': u'Иван'})
         self.assertEqual(section_last.sheet_data.cursor.row, ('A', 16))
         self.assertEqual(section_last.sheet_data.cursor.column, ('D', 15))
+
+class TestWrite(unittest.TestCase):
+    """
+    Тестируем правильность вывода
+    """
+
+    SUBDIR = 'linux'
+
+    def setUp(self):
+        assert self.SUBDIR
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xlsx', )
+        self.dst_dir = self.src_dir
+
+        self.test_files = dict([(path, os.path.join(self.src_dir, path))
+        for path in os.listdir(self.src_dir) if path.startswith('test')])
+
+    def test_left_down(self, report=None):
+        if report is None:
+            return
+        for i in range(2):
+            section1 = report.get_section('Section1')
+            section1.flush({'section1': i}, oriented=Section.LEFT_DOWN)
+            self.assertEqual(section1.sheet_data.cursor.row, ('A', 2*i + 3))
+            self.assertEqual(section1.sheet_data.cursor.column, ('C', 2*i + 1))
+
+    def test_left_down2(self, report=None):
+        if report is None:
+            return
+        for i in range(2):
+            section3 = report.get_section('Section3')
+            section3.flush({'section3': 100}, oriented=Section.LEFT_DOWN)
+            self.assertEqual(section3.sheet_data.cursor.row, ('A', 2*i + 11))
+            self.assertEqual(section3.sheet_data.cursor.column, ('C', 2*i + 9))
+
+    def test_right_up(self, report=None):
+        if report is None:
+            return
+        section1 = report.get_section('Section1')
+        section1.flush({'section1': 2}, oriented=Section.RIGHT_UP)
+        self.assertEqual(section1.sheet_data.cursor.row, ('C', 3))
+        self.assertEqual(section1.sheet_data.cursor.column, ('E', 1))
+
+    def test_vertical(self, report=None):
+        if report is None:
+            return
+        for i in range(3):
+            section2 = report.get_section('Section2')
+            section2.flush({'section2': i}, oriented=Section.VERTICAL)
+            self.assertEqual(section2.sheet_data.cursor.row, ('C', 2*i + 5))
+            self.assertEqual(section2.sheet_data.cursor.column, ('E', 2*i + 3))
+
+    def test_horizontal(self, report=None):
+        if report is None:
+            return
+        for i in range(3):
+            section3 = report.get_section('Section3')
+            section3.flush({'section3': i}, oriented=Section.HORIZONTAL)
+            self.assertEqual(section3.sheet_data.cursor.row, ('C', 9))
+            self.assertEqual(section3.sheet_data.cursor.column,
+                (ColumnHelper.add('G', 2*i), 7))
+
+    def test_report_write(self):
+        src = self.test_files['test-report-output.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-report-output.xlsx')
+        if os.path.exists(dst):
+            os.remove(dst)
+        self.assertEqual(os.path.exists(dst), False)
+
+        report = SpreadsheetReport(src)
+        self.test_left_down(report)
+        self.test_right_up(report)
+        self.test_vertical(report)
+        self.test_horizontal(report)
+        self.test_left_down2(report)
+
+        report.build(dst)
+
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):
     SUBDIR = 'win'

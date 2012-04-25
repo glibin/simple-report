@@ -65,9 +65,11 @@ class ISpreadsheetSection(object):
     # Тип разворота секции
     VERTICAL = 0
     HORIZONTAL = 1
+    RIGHT_UP = 2
+    LEFT_DOWN = 3
 
     @abstractmethod
-    def flush(self, params, oriented=VERTICAL):
+    def flush(self, params, oriented=LEFT_DOWN):
         pass
 
 

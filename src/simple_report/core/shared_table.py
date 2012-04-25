@@ -33,9 +33,9 @@ class SharedStringsTable(object):
         value = self.elements[i]
 
         if value in self.new_elements_list:
-            self.uniq_elements += 1
             return str(self.new_elements_dict[value])
         else:
+            self.uniq_elements += 1
             self.new_elements_list.append(value)
             len_list = len(self.new_elements_list)
             self.new_elements_dict[value] = len_list - 1
