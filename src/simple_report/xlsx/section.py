@@ -464,7 +464,7 @@ class SheetData(object):
             if not childs:
                 self._write_xml.remove(self.write_merge_cell)
 
-        if self.write_cols is not None:
+        if self.write_cols is not None and not self.write_cols.getchildren():
             self._write_xml.remove(self.write_cols)
 
         # если небыло разделителей страниц, то удалим раздел
