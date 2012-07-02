@@ -7,13 +7,14 @@ Created on 24.11.2011
 
 import abc
 import os
-from simple_report.core.document_wrap import DocumentOpenXML
+from simple_report.core.document_wrap import Document, DocumentOpenXML
 from simple_report.core.tags import TemplateTags
 from simple_report.docx.document import DocumentDOCX
 
 from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
 from simple_report.xlsx.document import DocumentXLSX
+from simple_report.xls.document import DocumentXLS
 from simple_report.utils import FileProxy
 
 class ReportGeneratorException(Exception):
@@ -50,7 +51,7 @@ class Report(object):
 
         ffile = self.convert(self.file, self.TYPE)
 
-        assert issubclass(self._wrapper, DocumentOpenXML)
+        assert issubclass(self._wrapper, Document)
         self._wrapper = self._wrapper(ffile, self.tags)
 
     def convert(self, src_file, to_format):
@@ -80,7 +81,6 @@ class Report(object):
         xlsx_file = FileProxy(xlsx_path, new_file=True)
 
         # Всегда вернет файл с расширением open office (xlsx, docx, etc.)
-
 
         self._wrapper.pack(xlsx_file)
 
@@ -116,6 +116,12 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
 
     _wrapper = DocumentXLSX
 
+    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX):
+
+        self.TYPE = type
+        self._wrapper = wrapper
+
+        super(SpreadsheetReport, self).__init__(src_file, converter, tags)
 
     @property
     def sections(self):
@@ -141,3 +147,34 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
     @property
     def sheets(self):
         return self._wrapper.sheets
+
+    def build(self, dst_file_path, file_type=None):
+
+        if isinstance(self._wrapper, DocumentXLSX):
+            super(SpreadsheetReport, self).build(dst_file_path, file_type=None)
+        else:
+            self._wrapper.show(dst=dst_file_path, file_type='xls')
+
+
+class XLSSpreadsheetReport(Report, ISpreadsheetReport):
+
+    TYPE = FileConverter.XLS
+
+    _wrapper = DocumentXLS
+
+    def get_section(self, section_name):
+        return self._wrapper.get_section(section_name)
+
+    def get_sections(self):
+        return self._wrapper.get_sections()
+
+    @property
+    def workbook(self):
+        return self._wrapper.workbook
+
+    @property
+    def sheets(self):
+        return self._wrapper.sheets
+
+    def build(self, dst, type='xls'):
+        self._wrapper.show(dst=dst, file_type=type)

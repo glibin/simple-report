@@ -1,7 +1,7 @@
 #coding: utf-8
 from datetime import datetime
 
-import sys;
+import sys
 from simple_report.converter.abstract import FileConverter
 from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
@@ -21,7 +21,10 @@ sys.path.append('../')
 import os
 import unittest
 
-from simple_report.report import SpreadsheetReport, ReportGeneratorException, DocumentReport
+from simple_report.report import (SpreadsheetReport, ReportGeneratorException, DocumentReport,
+                                  XLSSpreadsheetReport)
+from simple_report.xls.document import DocumentXLS
+from simple_report.converter.abstract import FileConverter
 from simple_report.utils import ColumnHelper
 
 
@@ -510,6 +513,7 @@ class TestWrite(unittest.TestCase):
                 (ColumnHelper.add('G', 2*i), 7))
 
     def test_report_write(self):
+
         src = self.test_files['test-report-output.xlsx']
         dst = os.path.join(self.dst_dir, 'res-report-output.xlsx')
         if os.path.exists(dst):
@@ -523,7 +527,69 @@ class TestWrite(unittest.TestCase):
         self.test_horizontal(report)
         self.test_left_down2(report)
 
-        report.build(dst)
+        return report.build(dst)
+
+
+class TestReportFormatXLS(unittest.TestCase):
+    """
+    Тест на работоспособность отчета формата XLS
+    """
+
+    SUBDIR = 'linux'
+
+    def setUp(self):
+        assert self.SUBDIR
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xls', )
+        self.dst_dir = self.src_dir
+
+        self.test_files = dict([(path, os.path.join(self.src_dir, path))
+        for path in os.listdir(self.src_dir) if path.startswith('test')])
+
+    def test_spreadsheet_with_flag(self):
+        """
+        Тест на использование класса SpreadsheetReport с переданным в конструктор wrapper-ом.
+        """
+
+        src = self.test_files['test_xls.xls']
+        dst = os.path.join(self.dst_dir, 'res-test_xls.xls')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
+
+        section1 = report.get_section('Section1')
+        section1.flush({'tag1': 1})
+
+        report.workbook.active_sheet = 1
+
+        section2 = report.get_section('Section2')
+        for i in range(10):
+            section2.flush({'tag2': i})
+
+        return report.build(dst)
+
+    def test_xls_spreadsheet(self):
+        """
+        Тест на класс XLSSpreadsheetReport
+        """
+
+        src = self.test_files['test_xls.xls']
+        dst = os.path.join(self.dst_dir, 'res-test_xls.xls')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = XLSSpreadsheetReport(src)
+
+        section1 = report.get_section('Section1')
+        section1.flush({'tag1': 1})
+
+        report.workbook.active_sheet = 1
+
+        section2 = report.get_section('Section2')
+        for i in range(10):
+            section2.flush({'tag2': i})
+
+        return report.build(dst)
 
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):
@@ -545,7 +611,6 @@ class TestLinuxDOCX(unittest.TestCase):
 
     def test_simple_docx(self):
         """
-
         """
 
         template_name = 'test-sluzh.docx'

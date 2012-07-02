@@ -5,7 +5,21 @@ from simple_report.utils import ZipProxy
 __author__ = 'prefer'
 
 
-class DocumentOpenXML(object):
+
+class Document(object):
+    """
+    Базовый класс для всех документов
+    """
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def build(self):
+        """
+        """
+
+
+class DocumentOpenXML(Document):
     u"""
     Базовый класс для работы со структурой open xml
     """
@@ -22,9 +36,3 @@ class DocumentOpenXML(object):
         """
         self.build()
         ZipProxy.pack(dst_file, self.extract_folder)
-
-    @abstractmethod
-    def build(self):
-        """
-
-        """
