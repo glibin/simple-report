@@ -623,5 +623,45 @@ class TestLinuxDOCX(unittest.TestCase):
         doc.build(dst, {'Employee_name': u'Иванов И.И.', 'region_name': u'Казань'})
         self.assertEqual(os.path.exists(dst), True)
 
+    def test_spreadsheet_docx(self):
+        """
+        Текст внутри таблицы
+        """
+
+        template_name = 'test_spreadsheet.docx'
+        path = self.test_files[template_name]
+        doc = DocumentReport(path)
+
+        res_file_name = 'res-' + template_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+
+        tag1 = doc.get_all_parameters().next()
+        self.assertEqual(tag1, '#sometext#')
+
+        doc.build(dst, {'sometext': u'Некий текст'})
+        self.assertEqual(os.path.exists(dst), True)
+
+    def test_picture_docx(self):
+        """
+        Текст внутри прямоугольника
+        """
+
+        template_name = 'test_rect.docx'
+        path = self.test_files[template_name]
+        doc = DocumentReport(path)
+
+        res_file_name = 'res-' + template_name
+        dst = os.path.join(self.dst_dir, res_file_name)
+
+        tags = []
+        for tag in doc.get_all_parameters():
+            tags.append(tag)
+
+        self.assertFalse(tags[0] != '#brandgroupname#' and tags[0] != '#category#')
+        self.assertFalse(tags[1] != '#brandgroupname#' and tags[1] != '#category#')
+
+        doc.build(dst, {'brandgroupname': u'Брэнд', 'category': u'Категория'})
+        self.assertEqual(os.path.exists(dst), True)
+
 if __name__ == '__main__':
     unittest.main()
