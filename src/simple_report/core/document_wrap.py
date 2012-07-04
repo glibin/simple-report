@@ -1,12 +1,12 @@
 #coding: utf-8
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from simple_report.utils import ZipProxy
 
 __author__ = 'prefer'
 
 
 
-class Document(object):
+class BaseDocument(object):
     """
     Базовый класс для всех документов
     """
@@ -19,7 +19,33 @@ class Document(object):
         """
 
 
-class DocumentOpenXML(Document):
+class SpreadsheetDocument(object):
+
+    __metaclass__ = ABCMeta
+
+    @abstractproperty
+    def workbook(self):
+        """
+        """
+
+    def get_sections(self):
+        """
+        Возвращает все секции в шаблоне
+        """
+        return self.workbook.get_sections()
+
+    def get_section(self, name):
+        """
+        Возвращает секцию по названию шаблона
+        """
+        return self.workbook.get_section(name)
+
+    @property
+    def sheets(self):
+        return self.workbook.sheets
+
+
+class DocumentOpenXML(BaseDocument):
     u"""
     Базовый класс для работы со структурой open xml
     """
@@ -31,8 +57,7 @@ class DocumentOpenXML(Document):
 
         self._tags = tags # Ссылка на тэги
 
-    def pack(self, dst_file):
+    def build(self, dst_file):
         """
         """
-        self.build()
         ZipProxy.pack(dst_file, self.extract_folder)

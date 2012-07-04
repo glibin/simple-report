@@ -7,7 +7,7 @@ Created on 24.11.2011
 
 import abc
 import os
-from simple_report.core.document_wrap import Document, DocumentOpenXML
+from simple_report.core.document_wrap import BaseDocument
 from simple_report.core.tags import TemplateTags
 from simple_report.docx.document import DocumentDOCX
 
@@ -29,15 +29,11 @@ class Report(object):
 
     __metaclass__ = abc.ABCMeta
 
-    # Тип документа: XLSX, DOCX, etc.
-    TYPE = None
-
-    # Класс-делегат черной работы
-    _wrapper = None
-
-    def __init__(self, src_file, converter=None, tags=None):
+    def __init__(self, src_file, converter=None, tags=None, wrapper = None, type = None):
         """
         """
+
+        self.TYPE = type
 
         self.tags = tags or TemplateTags()
         assert isinstance(self.tags, TemplateTags)
@@ -51,8 +47,8 @@ class Report(object):
 
         ffile = self.convert(self.file, self.TYPE)
 
-        assert issubclass(self._wrapper, Document)
-        self._wrapper = self._wrapper(ffile, self.tags)
+        assert issubclass(wrapper, BaseDocument)
+        self._wrapper = wrapper(ffile, self.tags)
 
     def convert(self, src_file, to_format):
         """
@@ -82,7 +78,7 @@ class Report(object):
 
         # Всегда вернет файл с расширением open office (xlsx, docx, etc.)
 
-        self._wrapper.pack(xlsx_file)
+        self._wrapper.build(xlsx_file)
 
         if file_type == self.TYPE:
             return xlsx_path
@@ -92,12 +88,15 @@ class Report(object):
 
 class DocumentReport(Report, IDocumentReport):
     #
-    TYPE = FileConverter.DOCX
 
-    _wrapper = DocumentDOCX
+    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentDOCX, type=FileConverter.DOCX):
 
+        assert issubclass(wrapper, DocumentDOCX)
+        assert (type == FileConverter.DOCX)
 
-    def build(self, dst_file_path, params, file_type=TYPE):
+        super(DocumentReport, self).__init__(src_file, converter, tags, wrapper, type)
+
+    def build(self, dst_file_path, params, file_type=FileConverter.DOCX):
         u"""
         Генерирует выходной файл в нужном формате
         """
@@ -112,16 +111,13 @@ class DocumentReport(Report, IDocumentReport):
 
 
 class SpreadsheetReport(Report, ISpreadsheetReport):
-    TYPE = FileConverter.XLSX
-
-    _wrapper = DocumentXLSX
 
     def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX):
 
-        self.TYPE = type
-        self._wrapper = wrapper
+        assert issubclass(wrapper, DocumentXLSX) or issubclass(wrapper, DocumentXLS)
+        assert (type == FileConverter.XLSX) or (type == FileConverter.XLS)
 
-        super(SpreadsheetReport, self).__init__(src_file, converter, tags)
+        super(SpreadsheetReport, self).__init__(src_file, converter, tags, wrapper, type)
 
     @property
     def sections(self):
@@ -147,34 +143,3 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
     @property
     def sheets(self):
         return self._wrapper.sheets
-
-    def build(self, dst_file_path, file_type=None):
-
-        if isinstance(self._wrapper, DocumentXLSX):
-            super(SpreadsheetReport, self).build(dst_file_path, file_type=None)
-        else:
-            self._wrapper.show(dst=dst_file_path, file_type='xls')
-
-
-class XLSSpreadsheetReport(Report, ISpreadsheetReport):
-
-    TYPE = FileConverter.XLS
-
-    _wrapper = DocumentXLS
-
-    def get_section(self, section_name):
-        return self._wrapper.get_section(section_name)
-
-    def get_sections(self):
-        return self._wrapper.get_sections()
-
-    @property
-    def workbook(self):
-        return self._wrapper.workbook
-
-    @property
-    def sheets(self):
-        return self._wrapper.sheets
-
-    def build(self, dst, type='xls'):
-        self._wrapper.show(dst=dst, file_type=type)

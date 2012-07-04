@@ -10,6 +10,7 @@ from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
 from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
 from simple_report.xlsx.cursor import Cursor
+from simple_report.core.spreadsheet_section import SpreadsheetSection
 
 __author__ = 'prefer'
 
@@ -646,7 +647,7 @@ class SheetData(object):
 
         self._set_rowpagebreaks(rowbreaks)
 
-class Section(ISpreadsheetSection):
+class Section(SpreadsheetSection, ISpreadsheetSection):
     """
     """
 
@@ -657,11 +658,7 @@ class Section(ISpreadsheetSection):
         @param begin: Начало секции, пример ('A', 1)
         @param end: Конец секции, пример ('E', 6)
         """
-        assert begin or end
-
-        self.name = name
-        self.begin = begin
-        self.end = end
+        super(Section, self).__init__(sheet_data, name, begin, end)
 
         # Ссылка на курсор листа. Метод flush вставляет данные относительно курсора
         # и меняет его местоположение

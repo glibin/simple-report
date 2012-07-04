@@ -4,10 +4,13 @@ import os
 from exceptions import AttributeError, KeyError, Exception
 import settings as st
 
-import uno
-from com.sun.star.beans import PropertyValue
-from com.sun.star.task import ErrorCodeIOException
-from com.sun.star.connection import NoConnectException
+try:
+    import uno
+    from com.sun.star.beans import PropertyValue
+    from com.sun.star.task import ErrorCodeIOException
+    from com.sun.star.connection import NoConnectException
+except ImportError:
+    pass
 
 __author__ = 'prefer'
 

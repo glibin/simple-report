@@ -5,7 +5,15 @@ from uuid import uuid4
 from xlrd.sheet import Sheet
 from xlutils.filter import XLWTWriter
 from simple_report.xls.section import Section
+from simple_report.converter.abstract import FileConverter
 
+class SectionException(Exception):
+    """
+    """
+
+class SheetException(Exception):
+    """
+    """
 
 class WorkbookSheet():
 
@@ -44,8 +52,8 @@ class WorkbookSheet():
                     begin = end = note_coord
 
             if not (begin and end):
-                raise Exception('Section named %s has not been found' % name)
-            self.sections[name] = Section(begin, end, self, self.writer)
+                raise SectionException('Section named %s has not been found' % name)
+            self.sections[name] = Section(self, name, begin, end, self.writer)
         return self.sections[name]
 
     def get_sections(self):
@@ -73,7 +81,7 @@ class Workbook(object):
             self._active_sheet = self.sheets[0]
             self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
         else:
-            raise Exception('Sheets not found')
+            raise SheetException('Sheets not found')
 
         for k, v in kwargs.items():
             self.__setattr__(k, v)
@@ -97,8 +105,15 @@ class Workbook(object):
     @active_sheet.setter
     def active_sheet(self, value):
         assert isinstance(value, int)
-        self._active_sheet = self.sheets[value]
-        self.xlwt_writer.sheet(self._active_sheet.sheet, self.get_sheet_name())
+        try:
+            self._active_sheet = self.sheets[value]
+        except IndexError:
+            raise SheetException('Sheet not found')
+
+        try:
+            self.xlwt_writer.sheet(self._active_sheet.sheet, self.get_sheet_name())
+        except ValueError:
+            return
 
     def _sheet_list(self):
         all_sheets = self.workbook._sheet_list
@@ -112,9 +127,11 @@ class Workbook(object):
     def get_sheet_name(self):
         return self.active_sheet.get_name()
 
-    def show(self, dest_file_name, file_type=None):
+    def build(self, dest_file):
         """
         """
+
+        dest_file_name = dest_file.file
 
         if hasattr(self, 'fit_num_pages'):
             self.xlwt_writer.wtsheet.fit_num_pages = self.fit_num_pages
@@ -126,8 +143,13 @@ class Workbook(object):
             self.xlwt_writer.wtsheet.fit_height_to_pages = self.fit_height_to_pages
         self.xlwt_writer.finish()
 
-        if file_type and not dest_file_name.endswith(file_type):
-            dest_file_name = '%s.%s' % (dest_file_name, file_type)
+        try:
+            dest_file_format = dest_file_name.split('.')[-1]
+        except IndexError:
+            dest_file_format = ''
+
+        if dest_file_format != FileConverter.XLS:
+            dest_file_name = '%s.%s' % (dest_file_name, FileConverter.XLS)
 
         # self.xlwt_writer.output имеет вид
         # [('выходной файл1', Workbook1), ('выходной файл2', Workbook2), ... ]

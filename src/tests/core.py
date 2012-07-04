@@ -22,7 +22,7 @@ import os
 import unittest
 
 from simple_report.report import (SpreadsheetReport, ReportGeneratorException, DocumentReport,
-                                  XLSSpreadsheetReport)
+                                  )
 from simple_report.xls.document import DocumentXLS
 from simple_report.converter.abstract import FileConverter
 from simple_report.utils import ColumnHelper
@@ -556,29 +556,6 @@ class TestReportFormatXLS(unittest.TestCase):
             os.remove(dst)
 
         report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
-
-        section1 = report.get_section('Section1')
-        section1.flush({'tag1': 1})
-
-        report.workbook.active_sheet = 1
-
-        section2 = report.get_section('Section2')
-        for i in range(10):
-            section2.flush({'tag2': i})
-
-        return report.build(dst)
-
-    def test_xls_spreadsheet(self):
-        """
-        Тест на класс XLSSpreadsheetReport
-        """
-
-        src = self.test_files['test_xls.xls']
-        dst = os.path.join(self.dst_dir, 'res-test_xls.xls')
-        if os.path.exists(dst):
-            os.remove(dst)
-
-        report = XLSSpreadsheetReport(src)
 
         section1 = report.get_section('Section1')
         section1.flush({'tag1': 1})

@@ -20,10 +20,11 @@ class DocumentDOCX(DocumentOpenXML):
     def word(self):
         return self.common_properties.main
 
-    def build(self):
+    def build(self, dst_file):
         """
         """
         self.word.build()
+        super(DocumentDOCX, self).build(dst_file)
 
     def set_params(self, *args, **kwargs):
         """

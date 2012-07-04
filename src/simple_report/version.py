@@ -7,6 +7,6 @@ __appname__ = u'Генератор отчетов'
 
 __require__ = {
     'xlutils': 'default',
-    'xlwt': '0.7.2',
-    'xlrd': '0.7.1'
+    'xlwt': '0.7.4',
+    'xlrd': '0.7.9'
 }

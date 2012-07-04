@@ -4,16 +4,19 @@ import re
 import xlrd
 from xlwt.Style import default_style
 
-class Section(object):
+from simple_report.core.spreadsheet_section import SpreadsheetSection
+
+class Section(SpreadsheetSection):
     """
     Класс секции отчета в xls
     """
 
-    def __init__(self, begin, end, sheet, writer):
+    def __init__(self, sheet, name, begin, end, writer):
 
-        self.begin = begin
-        self.end = end
+        super(Section, self).__init__(sheet, name, begin, end)
+
         self.sheet = sheet
+
         self.writer = writer
 
     def flush(self, params):
@@ -88,7 +91,7 @@ class Section(object):
                 if cty == xlrd.XL_CELL_TEXT:
                     wtrow.set_cell_text(wtcolx, val, style)
                 elif cty == xlrd.XL_CELL_NUMBER or cty == xlrd.XL_CELL_DATE:
-                    wtrow.set_cell_number(wtcolx, val, style)
+                    wtrow.set_cell_number(wtcolx, int(val), style)
                 elif cty == xlrd.XL_CELL_BLANK:
                     wtrow.set_cell_blank(wtcolx, style)
                 elif cty == xlrd.XL_CELL_BOOLEAN:
