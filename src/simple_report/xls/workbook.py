@@ -137,11 +137,10 @@ class Workbook(object):
             self.xlwt_writer.wtsheet.fit_height_to_pages = self.fit_height_to_pages
         self.xlwt_writer.finish()
 
-        try:
-            dest_file_format = dest_file_name.split('.')[-1]
-        except IndexError:
-            dest_file_format = ''
+        # Получаем формат файла
+        dest_file_format = dest_file_name.split('.')[-1]
 
+        # Если не xls, то проставляем явно.
         if dest_file_format != FileConverter.XLS:
             dest_file_name = '%s.%s' % (dest_file_name, FileConverter.XLS)
 
