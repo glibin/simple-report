@@ -11,13 +11,9 @@ from simple_report.interface import ISpreadsheetSection
 from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
 from simple_report.xlsx.cursor import Cursor
 from simple_report.core.spreadsheet_section import SpreadsheetSection
+from simple_report.core.exception import SheetDataException
 
 __author__ = 'prefer'
-
-
-class SheetDataException(Exception):
-    """
-    """
 
 
 class SheetData(object):

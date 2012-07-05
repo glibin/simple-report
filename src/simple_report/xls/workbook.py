@@ -4,16 +4,10 @@ import xlrd
 from uuid import uuid4
 from xlrd.sheet import Sheet
 from xlutils.filter import XLWTWriter
+from simple_report.core.exception import SheetNotFoundException, SectionNotFoundException
 from simple_report.xls.section import Section
 from simple_report.converter.abstract import FileConverter
 
-class SectionException(Exception):
-    """
-    """
-
-class SheetException(Exception):
-    """
-    """
 
 class WorkbookSheet():
 
@@ -52,7 +46,7 @@ class WorkbookSheet():
                     begin = end = note_coord
 
             if not (begin and end):
-                raise SectionException('Section named %s has not been found' % name)
+                raise SectionNotFoundException('Section named %s has not been found' % name)
             self.sections[name] = Section(self, name, begin, end, self.writer)
         return self.sections[name]
 
@@ -81,7 +75,7 @@ class Workbook(object):
             self._active_sheet = self.sheets[0]
             self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
         else:
-            raise SheetException('Sheets not found')
+            raise SheetNotFoundException('Sheets not found')
 
         for k, v in kwargs.items():
             self.__setattr__(k, v)
@@ -108,7 +102,7 @@ class Workbook(object):
         try:
             self._active_sheet = self.sheets[value]
         except IndexError:
-            raise SheetException('Sheet not found')
+            raise SheetNotFoundException('Sheet not found')
 
         try:
             self.xlwt_writer.sheet(self._active_sheet.sheet, self.get_sheet_name())
