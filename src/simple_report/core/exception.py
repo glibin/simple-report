@@ -2,15 +2,19 @@
 
 import abc
 
-class SectionException(Exception):
+class AbstractSectionException(Exception):
     """
     Абстрактный класс для исключений, которые возникают при работе с секциями
     """
 
     __metaclass__ = abc.ABCMeta
 
+class SectionException(AbstractSectionException):
+    """
+    """
 
-class SectionNotFoundException(SectionException):
+
+class SectionNotFoundException(AbstractSectionException):
     """
     Исключение - секция не найдена
     """

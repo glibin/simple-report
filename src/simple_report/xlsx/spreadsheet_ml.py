@@ -11,19 +11,10 @@ from lxml.etree import QName, tostring
 from simple_report.core import XML_DEFINITION
 from simple_report.core.xml_wrap import OpenXMLFile, ReletionOpenXMLFile, ReletionTypes, CommonProperties
 from simple_report.core.shared_table import SharedStringsTable
+from simple_report.core.exception import SectionNotFoundException, SectionException, SheetNotFoundException
 from simple_report.utils import get_addr_cell
 from simple_report.xlsx.cursor import Cursor
 from simple_report.xlsx.section import Section, SheetData
-
-
-class SectionException(Exception):
-    """
-    """
-
-
-class SectionNotFoundException(SectionException):
-    """
-    """
 
 
 class Comments(OpenXMLFile):
@@ -233,7 +224,6 @@ class WorkbookSheet(ReletionOpenXMLFile):
         """
         return self.sections
 
-
     def build(self):
         """
         """
@@ -278,7 +268,7 @@ class Workbook(ReletionOpenXMLFile):
             # По-умолчанию активным считается первый лист
             self._active_sheet = self.sheets[0]
         else:
-            raise Exception('Sheets not found')
+            raise SheetNotFoundException('Sheets not found')
 
     def walk_reletions(self):
         workbook_style = shared_strings = None
