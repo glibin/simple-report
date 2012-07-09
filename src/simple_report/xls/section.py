@@ -62,7 +62,7 @@ class Section(SpreadsheetSection):
 
                     self.writer.wtcols.add(wtcolx)
 
-                cty = cell.ctype
+                cty = self.get_value_type(value=val, default_type=cell.ctype)
 
                 if cty == xlrd.XL_CELL_EMPTY:
                     continue
@@ -103,3 +103,16 @@ class Section(SpreadsheetSection):
             wtrowx += 1
 
         self.sheet.wtrowx = wtrowx
+
+    def get_value_type(self, value, default_type=xlrd.XL_CELL_TEXT):
+        """
+        Возвращаем тип значения для выходного элемента
+        """
+
+        try:
+            float(value)
+            cty = xlrd.XL_CELL_NUMBER
+        except ValueError:
+            cty = default_type
+
+        return cty
