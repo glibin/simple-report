@@ -25,21 +25,19 @@ class SharedStringsTable(object):
 
         self.elements = [''.join(t.text or '' for t in si) for si in root]
 
-    def get_new_index(self, index):
+    def get_new_index(self, value_string):
         """
+        Возвращаем индекс нового элемента таблицы shared string
         """
-        i = int(index)
 
-        value = self.elements[i]
-
-        if value in self.new_elements_list:
-            return str(self.new_elements_dict[value])
-        else:
+        try:
+            new_index = self.new_elements_list.index(value_string)
+        except ValueError:
+            new_index = self.uniq_elements
+            self.new_elements_list.append(value_string)
             self.uniq_elements += 1
-            self.new_elements_list.append(value)
-            len_list = len(self.new_elements_list)
-            self.new_elements_dict[value] = len_list - 1
-            return str(len_list - 1)
+
+        return str(new_index)
 
     def get_value(self, index):
         """
