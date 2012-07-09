@@ -91,7 +91,7 @@ class Section(SpreadsheetSection):
                 if cty == xlrd.XL_CELL_TEXT:
                     wtrow.set_cell_text(wtcolx, val, style)
                 elif cty == xlrd.XL_CELL_NUMBER or cty == xlrd.XL_CELL_DATE:
-                    wtrow.set_cell_number(wtcolx, int(val), style)
+                    wtrow.set_cell_number(wtcolx, val, style)
                 elif cty == xlrd.XL_CELL_BLANK:
                     wtrow.set_cell_blank(wtcolx, style)
                 elif cty == xlrd.XL_CELL_BOOLEAN:
