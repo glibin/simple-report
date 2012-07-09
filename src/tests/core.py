@@ -640,5 +640,57 @@ class TestLinuxDOCX(unittest.TestCase):
         doc.build(dst, {'brandgroupname': u'Брэнд', 'category': u'Категория'})
         self.assertEqual(os.path.exists(dst), True)
 
+    def test_picture_shape(self):
+
+        template_name = 'test_pict_shape.docx'
+        path = self.test_files[template_name]
+
+        res_file_name = 'res-pict_shape.docx'
+        dst = os.path.join(self.dst_dir, res_file_name)
+
+        report = DocumentReport(path)
+        params = {}
+
+        params['fname'] = '1'
+        params['sname'] = '2'
+        params['pname'] = '3'
+        params['issued_by'] = '4'
+        params['date_of_birth'] = '5'
+
+        params['date_start_day'] = '6'
+        params['date_start_month'] = '7'
+        params['date_start_year'] = '8'
+        params['date_start'] = '9'
+        params['date_end_day'] = '10'
+        params['date_end_month'] = '11'
+        params['date_end_year'] = '12'
+        params['date_end'] = '13'
+        params['region_number'] = '14'
+        params['date_start_plus'] = '15'
+        params['date_start_plus_day'] = '16'
+        params['date_start_plus_month'] = '17'
+        params['date_start_plus'] = '18'
+        params['date_start_plus_year'] = '19'
+        params['habaddr'] = '20'
+        params['regaddr1'] = '21'
+        params['regaddr2'] = '22'
+        params['regaddr3'] = '23'
+        params['inspect1'] = '24'
+        params['inspect2'] = '25'
+        params['is_AI'] = u"AI"
+        params['is_AII'] = u"AII"
+        params['is_AIII'] = u"AIII"
+        params['is_AIV'] = u"AIV"
+        params['is_B'] = u"B"
+        params['is_C'] = u"C"
+        params['is_D'] = u"D"
+        params['is_E'] = u"E"
+        params['is_F'] = u"F"
+        params['#komment#'] = 'd'
+
+        report.build(dst, params)
+
+        self.assertEqual(os.path.exists(dst), True)
+
 if __name__ == '__main__':
     unittest.main()
