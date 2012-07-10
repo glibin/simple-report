@@ -129,12 +129,19 @@ class Workbook(object):
 
         if hasattr(self, 'fit_num_pages'):
             self.xlwt_writer.wtsheet.fit_num_pages = self.fit_num_pages
+
         if hasattr(self, 'portrait_orientation'):
             self.xlwt_writer.wtsheet.portrait = self.portrait_orientation
+
         if hasattr(self, 'fit_width_to_pages'):
             self.xlwt_writer.wtsheet.fit_width_to_pages = self.fit_width_to_pages
+
         if hasattr(self, 'fit_height_to_pages'):
             self.xlwt_writer.wtsheet.fit_height_to_pages = self.fit_height_to_pages
+        else:
+            # По-умолчанию, указываем значение 0, для того, чтобы не запихивать огромный отчет на одну страницу.
+            self.xlwt_writer.wtsheet.fit_height_to_pages = 0
+
         self.xlwt_writer.finish()
 
         # Получаем формат файла
