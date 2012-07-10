@@ -15,6 +15,7 @@ from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
 from simple_report.xlsx.document import DocumentXLSX
 from simple_report.xls.document import DocumentXLS
+from simple_report.xls.output_options import XSL_OUTPUT_SETTINGS
 from simple_report.utils import FileProxy
 
 class ReportGeneratorException(Exception):
@@ -143,3 +144,10 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
     @property
     def sheets(self):
         return self._wrapper.sheets
+
+    def __setattr__(self, key, value):
+
+        if key in XSL_OUTPUT_SETTINGS:
+            setattr(self._wrapper, key, value)
+        else:
+            super(SpreadsheetReport, self).__setattr__(key, value)
