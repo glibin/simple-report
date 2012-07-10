@@ -29,7 +29,7 @@ class Report(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, src_file, converter=None, tags=None, wrapper = None, type = None):
+    def __init__(self, src_file, converter=None, tags=None, wrapper = None, type = None, **kwargs):
         """
         """
 
@@ -48,7 +48,7 @@ class Report(object):
         ffile = self.convert(self.file, self.TYPE)
 
         assert issubclass(wrapper, BaseDocument)
-        self._wrapper = wrapper(ffile, self.tags)
+        self._wrapper = wrapper(ffile, self.tags, **kwargs)
 
     def convert(self, src_file, to_format):
         """
@@ -112,12 +112,12 @@ class DocumentReport(Report, IDocumentReport):
 
 class SpreadsheetReport(Report, ISpreadsheetReport):
 
-    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX):
+    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX, **kwargs):
 
         assert issubclass(wrapper, DocumentXLSX) or issubclass(wrapper, DocumentXLS)
         assert (type == FileConverter.XLSX) or (type == FileConverter.XLS)
 
-        super(SpreadsheetReport, self).__init__(src_file, converter, tags, wrapper, type)
+        super(SpreadsheetReport, self).__init__(src_file, converter, tags, wrapper, type, **kwargs)
 
     @property
     def sections(self):

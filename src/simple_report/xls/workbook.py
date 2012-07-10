@@ -78,7 +78,7 @@ class Workbook(object):
             raise SheetNotFoundException('Sheets not found')
 
         for k, v in kwargs.items():
-            self.__setattr__(k, v)
+            setattr(self, k, v)
 
     def get_section(self, name):
         return self._active_sheet.get_section(name)

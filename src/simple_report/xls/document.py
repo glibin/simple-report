@@ -9,9 +9,9 @@ class DocumentXLS(BaseDocument, SpreadsheetDocument):
     """
     """
 
-    def __init__(self, ffile, tags=None):
+    def __init__(self, ffile, tags=None, **kwargs):
         self.file = ffile
-        self._workbook = Workbook(ffile)
+        self._workbook = Workbook(ffile, **kwargs)
 
     @property
     def workbook(self):
