@@ -77,7 +77,7 @@ class Section(SpreadsheetSection):
                 if rdcoords2d in self.writer.merged_cell_top_left_map:
 
                     rlo, rhi, clo, chi = self.writer.merged_cell_top_left_map[rdcoords2d]
-                    assert rlo, clo == rdcoords2d
+                    assert (rlo, clo) == rdcoords2d
                     self.writer.wtsheet.write_merge(
                         wtrowx, wtrowx + rhi - rlo - 1,
                         wtcolx, wtcolx + chi - clo - 1,
