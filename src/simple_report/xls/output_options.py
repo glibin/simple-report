@@ -5,4 +5,6 @@ XSL_OUTPUT_SETTINGS = [
     'portrait_orientation',
     'fit_width_to_pages',
     'fit_height_to_pages'
+    'header_str',
+    'footer_str'
 ]

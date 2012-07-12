@@ -80,6 +80,40 @@ class Workbook(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
+        self.configure_writer()
+
+    def configure_writer(self):
+        """
+        Настройка конфигураций writer-а
+        """
+
+        if hasattr(self, 'fit_num_pages'):
+            self.xlwt_writer.wtsheet.fit_num_pages = self.fit_num_pages
+
+        if hasattr(self, 'portrait_orientation'):
+            self.xlwt_writer.wtsheet.portrait = self.portrait_orientation
+
+        if hasattr(self, 'fit_width_to_pages'):
+            self.xlwt_writer.wtsheet.fit_width_to_pages = self.fit_width_to_pages
+
+        if hasattr(self, 'fit_height_to_pages'):
+            self.xlwt_writer.wtsheet.fit_height_to_pages = self.fit_height_to_pages
+        else:
+            # По-умолчанию, указываем значение 0, для того, чтобы не запихивать огромный отчет на одну страницу.
+            self.xlwt_writer.wtsheet.fit_height_to_pages = 0
+
+        if hasattr(self, 'header_str'):
+            self.xlwt_writer.wtsheet.header_str = self.header_str
+        else:
+            #
+            self.xlwt_writer.wtsheet.header_str = (u'')
+
+        if hasattr(self, 'footer_str'):
+            self.xlwt_writer.wtsheet.footer_str = self.footer_str
+        else:
+            #
+            self.xlwt_writer.wtsheet.footer_str = (u'&P из %s') % self.write_sheet_count()
+
     def get_section(self, name):
         return self._active_sheet.get_section(name)
 
@@ -106,6 +140,12 @@ class Workbook(object):
 
         try:
             self.xlwt_writer.sheet(self._active_sheet.sheet, self.get_sheet_name())
+            # Проставляем номер листа в выходном документе.
+            # Для этого берём номер соответствующего узла из шаблона и прибавляем 1, т.к.
+            # нумерация с нуля.
+            self.xlwt_writer.wtsheet.start_page_number = self.xlwt_writer.rdsheet.number + 1
+            # Настраиваем writer для работы с новым листом.
+            self.configure_writer()
         except ValueError:
             return
 
@@ -127,21 +167,6 @@ class Workbook(object):
 
         dest_file_name = dest_file.file
 
-        if hasattr(self, 'fit_num_pages'):
-            self.xlwt_writer.wtsheet.fit_num_pages = self.fit_num_pages
-
-        if hasattr(self, 'portrait_orientation'):
-            self.xlwt_writer.wtsheet.portrait = self.portrait_orientation
-
-        if hasattr(self, 'fit_width_to_pages'):
-            self.xlwt_writer.wtsheet.fit_width_to_pages = self.fit_width_to_pages
-
-        if hasattr(self, 'fit_height_to_pages'):
-            self.xlwt_writer.wtsheet.fit_height_to_pages = self.fit_height_to_pages
-        else:
-            # По-умолчанию, указываем значение 0, для того, чтобы не запихивать огромный отчет на одну страницу.
-            self.xlwt_writer.wtsheet.fit_height_to_pages = 0
-
         self.xlwt_writer.finish()
 
         # Получаем формат файла
@@ -156,3 +181,13 @@ class Workbook(object):
         # Для данного Workbook выбираем первый кортеж
         ouput_file, workbook = self.xlwt_writer.output[0]
         workbook.save(dest_file_name)
+
+    def write_sheet_count(self):
+        """
+        Подсчитываем количество листов в которых есть секции (другими словами в них будет производиться запись)
+        """
+
+        # Берём листы из шаблона
+        read_sheets = self.xlwt_writer.rdbook._sheet_list
+
+        return len([read_sheet for read_sheet in read_sheets if read_sheet.cell_note_map])
