@@ -13,12 +13,10 @@ class Wordprocessing(ReletionOpenXMLFile):
 
     """
     NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-    NS_V = 'urn:schemas-microsoft-com:vml'
 
-    XPATH_TEXT = '/{0}:document/{0}:body/{0}:p/{0}:r/{0}:t'
-    XPATH_TABLE = '/{0}:document/{0}:body/{0}:tbl/{0}:tr/{0}:tc/{0}:p/{0}:r/{0}:t'
-    XPATH_RECT = '/{0}:document/{0}:body/{0}:p/{0}:r/{0}:pict/{1}:rect/{1}:textbox/{0}:txbxContent/{0}:p/{0}:r/{0}:t'
-    XPATH_SHAPE = '/{0}:document/{0}:body/{0}:p/{0}:r/{0}:pict/{1}:shape/{1}:textbox/{0}:txbxContent/{0}:p/{0}:r/{0}:t'
+    # Узел контекста document
+    # .// рекурсивно спускаемся к потомкам в поисках <ns:p><ns:r><ns:t></ns:t></ns:r></ns:p>
+    XPATH_QUERY = './/{0}:p/{0}:r/{0}:t'
 
     def __init__(self, tags, *args, **kwargs):
         super(Wordprocessing, self).__init__(*args, **kwargs)
@@ -36,12 +34,8 @@ class Wordprocessing(ReletionOpenXMLFile):
     def set_params(self, params):
         """
         """
-        text_nodes = self._root.xpath(self.XPATH_TEXT.format('w'), namespaces={'w': self.NS_W})
-        text_nodes.extend(self._root.xpath(self.XPATH_TABLE.format('w'), namespaces={'w':self.NS_W}))
-        text_nodes.extend(self._root.xpath(self.XPATH_RECT.format('w', 'v'), namespaces={'w':self.NS_W,
-                                                                                                        'v':self.NS_V}))
-        text_nodes.extend(self._root.xpath(self.XPATH_SHAPE.format('w', 'v'), namespaces={'w':self.NS_W,
-                                                                                                        'v':self.NS_V}))
+
+        text_nodes = self._root.xpath(self.XPATH_QUERY.format('w'), namespaces={'w': self.NS_W})
 
         for node in text_nodes:
             for key_param, value in params.items():
@@ -54,12 +48,7 @@ class Wordprocessing(ReletionOpenXMLFile):
     def get_all_parameters(self):
         """
         """
-        text_nodes =self._root.xpath(self.XPATH_TEXT.format('w'), namespaces={'w': self.NS_W})
-        text_nodes.extend(self._root.xpath(self.XPATH_TABLE.format('w'), namespaces={'w':self.NS_W}))
-        text_nodes.extend(self._root.xpath(self.XPATH_RECT.format('w', 'v'), namespaces={'w': self.NS_W,
-                                                                                                       'v': self.NS_V}))
-        text_nodes.extend(self._root.xpath(self.XPATH_SHAPE.format('w', 'v'), namespaces={'w':self.NS_W,
-                                                                                                        'v':self.NS_V}))
+        text_nodes = self._root.xpath(self.XPATH_QUERY.format('w'), namespaces={'w':self.NS_W})
 
         for node in text_nodes:
             if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
