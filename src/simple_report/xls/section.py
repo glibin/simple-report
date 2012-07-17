@@ -24,8 +24,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
 
-        begin_column, begin_row = self.begin
-        end_column, end_row = self.end
+        begin_row, begin_column = self.begin
+        end_row, end_column = self.end
 
         current_col, current_row = self.calc_next_cursor(oriented=oriented)
 
