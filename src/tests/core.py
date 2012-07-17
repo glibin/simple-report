@@ -452,9 +452,9 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         self.assertEqual(section_last.sheet_data.cursor.row, ('A', 16))
         self.assertEqual(section_last.sheet_data.cursor.column, ('D', 15))
 
-class TestWrite(unittest.TestCase):
+class TestWriteXLSX(unittest.TestCase):
     """
-    Тестируем правильность вывода
+    Тестируем правильность вывода для XLSX
     """
 
     SUBDIR = 'linux'
@@ -529,6 +529,81 @@ class TestWrite(unittest.TestCase):
 
         return report.build(dst)
 
+class TestWriteXLS(unittest.TestCase):
+    """
+    Тестируем правильность вывода для XSL
+    """
+
+    SUBDIR = 'linux'
+
+    def setUp(self):
+        assert self.SUBDIR
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xls', )
+        self.dst_dir = self.src_dir
+
+        self.test_files = dict([(path, os.path.join(self.src_dir, path))
+        for path in os.listdir(self.src_dir) if path.startswith('test')])
+
+    def test_left_down(self, report=None):
+        if report is None:
+            return
+        for i in range(2):
+            section1 = report.get_section('Section1')
+            section1.flush({'section1': i}, oriented=Section.LEFT_DOWN)
+            self.assertEqual(section1.sheet.cursor.row, (0, 2*i + 2))
+            self.assertEqual(section1.sheet.cursor.column, (2, 2*i))
+
+    def test_left_down2(self, report=None):
+        if report is None:
+            return
+        for i in range(2):
+            section3 = report.get_section('Section3')
+            section3.flush({'section3': 100}, oriented=Section.LEFT_DOWN)
+            self.assertEqual(section3.sheet.cursor.row, (0, 2*i + 10))
+            self.assertEqual(section3.sheet.cursor.column, (2, 2*i + 8))
+
+    def test_right_up(self, report=None):
+        if report is None:
+            return
+        section1 = report.get_section('Section1')
+        section1.flush({'section1': 2}, oriented=Section.RIGHT_UP)
+        self.assertEqual(section1.sheet.cursor.row, (2, 2))
+        self.assertEqual(section1.sheet.cursor.column, (4, 1))
+
+    def test_vertical(self, report=None):
+        if report is None:
+            return
+        for i in range(3):
+            section2 = report.get_section('Section2')
+            section2.flush({'section2': i}, oriented=Section.VERTICAL)
+            self.assertEqual(section2.sheet.cursor.row, (2, 2*(i+1) + 2))
+            self.assertEqual(section2.sheet.cursor.column, (4, 2*(i+1)))
+
+    def test_horizontal(self, report=None):
+        if report is None:
+            return
+        for i in range(3):
+            section3 = report.get_section('Section3')
+            section3.flush({'section3': i}, oriented=Section.HORIZONTAL)
+            self.assertEqual(section3.sheet.cursor.row, (2, 8))
+            self.assertEqual(section3.sheet.cursor.column,
+                (6 + 2*i, 6))
+
+    def test_report_write(self):
+
+        src = self.test_files['test-report-output.xls']
+        dst = os.path.join(self.dst_dir, 'res-report-output.xls')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
+        self.test_left_down(report)
+        self.test_right_up(report)
+        self.test_vertical(report)
+        self.test_horizontal(report)
+        self.test_left_down2(report)
+
+        return report.build(dst)
 
 class TestReportFormatXLS(unittest.TestCase):
     """
@@ -565,6 +640,9 @@ class TestReportFormatXLS(unittest.TestCase):
         section2 = report.get_section('Section2')
         for i in range(10):
             section2.flush({'tag2': i})
+
+        for i in range(10):
+            section2.flush({'tag2': 10}, oriented=Section.HORIZONTAL)
 
         return report.build(dst)
 
@@ -642,7 +720,7 @@ class TestLinuxDOCX(unittest.TestCase):
 
     def test_picture_shape(self):
 
-        template_name = 'test_pict_shape.docx'
+        template_name = 'test_pict_shape_2.docx'
         path = self.test_files[template_name]
 
         res_file_name = 'res-pict_shape.docx'

@@ -39,4 +39,7 @@ class SheetDataException(SheetException):
     Ошибка данных.
     """
 
-
+class XLSReportWriteException(Exception):
+    """
+    Ошибка вывода в отчетах XLS
+    """

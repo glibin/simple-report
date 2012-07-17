@@ -1,38 +1,40 @@
 #coding: utf-8
 __author__ = 'prefer'
 
+from simple_report.core.cursor import AbstractCursor, AbstractCalculateNextCursor
+from simple_report.utils import ColumnHelper
 
-class Cursor(object):
+class Cursor(AbstractCursor):
+    """
+    Специализированный курсор для XLSX таблиц.
+    """
+
     def __init__(self, column=None, row=None, ):
+        super(Cursor, self).__init__()
         self._column = column or ('A', 1)
         self._row = row or ('A', 1)
 
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        return "row: %s - col: %s" % (self._row, self._column)
-
-    @property
-    def row(self):
-        return self._row
-
-    @row.setter
-    def row(self, value):
-        self._test_value(value)
-        self._row = value
-
-    @property
-    def column(self):
-        return self._column
-
-    @column.setter
-    def column(self, value):
-        self._test_value(value)
-        self._column = value
-
     def _test_value(self, value):
-        assert isinstance(value, tuple)
-        assert len(value) == 2 # Только два элемента: строка и колонка
+
+        super(Cursor, self)._test_value(value)
+
+        # Координаты в XLSX таблицах имеют вид
+        # (F, 3). F - имя стобла
+        #         3 - номер строки. Нумерация строк с 1
         assert isinstance(value[0], basestring)
-        assert isinstance(value[1], int)
+
+class CalculateNextCursor(AbstractCalculateNextCursor):
+    """
+    """
+
+    def get_next_column(self, current_col, end_col, begin_col):
+
+        return ColumnHelper.add(current_col, ColumnHelper.difference(end_col, begin_col) + 1)
+
+    def get_first_column(self):
+        # Колонки имеют строкое представление
+        return 'A'
+
+    def get_first_row(self):
+        # Строки имеют числовое представление и нумер. с единицы.
+        return 1

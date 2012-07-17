@@ -3,10 +3,13 @@
 import re
 import xlrd
 from xlwt.Style import default_style
+from simple_report.interface import ISpreadsheetSection
 
+from simple_report.core.exception import XLSReportWriteException
 from simple_report.core.spreadsheet_section import SpreadsheetSection
+from simple_report.xls.cursor import CalculateNextCursor
 
-class Section(SpreadsheetSection):
+class Section(SpreadsheetSection, ISpreadsheetSection):
     """
     Класс секции отчета в xls
     """
@@ -19,16 +22,19 @@ class Section(SpreadsheetSection):
 
         self.writer = writer
 
-    def flush(self, params):
+    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
 
-        wtrowx = self.sheet.wtrowx
+        begin_column, begin_row = self.begin
+        end_column, end_row = self.end
 
-        begin_row, begin_column = self.begin
-        end_row, end_column = self.end
+        current_col, current_row = self.calc_next_cursor(oriented=oriented)
 
         for rdrowx in range(begin_row, end_row + 1):
             for rdcolx in range(begin_column, end_column + 1):
-                wtcolx = rdcolx - begin_column
+
+                # Вычисляем координаты ячейки для записи.
+                wtcolx = current_col + rdcolx - begin_column
+                wtrowx = current_row + rdrowx - begin_row
 
                 try:
                     cell = self.writer.rdsheet.cell(rdrowx, rdcolx)
@@ -49,6 +55,7 @@ class Section(SpreadsheetSection):
                         if len(val.split('#')) == 2:
                             break
 
+                # Копирование всяких свойств из шаблона в результирующий отчет.
                 if wtcolx not in self.writer.wtcols and rdcolx in self.writer.rdsheet.colinfo_map:
                     rdcol = self.writer.rdsheet.colinfo_map[rdcolx]
                     wtcol = self.writer.wtsheet.col(wtcolx)
@@ -61,12 +68,12 @@ class Section(SpreadsheetSection):
                     wtcol.collapsed = rdcol.collapsed
 
                     self.writer.wtcols.add(wtcolx)
-
+                # Тип ячейки
                 cty = self.get_value_type(value=val, default_type=cell.ctype)
 
                 if cty == xlrd.XL_CELL_EMPTY:
                     continue
-
+                # XF - индексы
                 if cell.xf_index is not None:
                     style = self.writer.style_list[cell.xf_index]
                 else:
@@ -87,22 +94,25 @@ class Section(SpreadsheetSection):
                 if rdcoords2d in self.writer.merged_cell_already_set:
                     continue
 
-                wtrow = self.writer.wtsheet.row(wtrowx)
-                if cty == xlrd.XL_CELL_TEXT:
-                    wtrow.set_cell_text(wtcolx, val, style)
-                elif cty == xlrd.XL_CELL_NUMBER or cty == xlrd.XL_CELL_DATE:
-                    wtrow.set_cell_number(wtcolx, val, style)
-                elif cty == xlrd.XL_CELL_BLANK:
-                    wtrow.set_cell_blank(wtcolx, style)
-                elif cty == xlrd.XL_CELL_BOOLEAN:
-                    wtrow.set_cell_boolean(wtcolx, cell.value, style)
-                elif cty == xlrd.XL_CELL_ERROR:
-                    wtrow.set_cell_error(wtcolx, cell.value, style)
-                else:
-                    raise Exception
-            wtrowx += 1
+                self.write_result((wtcolx, wtrowx), val, style, cty)
 
-        self.sheet.wtrowx = wtrowx
+    def calc_next_cursor(self, oriented=ISpreadsheetSection.LEFT_DOWN):
+        """
+        Вычисляем следующее положение курсора.
+        """
+
+        begin_row, begin_column = self.begin
+        end_row, end_column = self.end
+
+        current_col, current_row = CalculateNextCursor().get_next_cursor(self.sheet.cursor, (begin_column, begin_row),
+                                                (end_column, end_row), oriented)
+
+        return current_col, current_row
+
+    #TODO реализовать для поддержки интерфейса ISpreadsheetSection
+    def get_all_parameters(self):
+        """
+        """
 
     def get_value_type(self, value, default_type=xlrd.XL_CELL_TEXT):
         """
@@ -116,3 +126,27 @@ class Section(SpreadsheetSection):
             cty = default_type
 
         return cty
+
+    def write_result(self, write_coords, value, style, cell_type):
+        """
+        Выводим в ячейку с координатами write_coords значение value.
+        Стиль вывода определяется параметров style
+        cty - тип ячейки
+        """
+
+        wtcolx, wtrowx = write_coords
+
+        # Вывод
+        wtrow = self.writer.wtsheet.row(wtrowx)
+        if cell_type == xlrd.XL_CELL_TEXT:
+            wtrow.set_cell_text(wtcolx, value, style)
+        elif cell_type == xlrd.XL_CELL_NUMBER or cell_type == xlrd.XL_CELL_DATE:
+            wtrow.set_cell_number(wtcolx, value, style)
+        elif cell_type == xlrd.XL_CELL_BLANK:
+            wtrow.set_cell_blank(wtcolx, style)
+        elif cell_type == xlrd.XL_CELL_BOOLEAN:
+            wtrow.set_cell_boolean(wtcolx, value, style)
+        elif cell_type == xlrd.XL_CELL_ERROR:
+            wtrow.set_cell_error(wtcolx, value, style)
+        else:
+            raise XLSReportWriteException

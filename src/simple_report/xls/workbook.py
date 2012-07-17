@@ -6,6 +6,7 @@ from xlrd.sheet import Sheet
 from xlutils.filter import XLWTWriter
 from simple_report.core.exception import SheetNotFoundException, SectionNotFoundException
 from simple_report.xls.section import Section
+from simple_report.xls.cursor import Cursor
 from simple_report.converter.abstract import FileConverter
 
 
@@ -16,7 +17,7 @@ class WorkbookSheet():
 
         self.sheet = sheet
         self.writer = writer
-        self.wtrowx = 0
+        self.cursor = Cursor()
         self.sections = {}
 
     def get_section(self, name):
@@ -43,7 +44,22 @@ class WorkbookSheet():
                     end = note_coord
 
                 elif note_text in u''.join([begin_section_text, end_section_text]):
-                    begin = end = note_coord
+                    # Является ли данная ячейка смерженной.
+                    row_coord, column_coord = note_coord
+                    for merged_cell in self.sheet.merged_cells:
+                        # Смерженная ячейка представленна в виде списка из 4 элементов
+                        # (clo, rlo) - координаты левой верхней ячейки данной смерженной ячейки
+                        # chi - количество колонок в смерженной ячейке
+                        # rli - количество строк в смерженной ячейке
+                        rlo, rhi, clo, chi = merged_cell
+                        if column_coord == clo and row_coord == rlo:
+                            # Сохраняем начало и конец смерженной ячейки
+                            begin = (clo, rlo)
+                            end = (chi - 1, rhi - 1)
+                            break
+
+                    if not (begin and end):
+                        begin = end = note_coord
 
             if not (begin and end):
                 raise SectionNotFoundException('Section named %s has not been found' % name)

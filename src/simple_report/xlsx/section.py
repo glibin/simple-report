@@ -12,6 +12,7 @@ from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
 from simple_report.xlsx.cursor import Cursor
 from simple_report.core.spreadsheet_section import SpreadsheetSection
 from simple_report.core.exception import SheetDataException
+from simple_report.xlsx.cursor import CalculateNextCursor
 
 __author__ = 'prefer'
 
@@ -217,7 +218,6 @@ class SheetData(object):
             count_merge_cells = len(self.write_merge_cell)
             self.write_merge_cell.set('count', str(count_merge_cells))
 
-
     def _find_rows(self, range_rows):
         """
 
@@ -271,7 +271,6 @@ class SheetData(object):
         else:
             return []
 
-
     def find_all_parameters(self, begin, end):
         """
 
@@ -281,7 +280,6 @@ class SheetData(object):
             for j, col, cell in self._find_cells(range_cols, num_row, row):
                 for param in self._get_params(cell):
                     yield param
-
 
     def _get_tag_formula(self, cell):
         """
@@ -681,34 +679,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         begin_col, begin_row = self.begin
         end_col, end_row = self.sheet_data.get_cell_end(self.end)
 
-        # если это первый вывод
-        if self.sheet_data.cursor.row == self.sheet_data.cursor.column:
-            current_col, current_row = self.sheet_data.cursor.row
-            # вычислим следующую строку
-            cursor.row = ('A', current_row + end_row - begin_row + 1)
-            cursor.column = (ColumnHelper.add(current_col,
-                ColumnHelper.difference(end_col, begin_col) + 1), current_row)
-        else:
-            if oriented == Section.LEFT_DOWN:
-                current_col, current_row = 'A', self.sheet_data.cursor.row[1]
-                # вычислим следующую строку
-                cursor.row = ('A', current_row + end_row - begin_row + 1)
-                cursor.column = (ColumnHelper.add(current_col,
-                    ColumnHelper.difference(end_col, begin_col) + 1), current_row)
-            elif oriented == Section.HORIZONTAL:
-                current_col, current_row = self.sheet_data.cursor.column
-                cursor.column = (ColumnHelper.add(current_col,
-                    ColumnHelper.difference(end_col, begin_col) + 1), current_row)
-            elif oriented == Section.RIGHT_UP:
-                current_col, current_row = self.sheet_data.cursor.column[0], 1
-                cursor.row = (current_col, current_row + end_row - begin_row + 1)
-                cursor.column = (ColumnHelper.add(current_col,
-                    ColumnHelper.difference(end_col, begin_col) + 1), 1)
-            else:
-                current_col, current_row = self.sheet_data.cursor.row
-                cursor.column = (ColumnHelper.add(current_col,
-                    ColumnHelper.difference(end_col, begin_col) + 1), current_row)
-                cursor.row = (current_col, current_row + end_row - begin_row + 1)
+        current_col, current_row = CalculateNextCursor().get_next_cursor(cursor, (begin_col, begin_row),
+                    (end_col, end_row), oriented)
 
         self.sheet_data.last_section.row = (current_col, current_row)
         self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
