@@ -25,7 +25,7 @@ from simple_report.report import (SpreadsheetReport, ReportGeneratorException, D
                                   )
 from simple_report.xls.document import DocumentXLS
 from simple_report.converter.abstract import FileConverter
-from simple_report.utils import ColumnHelper
+from simple_report.utils import ColumnHelper, date_to_float
 
 
 class TestXLSX(object):
@@ -769,6 +769,30 @@ class TestLinuxDOCX(unittest.TestCase):
         report.build(dst, params)
 
         self.assertEqual(os.path.exists(dst), True)
+
+
+class TestUtils(unittest.TestCase):
+    def test_date_to_float(self):
+        """
+        Тест преобразования даты в число
+        """
+        date_float = date_to_float(datetime(1899, 12, 30))
+        self.assertEqual(date_float, 0)
+
+        date_float = date_to_float(datetime(1899, 12, 31))
+        self.assertEqual(date_float, 1)
+
+        date_float = date_to_float(datetime(1899, 12, 29))
+        self.assertEqual(date_float, 1)
+
+        date_float = date_to_float(datetime(1899, 12, 29, 6))
+        self.assertEqual(date_float, 1.25)
+
+        date_float = date_to_float(datetime(1900, 1, 1))
+        self.assertEqual(date_float, 2)
+
+        date_float = date_to_float(datetime(1900, 1, 1, 6))
+        self.assertEqual(date_float, 2.25)
 
 if __name__ == '__main__':
     unittest.main()
