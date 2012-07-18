@@ -1,0 +1,695 @@
+# coding: utf-8
+
+import copy
+from datetime import datetime
+from decimal import Decimal
+import re
+from lxml.etree import QName, SubElement
+from simple_report.core.shared_table import SharedStringsTable
+from simple_report.core.tags import TemplateTags
+from simple_report.interface import ISpreadsheetSection
+from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
+from simple_report.xlsx.cursor import Cursor
+from simple_report.core.spreadsheet_section import SpreadsheetSection
+from simple_report.core.exception import SheetDataException
+from simple_report.xlsx.cursor import CalculateNextCursor
+
+__author__ = 'prefer'
+
+
+class SheetData(object):
+    u"""
+    self.read_data:
+        <sheetData>
+            <row collapsed="false" customFormat="false" customHeight="false" hidden="false" ht="12.8" outlineLevel="0" r="5">
+                <c r="C5" s="1" t="s">
+                    <v>0</v>
+                </c>
+                <c r="D5" s="1"/>
+                <c r="E5" s="1"/>
+            </row>
+            <row collapsed="false" customFormat="false" customHeight="false" hidden="false" ht="12.8" outlineLevel="0" r="6">
+                <c r="C6" s="0" t="s">
+                    <v>1</v>
+                </c>
+            </row>
+        </sheetData>
+
+    self.read_dimension:
+        <dimension ref="B5:I10"/>
+
+    self.read_merge_cell:
+        <mergeCells count="1">
+            <mergeCell ref="C5:E5"/>
+        </mergeCells>
+
+    Данные для подобных write атрибутов должны быть такой же структуры
+    """
+
+    XPATH_TEMPLATE_ROW = '*[@r="%d"]'
+    XPATH_TEMPLATE_CELL = '*[@r="%s"]'
+
+    PREFIX_TAG = '%'
+
+    FIND_PARAMS = re.compile('#\w+#')
+    FIND_TEMPLATE_TAGS = re.compile('#{0}\w+{0}#'.format(PREFIX_TAG))
+
+    def __init__(self, sheet_xml, tags, cursor, ns, shared_table):
+        # namespace
+        self.ns = ns
+
+        # Шаблонные теги
+        assert isinstance(tags, TemplateTags)
+        self.tags = tags
+
+        assert isinstance(cursor, Cursor)
+        self._cursor = cursor
+
+        self._last_section = Cursor()
+
+        assert isinstance(shared_table, SharedStringsTable)
+        self.shared_table = shared_table
+
+        self._read_xml = sheet_xml
+
+        self.read_data = sheet_xml.find(QName(self.ns, 'sheetData'))
+        if self.read_data is None:
+            self.read_data = []
+
+        self.read_dimension = sheet_xml.find(QName(self.ns, 'dimension'))
+        if self.read_dimension is None:
+            self.read_dimension = []
+
+        self.read_merge_cell = sheet_xml.find(QName(self.ns, 'mergeCells'))
+        if self.read_merge_cell is None:
+            self.read_merge_cell = []
+
+        # Строчные разделители страниц
+        self.read_rowbreaks = self._read_xml.find(QName(self.ns, 'rowBreaks'))
+
+        # Колоночные разделители страниц
+        self.read_colbreaks = self._read_xml.find(QName(self.ns, 'colBreaks'))
+
+        self._write_xml = copy.deepcopy(sheet_xml)
+
+        # Ссылка на тег данных строк и столбцов листа с очищенными значениями
+        self.write_data = self._write_xml.find(QName(self.ns, 'sheetData'))
+        if not self.write_data is None:
+            self.write_data.clear()
+
+        # Ссылка на размеры листа
+        self.write_dimension = self._write_xml.find(QName(self.ns, 'dimension'))
+
+        # Ссылка на объединенные ячейки листа с очищенными значениями
+        self.write_merge_cell = self._write_xml.find(QName(self.ns, 'mergeCells'))
+        if self.write_merge_cell is not None:
+            self.write_merge_cell.clear()
+
+        # Ссылка на ширины столбцов
+        self.write_cols = self._write_xml.find(QName(self.ns, 'cols'))
+#        if self.write_cols is None:
+#            self.write_cols = SubElement(self._write_xml, 'cols', attrib={})
+
+        # Строчные разделители страниц
+        self.write_rowbreaks = self._write_xml.find(QName(self.ns, 'rowBreaks'))
+        # очистим, т.к. будем заполнять при копировании
+        if self.write_rowbreaks is None:
+            self.write_rowbreaks = SubElement(self._write_xml, 'rowBreaks', attrib={"count":"0", "manualBreakCount":"0"})
+        else:
+            self.write_rowbreaks.clear()
+            self.write_rowbreaks.set("count", "0")
+            self.write_rowbreaks.set("manualBreakCount", "0")
+
+        # Колоночные разделители страниц
+        self.write_colbreaks = self._write_xml.find(QName(self.ns, 'colBreaks'))
+        # очистим, т.к. будем заполнять при копировании
+        if self.write_colbreaks is None:
+            self.write_colbreaks = SubElement(self._write_xml, 'colBreaks', attrib={"count":"0", "manualBreakCount":"0"})
+        else:
+            self.write_colbreaks.clear()
+            self.write_colbreaks.set("count", "0")
+            self.write_colbreaks.set("manualBreakCount", "0")
+
+    @property
+    def cursor(self):
+        return self._cursor
+
+    @cursor.setter
+    def cursor(self, value):
+        assert isinstance(value, Cursor)
+        self._cursor = value
+
+    @property
+    def last_section(self):
+        return self._last_section
+
+    @last_section.setter
+    def last_section(self, value):
+        assert isinstance(value, Cursor)
+        self._last_section = value
+
+    def flush(self, begin, end, start_cell, params):
+        """
+        Вывод секции
+        @param begin: Начало секции, пример ('A', 1)
+        @param end: Конец секции, пример ('E', 6)
+        @param start_cell: ячейка с которой надо выводить
+        @param params: данные для вывода
+        """
+        self.set_section(begin, end, start_cell, params)
+        self.set_merge_cells(begin, end, start_cell)
+        self.set_dimension()
+
+        if self.write_cols is not None:
+            self.set_columns_width(begin, end, start_cell)
+
+        self.set_pagebreaks(begin, end, start_cell)
+
+    def set_dimension(self):
+        """
+        """
+        _, row_index = self.cursor.row
+        col_index, _ = self.cursor.column
+
+        dimension = 'A1:%s' %\
+                    (ColumnHelper.add(col_index, -1) + str(row_index - 1))
+
+        self.write_dimension.set('ref', dimension)
+
+    def _get_merge_cells(self):
+        for cell in self.read_merge_cell:
+            yield cell.attrib['ref'].split(':')
+
+    def set_merge_cells(self, section_begin, section_end, start_cell):
+        """
+        """
+
+        def cell_dimensions(section, merge_cell, start_cell):
+            """
+            """
+
+            section_begin_col, section_begin_row = section
+
+            start_col, start_row = start_cell
+
+            begin_col, begin_row = merge_cell
+
+            new_begin_row = start_row + begin_row - section_begin_row
+            new_begin_col = ColumnHelper.add(start_col, ColumnHelper.difference(begin_col, section_begin_col))
+
+            return new_begin_col + str(new_begin_row)
+
+        range_rows, range_cols = self._range(section_begin, section_end)
+
+        for begin, end in self._get_merge_cells():
+            begin_col, begin_row = get_addr_cell(begin)
+            end_col, end_row = get_addr_cell(end)
+
+            # Если объединяемый диапазон лежит внутри секции
+            if (begin_col in range_cols and end_col in range_cols and
+                begin_row in range_rows and end_row in range_rows):
+                begin_merge = cell_dimensions(section_begin, (begin_col, begin_row), start_cell)
+                end_merge = cell_dimensions(section_begin, (end_col, end_row), start_cell)
+
+                attrib = {'ref': ':'.join((begin_merge, end_merge))}
+                SubElement(self.write_merge_cell, 'mergeCell', attrib)
+
+        if self.write_merge_cell is not None:
+            count_merge_cells = len(self.write_merge_cell)
+            self.write_merge_cell.set('count', str(count_merge_cells))
+
+    def _find_rows(self, range_rows):
+        """
+
+        """
+        for i, num_row in enumerate(range_rows):
+            row = self.read_data.find(self.XPATH_TEMPLATE_ROW % num_row)
+            if not row is None:
+                yield i, num_row, row
+
+    def _find_cells(self, range_cols, num_row, row):
+        """
+
+        """
+        for j, col in enumerate(range_cols):
+            cell = row.find(self.XPATH_TEMPLATE_CELL % (col + str(num_row)))
+            if not cell is None:
+                yield j, col, cell
+
+
+    def _get_tag_value(self, cell):
+        """
+
+        """
+        return cell.find(QName(self.ns, 'v'))
+
+    def _get_params(self, cell):
+        """
+
+        """
+        value = self._get_tag_value(cell)
+
+        if not value is None and cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+            index_value = int(value.text)
+            value_string = self.shared_table.get_value(index_value)
+
+            return self._get_values_by_re(value_string, self.FIND_PARAMS)
+        else:
+            return []
+
+    def _get_values_by_re(self, value_string, what_found=None):
+        """
+        """
+        if what_found is None:
+            # Если значение поиска неопределено выводим поиск для всех параметров
+            return self._get_values_by_re(value_string, self.FIND_PARAMS) +\
+                   self._get_values_by_re(value_string, self.FIND_TEMPLATE_TAGS)
+
+        who_found_params = what_found.findall(value_string)
+        if who_found_params is not None:
+            return [found_param for found_param in who_found_params]
+        else:
+            return []
+
+    def find_all_parameters(self, begin, end):
+        """
+
+        """
+        range_rows, range_cols = self._range(begin, end)
+        for i, num_row, row in self._find_rows(range_rows):
+            for j, col, cell in self._find_cells(range_cols, num_row, row):
+                for param in self._get_params(cell):
+                    yield param
+
+    def _get_tag_formula(self, cell):
+        """
+        """
+        return cell.find(QName(self.ns, 'f'))
+
+    def _create_or_get_output_row(self, row_index, attrib_row):
+        # найдем существующую строку в результирующих данных
+        row_el = self.write_data.find(self.XPATH_TEMPLATE_ROW % row_index)
+        if row_el is None:
+            # если не нашли - создадим
+            row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
+        return row_el
+
+    def _create_or_get_output_cell(self, row_el, cell_index, attrib_cell):
+        # найдем существующую ячейку в строке
+        cell_el = row_el.find(self.XPATH_TEMPLATE_CELL % cell_index)
+        if cell_el is None:
+            # если не нашли - создадим
+            cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
+        return cell_el
+
+    def set_section(self, begin, end, start_cell, params):
+        """
+
+        """
+        range_rows, range_cols = self._range(begin, end)
+        start_column, start_row = start_cell
+
+        for i, num_row, row in self._find_rows(range_rows):
+            attrib_row = dict(row.items())
+
+            row_index = start_row + i
+            attrib_row['r'] = str(row_index)
+
+            row_el = self._create_or_get_output_row(row_index, attrib_row)
+
+            for j, col, cell in self._find_cells(range_cols, num_row, row):
+                attrib_cell = dict(cell.items())
+
+                col_index = ColumnHelper.add(start_column, j)
+
+                attrib_cell['r'] = col_index + str(row_index)
+
+                cell_el = self._create_or_get_output_cell(row_el, col_index + str(row_index), attrib_cell)
+
+                # Перенос формул
+                formula = self._get_tag_formula(cell)
+                if formula is not None:
+                    formula_el = SubElement(cell_el, 'f')
+                    formula_el.text = formula.text
+
+                    # Если есть формула, то значение является вычисляемым параметром и не сильно интересует
+                    continue
+
+                value = self._get_tag_value(cell)
+                if not value is  None:
+                    value_el = SubElement(cell_el, 'v')
+
+                    if attrib_cell.get('t') in ('n', None): # number
+
+                        value_el.text = value.text
+
+                    elif attrib_cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+
+                        index_value = int(value.text)
+                        value_string = self.shared_table.get_value(index_value)
+
+                        who_found_params = self._get_values_by_re(value_string)
+
+                        is_int = False
+                        if who_found_params:
+                            for found_param in who_found_params:
+                                param_name = found_param[1:-1]
+
+                                param_value = params.get(param_name)
+
+                                # Находим теги шаблонов, если есть таковые
+                                if param_name[0] == self.PREFIX_TAG and param_name[-1] == self.PREFIX_TAG:
+                                    param_value = self.tags.get(param_name[1:-1])
+
+                                if isinstance(param_value, datetime) and found_param == value_string:
+                                    # В OpenXML хранится дата относительно 1900 года
+                                    days = date_to_float(param_value)
+                                    if days > 0:
+                                        # Дата конвертируется в int, начиная с 31.12.1899
+                                        is_int = True
+                                        cell_el.attrib['t'] = 'n' # type - number
+                                        value_el.text = unicode(days)
+                                    else:
+                                        date_less_1900 = '%s.%s.%s' % (param_value.date().day,
+                                                                       param_value.date().month, param_value.date().year
+                                                                       ,)
+                                        # strftime(param_value, locale.nl_langinfo(locale.D_FMT)) - неработает для 1900 и ниже
+                                        value_string = value_string.replace(found_param, unicode(date_less_1900))
+
+
+                                elif isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
+                                    # В первую очередь добавляем числовые значения
+                                    is_int = True
+
+                                    cell_el.attrib['t'] = 'n' # type - number
+                                    value_el.text = unicode(param_value)
+
+                                elif param_value:
+                                    # Строковые параметры
+
+                                    value_string = value_string.replace(found_param, unicode(param_value))
+
+                                else:
+                                    # Не передано значение параметра
+                                    value_string = value_string.replace(found_param, '')
+
+                            if not is_int:
+                                # Добавим данные в shared strings
+
+                                new_index = self.shared_table.get_new_index(value_string)
+                                value_el.text = new_index
+
+                        else:
+                            # Параметры в поле не найдены
+
+                            index = self.shared_table.get_new_index(value_string)
+                            value_el.text = index
+
+                    elif attrib_cell.get('t'):
+                        raise SheetDataException("Unknown value '%s' for tag t" % attrib_cell.get('t'))
+
+    def _range(self, begin, end):
+        """
+        """
+
+        # Если есть объединенная ячейка, и она попадает на конец секции, то адресс конца секции записывается как конец
+        # объединенной ячейки
+        end = self.get_cell_end(end)
+
+        rows = begin[1], end[1] + 1
+        cols = begin[0], end[0]
+
+        range_rows = xrange(*rows)
+        range_cols = list(ColumnHelper.get_range(*cols))
+
+        return range_rows, range_cols
+
+    def _addr_in_range(self, addr, begin, end):
+        """
+        Проверяет, попадает ли адрес в диапазон
+        """
+        col, row = addr
+        rows = xrange(begin[1], end[1]+1)
+        cols = list(ColumnHelper.get_range(begin[0], end[0]))
+        return all([col in cols, row in rows])
+
+    def get_cell_end(self, cell_addr):
+        """
+        Получение (правого нижнего) конца ячейки
+        """
+        cell_end = cell_addr
+        # Если указанный адрес пападает в объединенную ячейку, то адресс конца ячейки указывается как конец
+        # объединенной ячейки
+        for begin_merge, end_merge in self._get_merge_cells():
+            begin_addr = get_addr_cell(begin_merge)
+            end_addr = get_addr_cell(end_merge)
+            if self._addr_in_range(cell_addr, begin_addr, end_addr):
+                cell_end = end_addr
+                break
+        return cell_end
+
+    def new_sheet(self):
+        """
+        """
+
+        if self.write_merge_cell is not None:
+            childs = self.write_merge_cell.getchildren()
+            if not childs:
+                self._write_xml.remove(self.write_merge_cell)
+
+        if self.write_cols is not None and not self.write_cols.getchildren():
+            self._write_xml.remove(self.write_cols)
+
+        # если небыло разделителей страниц, то удалим раздел
+        if not self.write_colbreaks.getchildren():
+            self._write_xml.remove(self.write_colbreaks)
+        if not self.write_rowbreaks.getchildren():
+            self._write_xml.remove(self.write_rowbreaks)
+
+        return self._write_xml
+
+    def _create_or_get_output_col(self, col_index, attrib_col=None):
+        """
+        Найдем существующую колонку в результирующих данных
+        Если не передали начальные данные, то колонка не создается если не найдена,
+        """
+        # найдем интервал, в который попадаем искомый индекс
+        col_index = ColumnHelper.column_to_number(col_index)+1
+        col_el = None
+        for col in self.write_cols.getchildren():
+            begin_col = int(col.attrib['min'])
+            end_col = int(col.attrib['max'])
+            if begin_col <= col_index <= end_col:
+                col_el = col
+                break
+
+        if col_el is None:
+            # если не нашли - создадим
+            if attrib_col is None:
+                return None
+            attrib_col["min"] = str(col_index)
+            attrib_col["max"] = str(col_index)
+            col_el = SubElement(self.write_cols, 'col', attrib=attrib_col)
+        return col_el
+
+    def _set_new_column_width(self, col_index, src_col, dst_col):
+        """
+        Установка новой ширины колонки
+        Особенность в том, что нужно разбивать интервалы, если потребуется
+        """
+        col_index = ColumnHelper.column_to_number(col_index)+1
+        # если ширина колонок отличается и колонка-приемник является интервалом,
+        # то нужно разбить интервал на части с разной шириной колонок
+        if dst_col.attrib["width"] != src_col.attrib["width"]:
+            begin_col = int(dst_col.attrib['min'])
+            end_col = int(dst_col.attrib['max'])
+            # если задано интервалом, то будем разбивать
+            if end_col-begin_col > 0:
+                if col_index > begin_col:
+                    # предыдущий интервал: max = col-1
+                    prev_attrib_col = dict(dst_col.items())
+                    prev_attrib_col['max'] = str(col_index-1)
+                    prev_col_el = SubElement(self.write_cols, 'col', attrib=prev_attrib_col)
+
+                if col_index < end_col:
+                    # следующий интервал: min = col+1
+                    next_attrib_col = dict(dst_col.items())
+                    next_attrib_col["min"] = str(col_index+1)
+                    next_col_el = SubElement(self.write_cols, 'col', attrib=next_attrib_col)
+
+                # интервал для текущей колонки: min = max = col
+                dst_col.attrib["min"] = str(col_index)
+                dst_col.attrib["max"] = str(col_index)
+
+            dst_col.attrib["width"] = src_col.attrib["width"]
+
+    def set_columns_width(self, begin, end, start_cell):
+        """
+        Копирование ширины колонок
+        @param begin: начало секции, пример ('A', 1)
+        @param end: конец секции, пример ('E', 6)
+        @param start_cell: ячейка с которой выводилась секция
+        """
+        # определим интервал столбцов из которых надо взять ширину
+        end = self.get_cell_end(end)
+        cols = list(ColumnHelper.get_range(begin[0], end[0]))
+
+        # определим интервал столбцов, начинаемый со столбца начальной ячейки, куда надо прописать ширину
+        end_col = ColumnHelper.add(start_cell[0], ColumnHelper.difference(end[0], begin[0]))
+        new_cols = list(ColumnHelper.get_range(start_cell[0], end_col))
+
+        # запишем ширину столбцов в интервал
+        for index, src_col in enumerate(cols):
+            dst_col = new_cols[index]
+            src_col_el = self._create_or_get_output_col(src_col)
+            # если нет исходной колонки, то не надо копировать
+            if not src_col_el is None:
+                # копируем данные
+                attrib_col = dict(src_col_el.items())
+                dst_col_el = self._create_or_get_output_col(dst_col, attrib_col)
+                # записываем в новую колонку
+                self._set_new_column_width(dst_col, src_col_el, dst_col_el)
+
+    def get_rowbreaks(self):
+        breaks = [elem.attrib['id'] for elem in self.write_rowbreaks.getchildren()]
+        return tuple(breaks)
+
+    def get_colbreaks(self):
+        breaks = [elem.attrib['id'] for elem in self.write_colbreaks.getchildren()]
+        return tuple(breaks)
+
+
+    def _set_colpagebreaks(self, colbreaks_list):
+        """
+        Добавление разделителей страниц по колонкам
+        """
+        # добавим разделители
+        for new_col_index in colbreaks_list:
+            # проверим что такого разделителя еще нет
+            found = False
+            for elem in self.write_colbreaks.getchildren():
+                index = int(elem.attrib['id'])
+                if index == new_col_index:
+                    found = True
+                    break
+            # добавим
+            if not found:
+                col_break_attr = {'id': str(new_col_index), 'max': '1048575', 'man':'1'}
+                elem = SubElement(self.write_colbreaks, 'brk', attrib=col_break_attr)
+                count = int(self.write_colbreaks.get('count', 0))
+                man_count = int(self.write_colbreaks.get('manualBreakCount', 0))
+                self.write_colbreaks.attrib['count'] = str(count+1)
+                self.write_colbreaks.attrib['manualBreakCount'] = str(man_count+1)
+
+    def _set_rowpagebreaks(self, rowbreaks_list):
+        """
+        Добавление разделителей страниц по строкам
+        """
+        # добавим разделители
+        for new_row_index in rowbreaks_list:
+            # проверим что такого разделителя еще нет
+            found = False
+            for elem in self.write_rowbreaks.getchildren():
+                index = int(elem.attrib['id'])
+                if index == new_row_index:
+                    found = True
+                    break
+                    # добавим
+            if not found:
+                row_break_attr = {'id': str(new_row_index), 'max': '16383', 'man':'1'}
+                elem = SubElement(self.write_rowbreaks, 'brk', attrib=row_break_attr)
+                count = int(self.write_rowbreaks.get('count', 0))
+                man_count = int(self.write_rowbreaks.get('manualBreakCount', 0))
+                self.write_rowbreaks.attrib['count'] = str(count+1)
+                self.write_rowbreaks.attrib['manualBreakCount'] = str(man_count+1)
+
+    def set_pagebreaks(self, begin, end, start_cell):
+        """
+        Копирование разделителей страниц
+        @param begin: начало секции, пример ('A', 1)
+        @param end: конец секции, пример ('E', 6)
+        @param start_cell: ячейка с которой выводилась секция
+        """
+        # определим интервал столбцов и колонок из которых надо взять разделители
+        end = self.get_cell_end(end)
+        begin_col = ColumnHelper.column_to_number(begin[0])
+        end_col = ColumnHelper.column_to_number(end[0])
+        begin_row = int(begin[1])
+        end_row = int(end[1])
+        # определим интервал столбцов и колонок, начинаемый с начальной ячейки, куда надо добавить разделители
+        new_begin_col = ColumnHelper.column_to_number(start_cell[0])
+        new_begin_row = int(start_cell[1])
+        # вытащим смещение индексов столбцов у которых есть разделители и которые попали в этот интервал
+        colbreaks = []
+        if self.read_colbreaks is not None:
+            for elem in self.read_colbreaks.getchildren():
+                col_index = int(elem.attrib['id'])
+                if begin_col <= col_index-1 <= end_col:
+                    colbreaks.append(col_index-begin_col+new_begin_col)
+
+        self._set_colpagebreaks(colbreaks)
+
+        # вытащим смещение индексов строк у которых есть разделители и которые попали в этот интервал
+        rowbreaks = []
+        if self.read_rowbreaks is not None:
+            for elem in self.read_rowbreaks.getchildren():
+                row_index = int(elem.attrib['id'])
+                if begin_row <= row_index <= end_row:
+                    rowbreaks.append(row_index-begin_row+new_begin_row)
+
+        self._set_rowpagebreaks(rowbreaks)
+
+class Section(SpreadsheetSection, ISpreadsheetSection):
+    """
+    """
+
+    def __init__(self, sheet_data, name, begin=None, end=None):
+        """
+        @param sheet_data: Данные листа
+        @param name: Название секции
+        @param begin: Начало секции, пример ('A', 1)
+        @param end: Конец секции, пример ('E', 6)
+        """
+        super(Section, self).__init__(sheet_data, name, begin, end)
+
+        # Ссылка на курсор листа. Метод flush вставляет данные относительно курсора
+        # и меняет его местоположение
+        assert isinstance(sheet_data, SheetData)
+        self.sheet_data = sheet_data
+
+    def __str__(self):
+        return 'Section "{0} - ({1},{2}) \n\t sheet_data - {3}" '.format(
+            self.name, self.begin, self.end, self.sheet_data)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
+        """
+        """
+        assert isinstance(params, dict)
+        assert oriented in (Section.VERTICAL, Section.HORIZONTAL, Section.LEFT_DOWN, Section.RIGHT_UP)
+
+        # Тут смещение курсора, копирование данных из листа и общих строк
+        # Генерация новых данных и новых общих строк
+
+        cursor = self.sheet_data.cursor
+
+        begin_col, begin_row = self.begin
+        end_col, end_row = self.sheet_data.get_cell_end(self.end)
+
+        current_col, current_row = CalculateNextCursor().get_next_cursor(cursor, (begin_col, begin_row),
+                    (end_col, end_row), oriented)
+
+        self.sheet_data.last_section.row = (current_col, current_row)
+        self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
+            ColumnHelper.difference(end_col, begin_col) ), current_row + end_row - begin_row)
+
+        self.sheet_data.flush(self.begin, self.end, (current_col, current_row), params)
+
+    def get_all_parameters(self):
+        u"""
+        Возвращает все параметры секции
+        """
+        return self.sheet_data.find_all_parameters(self.begin, self.end)
