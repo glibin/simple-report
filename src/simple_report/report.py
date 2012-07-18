@@ -30,11 +30,11 @@ class Report(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, src_file, converter=None, tags=None, wrapper = None, type = None, **kwargs):
+    def __init__(self, src_file, converter=None, tags=None, wrapper = None, file_type = None, **kwargs):
         """
         """
 
-        self.TYPE = type
+        self.TYPE = file_type
 
         self.tags = tags or TemplateTags()
         assert isinstance(self.tags, TemplateTags)
@@ -90,12 +90,12 @@ class Report(object):
 class DocumentReport(Report, IDocumentReport):
     #
 
-    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentDOCX, type=FileConverter.DOCX):
+    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentDOCX, file_type=FileConverter.DOCX):
 
         assert issubclass(wrapper, DocumentDOCX)
-        assert (type == FileConverter.DOCX)
+        assert (file_type == FileConverter.DOCX)
 
-        super(DocumentReport, self).__init__(src_file, converter, tags, wrapper, type)
+        super(DocumentReport, self).__init__(src_file, converter, tags, wrapper, file_type)
 
     def build(self, dst_file_path, params, file_type=FileConverter.DOCX):
         u"""
@@ -113,12 +113,12 @@ class DocumentReport(Report, IDocumentReport):
 
 class SpreadsheetReport(Report, ISpreadsheetReport):
 
-    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX, **kwargs):
+    def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, file_type=FileConverter.XLSX, **kwargs):
 
         assert issubclass(wrapper, DocumentXLSX) or issubclass(wrapper, DocumentXLS)
-        assert (type == FileConverter.XLSX) or (type == FileConverter.XLS)
+        assert (file_type == FileConverter.XLSX) or (file_type == FileConverter.XLS)
 
-        super(SpreadsheetReport, self).__init__(src_file, converter, tags, wrapper, type, **kwargs)
+        super(SpreadsheetReport, self).__init__(src_file, converter, tags, wrapper, file_type, **kwargs)
 
     @property
     def sections(self):
