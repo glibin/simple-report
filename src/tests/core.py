@@ -596,7 +596,7 @@ class TestWriteXLS(unittest.TestCase):
         if os.path.exists(dst):
             os.remove(dst)
 
-        report = SpreadsheetReport(src, wrapper=DocumentXLS, file_type=FileConverter.XLS)
+        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
         self.test_left_down(report)
         self.test_right_up(report)
         self.test_vertical(report)
@@ -630,7 +630,7 @@ class TestReportFormatXLS(unittest.TestCase):
         if os.path.exists(dst):
             os.remove(dst)
 
-        report = SpreadsheetReport(src, wrapper=DocumentXLS, file_type=FileConverter.XLS)
+        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
 
         section1 = report.get_section('Section1')
         section1.flush({'tag1': 1})
