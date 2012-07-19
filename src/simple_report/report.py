@@ -97,12 +97,12 @@ class DocumentReport(Report, IDocumentReport):
 
         super(DocumentReport, self).__init__(src_file, converter, tags, wrapper, type)
 
-    def build(self, dst_file_path, params, type=FileConverter.DOCX):
+    def build(self, dst_file_path, params, file_type=FileConverter.DOCX):
         u"""
         Генерирует выходной файл в нужном формате
         """
         self._wrapper.set_params(params)
-        return super(DocumentReport, self).build(dst_file_path, type)
+        return super(DocumentReport, self).build(dst_file_path, file_type)
 
     def get_all_parameters(self):
         """
