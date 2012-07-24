@@ -96,8 +96,6 @@ class Workbook(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-        self.configure_writer()
-
     def configure_writer(self):
         """
         Настройка конфигураций writer-а
@@ -128,7 +126,7 @@ class Workbook(object):
             self.xlwt_writer.wtsheet.footer_str = self.footer_str
         else:
             #
-            self.xlwt_writer.wtsheet.footer_str = (u'&P из %s') % self.write_sheet_count()
+            self.xlwt_writer.wtsheet.footer_str = (u'&P из &N')
 
     def get_section(self, name):
         return self._active_sheet.get_section(name)
@@ -180,6 +178,8 @@ class Workbook(object):
     def build(self, dest_file):
         """
         """
+
+        self.configure_writer()
 
         dest_file_name = dest_file.file
 
