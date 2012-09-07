@@ -12,6 +12,9 @@ from simple_report.converter.abstract import FileConverter
 
 class WorkbookSheet():
 
+    # спец. символ конца строки
+    END_STRING = '\n'
+
     def __init__(self, sheet, writer):
         assert isinstance(sheet, Sheet), 'sheet must be xlrd.sheet.Sheet instance'
 
@@ -35,7 +38,11 @@ class WorkbookSheet():
             notes = self.sheet.cell_note_map
 
             for (note_coord, note) in notes.items():
-                note_text = note.text
+
+                # При составлении шаблона, разработчик может после имени секции вставить символ конца
+                # строки. В этом случае, данная секция не будет найдена. Поэтому необходимо данный
+                # символ обрезать.
+                note_text = note.text[:-1] if note.text[-1] == WorkbookSheet.END_STRING else note.text
 
                 if note_text == begin_section_text:
                     begin = note_coord
