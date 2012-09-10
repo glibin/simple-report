@@ -1,7 +1,7 @@
 #coding: utf-8
 from datetime import datetime
-
 import sys
+sys.path.append('/home/vahotin/dev/simple_report/src')
 from simple_report.converter.abstract import FileConverter
 from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
@@ -642,7 +642,7 @@ class TestReportFormatXLS(unittest.TestCase):
             section2.flush({'tag2': i})
 
         for i in range(10):
-            section2.flush({'tag2': 10}, oriented=Section.HORIZONTAL)
+            section2.flush({'tag2': str(10)}, oriented=Section.HORIZONTAL)
 
         return report.build(dst)
 
