@@ -69,8 +69,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                     self.writer.wtcols.add(wtcolx)
                 # Тип ячейки
-                #cty = self.get_value_type(value=val, default_type=cell.ctype)
-                cty = cell.ctype
+                cty = self.get_value_type(value=val, default_type=cell.ctype)
 
                 if cty == xlrd.XL_CELL_EMPTY:
                     continue
@@ -120,11 +119,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         Возвращаем тип значения для выходного элемента
         """
 
-        try:
-            float(value)
+        cty = default_type
+
+        if not isinstance(value, basestring):
             cty = xlrd.XL_CELL_NUMBER
-        except ValueError:
-            cty = default_type
 
         return cty
 
