@@ -4,13 +4,6 @@ import os
 from exceptions import AttributeError, KeyError, Exception
 import settings as st
 
-try:
-    from com.sun.star.beans import PropertyValue
-    from com.sun.star.task import ErrorCodeIOException
-    from com.sun.star.connection import NoConnectException
-except ImportError:
-    pass
-
 __author__ = 'prefer'
 
 
@@ -26,19 +19,25 @@ class OOWrapper(object):
     """
 
     def __init__(self, port=st.DEFAULT_OPENOFFICE_PORT):
+
         # 5.10.12. Вахотин. Если в проекте используется приложение(внесено в INSTALLED_APPS), которое
         # в свою очередь использует simple_report(например конструктор), то из-за uno не будут работать некоторые
         # команды manage.py (http://www.co-ment.org/ticket/29, https://code.djangoproject.com/ticket/11098)
-        try:
-            import uno
-        except ImportError:
-            pass
-        localContext = uno.getComponentContext()
+        import uno
+        from com.sun.star.beans import PropertyValue
+        from com.sun.star.task import ErrorCodeIOException
+        from com.sun.star.connection import NoConnectException
+        self.uno = uno
+        self.PropertyValue = PropertyValue
+        self.ErrorCodeIOException = ErrorCodeIOException
+        self.NoConnectException = NoConnectException
+
+        localContext = self.uno.getComponentContext()
         resolver = localContext.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver",
             localContext)
         try:
             context = resolver.resolve("uno:socket,host=localhost,port=%s;urp;StarOffice.ComponentContext" % port)
-        except NoConnectException:
+        except self.NoConnectException:
             raise OOWrapperException("failed to connect to OpenOffice.org on port %s" % port)
         self.desktop = context.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", context)
 
@@ -76,7 +75,7 @@ class OOWrapper(object):
         finally:
             document.close(True)
 
-        return uno.fileUrlToSystemPath(outputUrl)
+        return self.uno.fileUrlToSystemPath(outputUrl)
 
     def _overridePageStyleProperties(self, document, family):
         """
@@ -120,14 +119,14 @@ class OOWrapper(object):
             return ext[1:].lower()
 
     def _toFileUrl(self, path):
-        return uno.systemPathToFileUrl(os.path.abspath(path))
+
+        return self.uno.systemPathToFileUrl(os.path.abspath(path))
 
     def _toProperties(self, dict):
         props = []
         for key in dict:
-            prop = PropertyValue()
+            prop = self.PropertyValue()
             prop.Name = key
             prop.Value = dict[key]
             props.append(prop)
         return tuple(props)
-
