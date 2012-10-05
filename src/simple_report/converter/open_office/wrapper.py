@@ -5,7 +5,6 @@ from exceptions import AttributeError, KeyError, Exception
 import settings as st
 
 try:
-    import uno
     from com.sun.star.beans import PropertyValue
     from com.sun.star.task import ErrorCodeIOException
     from com.sun.star.connection import NoConnectException
@@ -27,6 +26,13 @@ class OOWrapper(object):
     """
 
     def __init__(self, port=st.DEFAULT_OPENOFFICE_PORT):
+        # 5.10.12. Вахотин. Если в проекте используется приложение(внесено в INSTALLED_APPS), которое
+        # в свою очередь использует simple_report(например конструктор), то из-за uno не будут работать некоторые
+        # команды manage.py (http://www.co-ment.org/ticket/29, https://code.djangoproject.com/ticket/11098)
+        try:
+            import uno
+        except ImportError:
+            pass
         localContext = uno.getComponentContext()
         resolver = localContext.ServiceManager.createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver",
             localContext)
