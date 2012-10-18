@@ -568,7 +568,7 @@ class TestWriteXLS(unittest.TestCase):
         section1 = report.get_section('Section1')
         section1.flush({'section1': 2}, oriented=Section.RIGHT_UP)
         self.assertEqual(section1.sheet.cursor.row, (2, 2))
-        self.assertEqual(section1.sheet.cursor.column, (4, 1))
+        self.assertEqual(section1.sheet.cursor.column, (4, 0))
 
     def test_vertical(self, report=None):
         if report is None:
