@@ -91,7 +91,7 @@ class AbstractCalculateNextCursor(object):
                 current_col, current_row = cursor.column[0], self.get_first_row()
                 cursor.row = (current_col, current_row + end_row - begin_row + 1)
                 cursor.column = (self.get_next_column(current_col, end_column, begin_column),
-                                 1)
+                                 self.get_first_row())
             else:
                 current_col, current_row = cursor.row
                 cursor.column = (self.get_next_column(current_col, end_column, begin_column),
