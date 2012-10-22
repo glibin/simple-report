@@ -12,6 +12,7 @@ from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
 from simple_report.xlsx.cursor import Cursor
 from simple_report.core.spreadsheet_section import SpreadsheetSection
 from simple_report.core.exception import SheetDataException
+from simple_report.xlsx.formula import Formula
 from simple_report.xlsx.cursor import CalculateNextCursor
 
 __author__ = 'prefer'
@@ -330,8 +331,10 @@ class SheetData(object):
                 formula = self._get_tag_formula(cell)
                 if formula is not None:
                     formula_el = SubElement(cell_el, 'f')
-                    formula_el.text = formula.text
-
+                    row_cursor_column, row_cursor_row = self.cursor.row
+                    column_cursor_column, column_cursor_row = self.cursor.column
+                    formula_el.text = Formula.get_instance(formula.text).get_next_formula(row_cursor_row,
+                                                                                          column_cursor_column)
                     # Если есть формула, то значение является вычисляемым параметром и не сильно интересует
                     continue
 
