@@ -7,6 +7,7 @@ from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
 from simple_report.xlsx.section import Section
 from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
+from simple_report.xlsx.formula import Formula
 
 sys.path.append('.')
 
@@ -24,6 +25,7 @@ import unittest
 from simple_report.report import (SpreadsheetReport, ReportGeneratorException, DocumentReport,
                                   )
 from simple_report.xls.document import DocumentXLS
+
 from simple_report.converter.abstract import FileConverter
 from simple_report.utils import ColumnHelper, date_to_float
 
@@ -181,6 +183,61 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
         report.build(dst)
 
+    def test_formula_generation(self):
+        src = self.test_files['test-formula_generation.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-formula_generation.xlsx')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = SpreadsheetReport(src)
+
+        all_change = report.get_section('all_change')
+        all_not_change = report.get_section('all_not_change')
+        row_not_change = report.get_section('row_not_change')
+        column_not_change = report.get_section('column_not_change')
+        other_section = report.get_section('other_section')
+
+        all_change_formula = '(A1+B1)*3'
+        all_not_change_formula = '($A$1+B1)*3'
+        row_not_change_formula = '(A$1+B1)*3'
+        column_not_change_formula = '($A1+B1)*3'
+
+        all_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        all_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_change_formula).formula, '(A2+B2)*3')
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        all_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_change_formula).formula, '(A4+B4)*3')
+
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        all_not_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_not_change_formula).formula, '($A$1+B1)*3')
+        all_not_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_not_change_formula).formula, '($A$1+B2)*3')
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        all_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_not_change_formula).formula, '($A$1+B4)*3')
+
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        row_not_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(row_not_change_formula).formula, '(A$1+B1)*3')
+        row_not_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(row_not_change_formula).formula, '(A$1+B2)*3')
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        row_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(row_not_change_formula).formula, '(A$1+B4)*3')
+
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        column_not_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+B1)*3')
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+        column_not_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+F1)*3')
+        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+        column_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+J1)*3')
+
+        return report.build(dst)
 
     def test_383_value(self):
         src = self.test_files['test-383.xlsx']
