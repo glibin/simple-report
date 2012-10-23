@@ -5,7 +5,7 @@ sys.path.append('/home/vahotin/dev/simple_report/src')
 from simple_report.converter.abstract import FileConverter
 from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
-from simple_report.xlsx.section import Section
+from simple_report.xlsx.section import Section, Merge
 from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
 from simple_report.xlsx.formula import Formula
 
@@ -25,6 +25,7 @@ import unittest
 from simple_report.report import (SpreadsheetReport, ReportGeneratorException, DocumentReport,
                                   )
 from simple_report.xls.document import DocumentXLS
+from simple_report.xls.section import Merge
 
 from simple_report.converter.abstract import FileConverter
 from simple_report.utils import ColumnHelper, date_to_float
@@ -236,6 +237,89 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
         column_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.HORIZONTAL)
         self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+J1)*3')
+
+        return report.build(dst)
+
+    def test_with_merge(self):
+        """
+        Конструкция with merge для обьединения ячеек вывода
+        """
+
+        src = self.test_files['test_merge.xlsx']
+        dst = os.path.join(self.dst_dir, 'res-merge.xlsx')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        from simple_report.xlsx.section import Merge
+
+        report = SpreadsheetReport(src)
+        s1 = report.get_section('s1')
+        s2 = report.get_section('s2')
+        s3 = report.get_section('s3')
+
+        m1 = Merge(s1, {'p1': 1}, from_new_row=False)
+        with m1:
+
+            m2 = Merge(s2, {'p2': 1}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m2:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+            s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+
+            m3 = Merge(s2, {'p2': 2}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m3:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+        m1_exp = (m1._merge_col == 'A') and (m1.begin_row_merge == 1) and (m1.end_row_merge == 6)
+        self.assertEqual(m1_exp, True)
+
+        m2_exp = (m2._merge_col == 'B') and (m2.begin_row_merge == 1) and (m2.end_row_merge == 3)
+        self.assertEqual(m2_exp, True)
+
+        m3_exp = (m3._merge_col == 'B') and (m3.begin_row_merge == 4) and (m3.end_row_merge == 6)
+        self.assertEqual(m3_exp, True)
+
+        m4 = Merge(s1, {'p1': 2}, oriented=ISpreadsheetSection.LEFT_DOWN, from_new_row=True)
+        with m4:
+
+            m5 = Merge(s2, {'p2': 1}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m5:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+            s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+
+            m6 = Merge(s2, {'p2': 2}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m6:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+        m4_exp = (m4._merge_col == 'A') and (m4.begin_row_merge == 7) and (m4.end_row_merge == 12)
+        self.assertEqual(m4_exp, True)
+
+        m5_exp = (m5._merge_col == 'B') and (m5.begin_row_merge == 7) and (m5.end_row_merge == 9)
+        self.assertEqual(m5_exp, True)
+
+        m6_exp = (m6._merge_col == 'B') and (m6.begin_row_merge == 10) and (m6.end_row_merge == 12)
+        self.assertEqual(m6_exp, True)
 
         return report.build(dst)
 
@@ -703,6 +787,86 @@ class TestReportFormatXLS(unittest.TestCase):
 
         return report.build(dst)
 
+    def test_with_merge(self):
+        """
+        Конструкция with merge для обьединения ячеек вывода
+        """
+
+        src = self.test_files['test_merge.xls']
+        dst = os.path.join(self.dst_dir, 'res-merge.xls')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
+        s1 = report.get_section('s1')
+        s2 = report.get_section('s2')
+        s3 = report.get_section('s3')
+
+        m1 = Merge(s1, {'p1': 1}, from_new_row=False)
+        with m1:
+
+            m2 = Merge(s2, {'p2': 1}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m2:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+            s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+
+            m3 = Merge(s2, {'p2': 2}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m3:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+        m1_exp = (m1._merge_col == 0) and (m1.begin_row_merge == 0) and (m1.end_row_merge == 5)
+        self.assertEqual(m1_exp, True)
+
+        m2_exp = (m2._merge_col == 1) and (m2.begin_row_merge == 0) and (m2.end_row_merge == 2)
+        self.assertEqual(m2_exp, True)
+
+        m3_exp = (m3._merge_col == 1) and (m3.begin_row_merge == 3) and (m3.end_row_merge == 5)
+        self.assertEqual(m3_exp, True)
+
+        m4 = Merge(s1, {'p1': 2}, oriented=ISpreadsheetSection.LEFT_DOWN, from_new_row=True)
+        with m4:
+
+            m5 = Merge(s2, {'p2': 1}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m5:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+            s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+
+            m6 = Merge(s2, {'p2': 2}, oriented=ISpreadsheetSection.HORIZONTAL, from_new_row=False)
+            with m6:
+                s3.flush({'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+                for i in range(2, 4):
+                    s1.flush({'p1': ''}, oriented=ISpreadsheetSection.VERTICAL)
+                    s2.flush({'p2': ''}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s3.flush({'p3':  i}, oriented=ISpreadsheetSection.HORIZONTAL)
+
+        m4_exp = (m4._merge_col == 0) and (m4.begin_row_merge == 6) and (m4.end_row_merge == 11)
+        self.assertEqual(m4_exp, True)
+
+        m5_exp = (m5._merge_col == 1) and (m5.begin_row_merge == 6) and (m5.end_row_merge == 8)
+        self.assertEqual(m5_exp, True)
+
+        m6_exp = (m6._merge_col == 1) and (m6.begin_row_merge == 9) and (m6.end_row_merge == 11)
+        self.assertEqual(m6_exp, True)
+
+        return report.build(dst)
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):
     SUBDIR = 'win'

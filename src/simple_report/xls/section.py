@@ -6,7 +6,7 @@ from xlwt.Style import default_style
 from simple_report.interface import ISpreadsheetSection
 
 from simple_report.core.exception import XLSReportWriteException
-from simple_report.core.spreadsheet_section import SpreadsheetSection
+from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
 from simple_report.xls.cursor import CalculateNextCursor
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
@@ -18,7 +18,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
         super(Section, self).__init__(sheet, name, begin, end)
 
-        self.sheet = sheet
+        self.sheet_data = sheet
 
         self.writer = writer
 
@@ -104,7 +104,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         begin_row, begin_column = self.begin
         end_row, end_column = self.end
 
-        current_col, current_row = CalculateNextCursor().get_next_cursor(self.sheet.cursor, (begin_column, begin_row),
+        current_col, current_row = CalculateNextCursor().get_next_cursor(self.sheet_data.cursor, (begin_column, begin_row),
                                                 (end_column, end_row), oriented)
 
         return current_col, current_row
@@ -149,3 +149,20 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             wtrow.set_cell_error(wtcolx, value, style)
         else:
             raise XLSReportWriteException
+
+
+class Merge(AbstractMerge):
+    """
+    Конструкция Merge
+    """
+
+    def _merge(self):
+
+        self.section.writer.wtsheet.merge(self.begin_row_merge,
+                                          self.end_row_merge,
+                                          self._merge_col,
+                                          self._merge_col)
+
+    def _calculate_merge_column(self, column):
+
+        return column - 1

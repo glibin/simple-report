@@ -10,7 +10,7 @@ from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
 from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
 from simple_report.xlsx.cursor import Cursor
-from simple_report.core.spreadsheet_section import SpreadsheetSection
+from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
 from simple_report.core.exception import SheetDataException
 from simple_report.xlsx.formula import Formula
 from simple_report.xlsx.cursor import CalculateNextCursor
@@ -696,3 +696,22 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         Возвращает все параметры секции
         """
         return self.sheet_data.find_all_parameters(self.begin, self.end)
+
+
+class Merge(AbstractMerge):
+
+    def _merge(self):
+
+        begin_merge = ''.join([self._merge_col, str(self.begin_row_merge)])
+        end_merge = ''.join([self._merge_col, str(self.end_row_merge)])
+
+        attrib = {'ref': ':'.join([begin_merge, end_merge])}
+
+        if self.section.sheet_data.write_merge_cell is None:
+            self.section.sheet_data.write_merge_cell = SubElement(self.section.sheet_data._write_xml, 'mergeCells')
+
+        SubElement(self.section.sheet_data.write_merge_cell, 'mergeCell', attrib)
+
+    def _calculate_merge_column(self, column):
+
+        return ColumnHelper.number_to_column(ColumnHelper.column_to_number(column) - 1)
