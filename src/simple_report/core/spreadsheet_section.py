@@ -37,10 +37,11 @@ class AbstractMerge(object):
 
         self.from_new_row = from_new_row
 
+    def __enter__(self):
+
         # Строка с которой начинаем обьединять ячейки
         self.begin_row_merge = self._get_border_row()
 
-    def __enter__(self):
         self.section.flush(self.params, self.oriented)
 
         # Индекс колонки, которую мержим
