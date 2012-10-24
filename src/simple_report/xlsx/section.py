@@ -9,14 +9,13 @@ from simple_report.core.shared_table import SharedStringsTable
 from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
 from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
-from simple_report.xlsx.cursor import Cursor
+from simple_report.xlsx.cursor import Cursor, MarkerPosition, DirectionSet
 from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
-from simple_report.core.exception import SheetDataException
+from simple_report.core.exception import SheetDataException, XLSXReportWriteException
 from simple_report.xlsx.formula import Formula
-from simple_report.xlsx.cursor import CalculateNextCursor
+from simple_report.xlsx.cursor import CalculateNextCursor, CalculateNextMarker
 
 __author__ = 'prefer'
-
 
 class SheetData(object):
     u"""
@@ -65,6 +64,11 @@ class SheetData(object):
 
         assert isinstance(cursor, Cursor)
         self._cursor = cursor
+
+        # Маркер - координата левой верхней ячейки последней выведенной секции
+        self.marker = MarkerPosition()
+        # Последняя выведенная секция.
+        self.last_write_section = None
 
         self._last_section = Cursor()
 
@@ -668,26 +672,50 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         return self.__str__()
 
 
-    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
+    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN, direction=None):
         """
+        Вывод. Имеется два механизма вывода. Для использования старого не передавать direction
         """
         assert isinstance(params, dict)
         assert oriented in (Section.VERTICAL, Section.HORIZONTAL, Section.LEFT_DOWN, Section.RIGHT_UP)
 
-        # Тут смещение курсора, копирование данных из листа и общих строк
-        # Генерация новых данных и новых общих строк
+        # Если передан параметр direction, то используем новый механизм вывода.
+        if direction:
+            assert direction in (DirectionSet.N, DirectionSet.E, DirectionSet.S, DirectionSet.W,
+                                 DirectionSet.NE, DirectionSet.SE, DirectionSet.SW, DirectionSet.NW,
+                                 DirectionSet.LD, DirectionSet.RU)
+            marker = self.sheet_data.marker
+            last_section = self.sheet_data.last_write_section
 
-        cursor = self.sheet_data.cursor
+            if last_section:
+                # Ширина и высота текущей секции
+                width = ColumnHelper.difference(self.end[0], self.begin[0]) + 1
+                height = self.end[1] - self.begin[1] + 1
+                # Ширина и высота предыдущей секции
+                last_width = ColumnHelper.difference(last_section.end[0], last_section.begin[0]) + 1
+                last_height = last_section.end[1] - last_section.begin[1] + 1
+                # Вычисляем новое положение маркера для вывода
+                CalculateNextMarker.get_next_marker(marker, direction,
+                    (width, height), (last_width, last_height))
+            # Запоминаем последнюю секцию
+            self.sheet_data.last_write_section = self
+            current_col, current_row = marker.column, marker.row
+        else:
 
-        begin_col, begin_row = self.begin
-        end_col, end_row = self.sheet_data.get_cell_end(self.end)
+            # Тут смещение курсора, копирование данных из листа и общих строк
+            # Генерация новых данных и новых общих строк
 
-        current_col, current_row = CalculateNextCursor().get_next_cursor(cursor, (begin_col, begin_row),
-                    (end_col, end_row), oriented)
+            cursor = self.sheet_data.cursor
 
-        self.sheet_data.last_section.row = (current_col, current_row)
-        self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
-            ColumnHelper.difference(end_col, begin_col) ), current_row + end_row - begin_row)
+            begin_col, begin_row = self.begin
+            end_col, end_row = self.sheet_data.get_cell_end(self.end)
+
+            current_col, current_row = CalculateNextCursor().get_next_cursor(cursor, (begin_col, begin_row),
+                        (end_col, end_row), oriented)
+
+            self.sheet_data.last_section.row = (current_col, current_row)
+            self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
+                ColumnHelper.difference(end_col, begin_col) ), current_row + end_row - begin_row)
 
         self.sheet_data.flush(self.begin, self.end, (current_col, current_row), params)
 

@@ -43,3 +43,8 @@ class XLSReportWriteException(Exception):
     """
     Ошибка вывода в отчетах XLS
     """
+
+class XLSXReportWriteException(Exception):
+    """
+    Ошибка вывода в отчетах XLSX
+    """

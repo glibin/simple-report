@@ -69,7 +69,7 @@ class ISpreadsheetSection(object):
     LEFT_DOWN = 3
 
     @abstractmethod
-    def flush(self, params, oriented=LEFT_DOWN):
+    def flush(self, params, oriented=LEFT_DOWN, direction=None):
         pass
 
 

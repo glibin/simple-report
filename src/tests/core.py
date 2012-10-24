@@ -184,6 +184,37 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
         report.build(dst)
 
+    def test_new_flush(self):
+        src = self.test_files['test_new_flush.xlsx']
+        dst = os.path.join(self.dst_dir, 'res_new_flush.xlsx')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        from simple_report.xlsx.section import DirectionSet
+
+        report = SpreadsheetReport(src)
+        section = report.get_section('section')
+        section.flush({'p': 1}, direction=DirectionSet.N)
+        self.assertEqual(section.sheet_data.marker.column, 'A')
+        self.assertEqual(section.sheet_data.marker.row, 1)
+        section.flush({'p': 2}, direction=DirectionSet.E)
+        self.assertEqual(section.sheet_data.marker.column, 'D')
+        self.assertEqual(section.sheet_data.marker.row, 1)
+        section.flush({'p': 3}, direction=DirectionSet.SE)
+        self.assertEqual(section.sheet_data.marker.column, 'G')
+        self.assertEqual(section.sheet_data.marker.row, 4)
+        section.flush({'p': 4}, direction=DirectionSet.SW)
+        self.assertEqual(section.sheet_data.marker.column, 'D')
+        self.assertEqual(section.sheet_data.marker.row, 7)
+        section.flush({'p': 5}, direction=DirectionSet.SE)
+        self.assertEqual(section.sheet_data.marker.column, 'G')
+        self.assertEqual(section.sheet_data.marker.row, 10)
+        section.flush({'p': 6}, direction=DirectionSet.RU)
+        self.assertEqual(section.sheet_data.marker.column, 'J')
+        self.assertEqual(section.sheet_data.marker.row, 1)
+
+        return report.build(dst)
+
     def test_formula_generation(self):
         src = self.test_files['test-formula_generation.xlsx']
         dst = os.path.join(self.dst_dir, 'res-formula_generation.xlsx')
@@ -691,8 +722,8 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(2):
             section1 = report.get_section('Section1')
             section1.flush({'section1': i}, oriented=Section.LEFT_DOWN)
-            self.assertEqual(section1.sheet.cursor.row, (0, 2*i + 2))
-            self.assertEqual(section1.sheet.cursor.column, (2, 2*i))
+            self.assertEqual(section1.sheet_data.cursor.row, (0, 2*i + 2))
+            self.assertEqual(section1.sheet_data.cursor.column, (2, 2*i))
 
     def test_left_down2(self, report=None):
         if report is None:
@@ -700,16 +731,16 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(2):
             section3 = report.get_section('Section3')
             section3.flush({'section3': 100}, oriented=Section.LEFT_DOWN)
-            self.assertEqual(section3.sheet.cursor.row, (0, 2*i + 10))
-            self.assertEqual(section3.sheet.cursor.column, (2, 2*i + 8))
+            self.assertEqual(section3.sheet_data.cursor.row, (0, 2*i + 10))
+            self.assertEqual(section3.sheet_data.cursor.column, (2, 2*i + 8))
 
     def test_right_up(self, report=None):
         if report is None:
             return
         section1 = report.get_section('Section1')
         section1.flush({'section1': 2}, oriented=Section.RIGHT_UP)
-        self.assertEqual(section1.sheet.cursor.row, (2, 2))
-        self.assertEqual(section1.sheet.cursor.column, (4, 0))
+        self.assertEqual(section1.sheet_data.cursor.row, (2, 2))
+        self.assertEqual(section1.sheet_data.cursor.column, (4, 0))
 
     def test_vertical(self, report=None):
         if report is None:
@@ -717,8 +748,8 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(3):
             section2 = report.get_section('Section2')
             section2.flush({'section2': i}, oriented=Section.VERTICAL)
-            self.assertEqual(section2.sheet.cursor.row, (2, 2*(i+1) + 2))
-            self.assertEqual(section2.sheet.cursor.column, (4, 2*(i+1)))
+            self.assertEqual(section2.sheet_data.cursor.row, (2, 2*(i+1) + 2))
+            self.assertEqual(section2.sheet_data.cursor.column, (4, 2*(i+1)))
 
     def test_horizontal(self, report=None):
         if report is None:
@@ -726,8 +757,8 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(3):
             section3 = report.get_section('Section3')
             section3.flush({'section3': i}, oriented=Section.HORIZONTAL)
-            self.assertEqual(section3.sheet.cursor.row, (2, 8))
-            self.assertEqual(section3.sheet.cursor.column,
+            self.assertEqual(section3.sheet_data.cursor.row, (2, 8))
+            self.assertEqual(section3.sheet_data.cursor.column,
                 (6 + 2*i, 6))
 
     def test_report_write(self):
