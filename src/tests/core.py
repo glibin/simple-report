@@ -184,37 +184,6 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
         report.build(dst)
 
-    def test_new_flush(self):
-        src = self.test_files['test_new_flush.xlsx']
-        dst = os.path.join(self.dst_dir, 'res_new_flush.xlsx')
-        if os.path.exists(dst):
-            os.remove(dst)
-
-        from simple_report.xlsx.section import DirectionSet
-
-        report = SpreadsheetReport(src)
-        section = report.get_section('section')
-        section.flush({'p': 1}, direction=DirectionSet.N)
-        self.assertEqual(section.sheet_data.marker.column, 'A')
-        self.assertEqual(section.sheet_data.marker.row, 1)
-        section.flush({'p': 2}, direction=DirectionSet.E)
-        self.assertEqual(section.sheet_data.marker.column, 'D')
-        self.assertEqual(section.sheet_data.marker.row, 1)
-        section.flush({'p': 3}, direction=DirectionSet.SE)
-        self.assertEqual(section.sheet_data.marker.column, 'G')
-        self.assertEqual(section.sheet_data.marker.row, 4)
-        section.flush({'p': 4}, direction=DirectionSet.SW)
-        self.assertEqual(section.sheet_data.marker.column, 'D')
-        self.assertEqual(section.sheet_data.marker.row, 7)
-        section.flush({'p': 5}, direction=DirectionSet.SE)
-        self.assertEqual(section.sheet_data.marker.column, 'G')
-        self.assertEqual(section.sheet_data.marker.row, 10)
-        section.flush({'p': 6}, direction=DirectionSet.RU)
-        self.assertEqual(section.sheet_data.marker.column, 'J')
-        self.assertEqual(section.sheet_data.marker.row, 1)
-
-        return report.build(dst)
-
     def test_formula_generation(self):
         src = self.test_files['test-formula_generation.xlsx']
         dst = os.path.join(self.dst_dir, 'res-formula_generation.xlsx')
