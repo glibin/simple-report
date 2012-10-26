@@ -1,5 +1,7 @@
 #coding:utf-8
 
+from datetime import datetime
+
 import re
 import xlrd
 from xlwt.Style import default_style
@@ -43,11 +45,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                 val = cell.value
 
-                cty = xlrd.XL_CELL_TEXT
                 for key, value in params.items():
                     if key in unicode(cell.value):
-                        # Тип ячейки
-                        cty = self.get_value_type(value=value, default_type=cell.ctype)
                         value = unicode(value)
                         val = val.replace(u'#%s#' % key, value)
 
@@ -71,6 +70,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                     wtcol.collapsed = rdcol.collapsed
 
                     self.writer.wtcols.add(wtcolx)
+
+                # Тип ячейки
+                cty = self.get_value_type(value=val, default_type=cell.ctype)
 
                 if cty == xlrd.XL_CELL_EMPTY:
                     continue
@@ -122,7 +124,11 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
         cty = default_type
 
-        if not isinstance(value, basestring):
+        if isinstance(value, basestring):
+            cty = xlrd.XL_CELL_TEXT
+        elif isinstance(value, datetime):
+            cty = xlrd.XL_CELL_DATE
+        else:
             cty = xlrd.XL_CELL_NUMBER
 
         return cty
@@ -166,4 +172,7 @@ class Merge(AbstractMerge):
 
     def _calculate_merge_column(self, column):
 
-        return column - 1
+        first_section_column = self.section.begin[0]
+        last_section_column = self.section.end[0]
+
+        return first_section_column, last_section_column
