@@ -43,9 +43,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                 val = cell.value
 
+                cty = xlrd.XL_CELL_TEXT
                 for key, value in params.items():
-                    value = unicode(value)
                     if key in unicode(cell.value):
+                        # Тип ячейки
+                        cty = self.get_value_type(value=value, default_type=cell.ctype)
+                        value = unicode(value)
                         val = val.replace(u'#%s#' % key, value)
 
                 if isinstance(val, basestring):
@@ -68,8 +71,6 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                     wtcol.collapsed = rdcol.collapsed
 
                     self.writer.wtcols.add(wtcolx)
-                # Тип ячейки
-                cty = self.get_value_type(value=val, default_type=cell.ctype)
 
                 if cty == xlrd.XL_CELL_EMPTY:
                     continue
@@ -160,8 +161,8 @@ class Merge(AbstractMerge):
 
         self.section.writer.wtsheet.merge(self.begin_row_merge,
                                           self.end_row_merge,
-                                          self._merge_col,
-                                          self._merge_col)
+                                          self._begin_merge_col,
+                                          self._end_merge_col)
 
     def _calculate_merge_column(self, column):
 
