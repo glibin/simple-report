@@ -24,7 +24,7 @@ class Cursor(AbstractCursor):
         assert isinstance(value[0], basestring)
 
 
-class CalculateNextCursor(AbstractCalculateNextCursor):
+class CalculateNextCursorXLSX(AbstractCalculateNextCursor):
     """
     """
 
@@ -39,3 +39,9 @@ class CalculateNextCursor(AbstractCalculateNextCursor):
     def get_first_row(self):
         # Строки имеют числовое представление и нумер. с единицы.
         return 1
+
+    def calculate_indent(self, column, w):
+        """
+        """
+        return ColumnHelper.number_to_column(ColumnHelper.column_to_number(column)-
+                                      w)

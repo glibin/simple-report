@@ -13,7 +13,7 @@ from simple_report.xlsx.cursor import Cursor
 from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
 from simple_report.core.exception import SheetDataException
 from simple_report.xlsx.formula import Formula
-from simple_report.xlsx.cursor import CalculateNextCursor
+from simple_report.xlsx.cursor import CalculateNextCursorXLSX
 
 __author__ = 'prefer'
 
@@ -53,6 +53,9 @@ class SheetData(object):
 
     FIND_PARAMS = re.compile('#\w+#')
     FIND_TEMPLATE_TAGS = re.compile('#{0}\w+{0}#'.format(PREFIX_TAG))
+
+    COLUMN_INDEX = re.compile('[A-Z]+')
+    ROW_INDEX = re.compile('[1-9][0-9]*')
 
     def __init__(self, sheet_xml, tags, cursor, ns, shared_table):
         # namespace
@@ -641,6 +644,31 @@ class SheetData(object):
 
         self._set_rowpagebreaks(rowbreaks)
 
+    def prepare_merge(self, begin_new_merge, end_new_merge):
+        """
+        Если в документе имеются смерженные ячейки и мы добавляем свою область перес. данную, то
+        необходимо прежде всего удалить, то что уже имеется.
+        """
+
+        begin_new_column, begin_new_row = get_addr_cell(begin_new_merge)
+        end_new_column, end_new_row = get_addr_cell(end_new_merge)
+
+        # Все смерженные ячейки на листе
+        merge_cells = self._write_xml.xpath('.//mergeCell')
+        for merge_cell in merge_cells:
+
+            ref_attr = merge_cell.attrib.get('ref') # D1:D3 Например
+            begin_old_merge, end_old_merge = ref_attr.split(':') # D1, D3
+
+            begin_old_column, begin_old_row = get_addr_cell(begin_old_merge)
+            end_old_column, end_old_row = get_addr_cell(end_old_merge)
+
+            if not (begin_new_column > end_old_column or end_new_column < begin_old_column or begin_new_row > end_old_row or
+                end_new_row < begin_old_row):
+
+                self.write_merge_cell.remove(merge_cell)
+
+
 class Section(SpreadsheetSection, ISpreadsheetSection):
     """
     """
@@ -672,7 +700,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         Вывод. Имеется два механизма вывода. Для использования старого не передавать direction
         """
         assert isinstance(params, dict)
-        assert oriented in (Section.VERTICAL, Section.HORIZONTAL, Section.LEFT_DOWN, Section.RIGHT_UP)
+        assert oriented in (Section.VERTICAL,
+                            Section.HORIZONTAL,
+                            Section.LEFT_DOWN,
+                            Section.RIGHT_UP,
+                            Section.RIGHT,
+                            Section.HIERARCHICAL)
 
         # Тут смещение курсора, копирование данных из листа и общих строк
         # Генерация новых данных и новых общих строк
@@ -682,8 +715,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         begin_col, begin_row = self.begin
         end_col, end_row = self.sheet_data.get_cell_end(self.end)
 
-        current_col, current_row = CalculateNextCursor().get_next_cursor(cursor, (begin_col, begin_row),
-                        (end_col, end_row), oriented)
+        current_col, current_row = CalculateNextCursorXLSX().get_next_cursor(cursor, (begin_col, begin_row),
+                        (end_col, end_row), oriented, self)
 
         self.sheet_data.last_section.row = (current_col, current_row)
         self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
@@ -697,21 +730,37 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         """
         return self.sheet_data.find_all_parameters(self.begin, self.end)
 
+    def get_width(self):
+        """
+        """
 
-class Merge(AbstractMerge):
+        begin_col, begin_row = self.begin
+        end_col, end_row = self.sheet_data.get_cell_end(self.end)
+
+        return ColumnHelper.difference(end_col, begin_col) + 1
+
+
+class MergeXLSX(AbstractMerge):
 
     def _merge(self):
 
-        begin_merge = ''.join([self._merge_col, str(self.begin_row_merge)])
-        end_merge = ''.join([self._merge_col, str(self.end_row_merge)])
+        begin_merge = ''.join([self._begin_merge_col, str(self.begin_row_merge)])
+        end_merge = ''.join([self._end_merge_col, str(self.end_row_merge)])
 
         attrib = {'ref': ':'.join([begin_merge, end_merge])}
 
         if self.section.sheet_data.write_merge_cell is None:
             self.section.sheet_data.write_merge_cell = SubElement(self.section.sheet_data._write_xml, 'mergeCells')
 
+        self.sheet_data.prepare_merge(begin_merge, end_merge)
+
         SubElement(self.section.sheet_data.write_merge_cell, 'mergeCell', attrib)
 
     def _calculate_merge_column(self, column):
 
-        return ColumnHelper.number_to_column(ColumnHelper.column_to_number(column) - 1)
+        column_number = ColumnHelper.column_to_number(column)
+
+        first_section_column = ColumnHelper.number_to_column(column_number - self.section.get_width())
+        last_section_column = ColumnHelper.number_to_column(column_number - 1)
+
+        return first_section_column, last_section_column
