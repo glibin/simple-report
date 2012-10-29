@@ -137,6 +137,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             cty = xlrd.XL_CELL_DATE
         elif isinstance(value, bool):
             cty = xlrd.XL_CELL_BOOLEAN
+        elif value is None:
+            cty = xlrd.XL_CELL_EMPTY
         else:
             try:
                 float(value)
@@ -157,7 +159,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
         # Вывод
         wtrow = self.writer.wtsheet.row(wtrowx)
-        if cell_type == xlrd.XL_CELL_TEXT:
+        if cell_type == xlrd.XL_CELL_TEXT or cell_type == xlrd.XL_CELL_EMPTY:
             wtrow.set_cell_text(wtcolx, value, style)
         elif cell_type == xlrd.XL_CELL_NUMBER:
             wtrow.set_cell_number(wtcolx, value, style)
