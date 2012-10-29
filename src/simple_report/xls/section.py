@@ -131,8 +131,6 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         Возвращаем тип значения для выходного элемента
         """
 
-        cty = default_type
-
         if isinstance(value, basestring):
             cty = xlrd.XL_CELL_TEXT
         elif isinstance(value, (datetime, date, time)):
@@ -140,7 +138,11 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         elif isinstance(value, bool):
             cty = xlrd.XL_CELL_BOOLEAN
         else:
-            cty = xlrd.XL_CELL_NUMBER
+            try:
+                float(value)
+                cty = xlrd.XL_CELL_NUMBER
+            except ValueError:
+                cty = default_type
 
         return cty
 
