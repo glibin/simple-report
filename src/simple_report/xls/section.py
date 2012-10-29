@@ -137,6 +137,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             cty = xlrd.XL_CELL_TEXT
         elif isinstance(value, (datetime, date, time)):
             cty = xlrd.XL_CELL_DATE
+        elif isinstance(value, bool):
+            cty = xlrd.XL_CELL_BOOLEAN
         else:
             cty = xlrd.XL_CELL_NUMBER
 
