@@ -2,6 +2,7 @@
 
 from abc import ABCMeta, abstractmethod
 from simple_report.interface import ISpreadsheetSection
+from simple_report.utils import ColumnHelper
 
 class AbstractCursor(object):
     """
@@ -55,7 +56,7 @@ class AbstractCalculateNextCursor(object):
     __metaclass__ = ABCMeta
 
 
-    def get_next_cursor(self, cursor, begin, end, oriented):
+    def get_next_cursor(self, cursor, begin, end, oriented, section=None):
         """
         сursor - текущее положение курсора
         begin - начало секции
@@ -92,6 +93,16 @@ class AbstractCalculateNextCursor(object):
                 cursor.row = (current_col, current_row + end_row - begin_row + 1)
                 cursor.column = (self.get_next_column(current_col, end_column, begin_column),
                                  self.get_first_row())
+            elif oriented == ISpreadsheetSection.RIGHT:
+                current_col, current_row = cursor.column
+                cursor.row = (current_col, current_row + end_row - begin_row + 1)
+                cursor.column = (self.get_next_column(current_col, end_column, begin_column),
+                                 current_row)
+            elif oriented == ISpreadsheetSection.HIERARCHICAL:
+                w = section.get_indent() - 1
+                current_col, current_row = (self.calculate_indent(cursor.row[0], w), cursor.row[1])
+                cursor.column = (self.get_next_column(current_col, end_column, begin_column), current_row)
+                cursor.row = (current_col, current_row + (end_row - begin_row)+1)
             else:
                 current_col, current_row = cursor.row
                 cursor.column = (self.get_next_column(current_col, end_column, begin_column),
@@ -114,4 +125,10 @@ class AbstractCalculateNextCursor(object):
     @abstractmethod
     def get_first_row(self):
         """
+        """
+
+    @abstractmethod
+    def calculate_indent(self, column, w):
+        """
+        Колонка - отступ
         """

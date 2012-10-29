@@ -9,7 +9,7 @@ from simple_report.interface import ISpreadsheetSection
 
 from simple_report.core.exception import XLSReportWriteException
 from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
-from simple_report.xls.cursor import CalculateNextCursor
+from simple_report.xls.cursor import CalculateNextCursorXLS
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
     """
@@ -99,6 +99,15 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                 self.write_result((wtcolx, wtrowx), val, style, cty)
 
+    def get_width(self):
+        """
+        """
+
+        begin_row, begin_col = self.begin
+        end_row, end_col = self.end
+
+        return end_col - begin_col + 1
+
     def calc_next_cursor(self, oriented=ISpreadsheetSection.LEFT_DOWN):
         """
         Вычисляем следующее положение курсора.
@@ -107,8 +116,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         begin_row, begin_column = self.begin
         end_row, end_column = self.end
 
-        current_col, current_row = CalculateNextCursor().get_next_cursor(self.sheet_data.cursor, (begin_column, begin_row),
-                                                (end_column, end_row), oriented)
+        current_col, current_row = CalculateNextCursorXLS().get_next_cursor(self.sheet_data.cursor, (begin_column, begin_row),
+                                                (end_column, end_row), oriented, section=self)
 
         return current_col, current_row
 
@@ -160,7 +169,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             raise XLSReportWriteException
 
 
-class Merge(AbstractMerge):
+class MergeXLS(AbstractMerge):
     """
     Конструкция Merge
     """
@@ -174,7 +183,7 @@ class Merge(AbstractMerge):
 
     def _calculate_merge_column(self, column):
 
-        first_section_column = self.section.begin[0]
-        last_section_column = self.section.end[0]
+        first_section_column = column - self.section.get_width()
+        last_section_column = column - 1
 
         return first_section_column, last_section_column

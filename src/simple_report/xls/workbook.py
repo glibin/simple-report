@@ -6,7 +6,7 @@ from xlrd.sheet import Sheet
 from xlutils.filter import XLWTWriter
 from simple_report.core.exception import SheetNotFoundException, SectionNotFoundException
 from simple_report.xls.section import Section
-from simple_report.xls.cursor import Cursor
+from simple_report.xls.cursor import CursorXLS
 from simple_report.converter.abstract import FileConverter
 
 
@@ -20,7 +20,7 @@ class WorkbookSheet():
 
         self.sheet = sheet
         self.writer = writer
-        self.cursor = Cursor()
+        self.cursor = CursorXLS()
         self.sections = {}
 
     def get_section(self, name):

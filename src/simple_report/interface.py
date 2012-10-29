@@ -67,6 +67,8 @@ class ISpreadsheetSection(object):
     HORIZONTAL = 1
     RIGHT_UP = 2
     LEFT_DOWN = 3
+    RIGHT = 4
+    HIERARCHICAL = 5
 
     @abstractmethod
     def flush(self, params, oriented=LEFT_DOWN):

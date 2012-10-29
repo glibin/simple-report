@@ -20,6 +20,19 @@ class SpreadsheetSection(object):
         self.begin = begin
         self.end = end
 
+    @abc.abstractmethod
+    def get_width(self):
+        """
+        """
+
+    def get_indent(self):
+
+        indent = self.get_width()
+        if hasattr(self, 'child'):
+            indent += self.child.get_indent()
+
+        return indent
+
 
 class AbstractMerge(object):
     """
@@ -28,14 +41,14 @@ class AbstractMerge(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, section, params, oriented=ISpreadsheetSection.LEFT_DOWN,
-                 from_new_row=True):
+    def __init__(self, parent_section, child_section, params, oriented=ISpreadsheetSection.LEFT_DOWN):
 
-        self.section = section
+        self.section = parent_section
         self.params = params
         self.oriented = oriented
 
-        self.from_new_row = from_new_row
+        self.section.child = child_section
+        self.sheet_data = self.section.sheet_data
 
     def __enter__(self):
 
@@ -46,7 +59,7 @@ class AbstractMerge(object):
 
         # Индекс колонки, которую мержим
         column, _ = self.section.sheet_data.cursor.column
-        self._merge_col = self._calculate_merge_column(column)
+        self._begin_merge_col, self._end_merge_col = self._calculate_merge_column(column)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -78,7 +91,7 @@ class AbstractMerge(object):
         _, c_row = self.section.sheet_data.cursor.column
 
         if top_border:
-            if self.from_new_row:
+            if self.oriented == ISpreadsheetSection.HIERARCHICAL:
                 border_row = r_row
             else:
                 border_row = c_row

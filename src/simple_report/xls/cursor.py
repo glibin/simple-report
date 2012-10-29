@@ -2,26 +2,26 @@
 
 from simple_report.core.cursor import AbstractCursor, AbstractCalculateNextCursor
 
-class Cursor(AbstractCursor):
+class CursorXLS(AbstractCursor):
     """
     Специализированный курсор для XLS таблиц
     """
 
     def __init__(self, column=None, row=None):
-        super(Cursor, self).__init__()
+        super(CursorXLS, self).__init__()
 
         self.column = column or (0, 0)
         self.row = row or (0, 0)
 
     def _test_value(self, value):
-        super(Cursor, self)._test_value(value)
+        super(CursorXLS, self)._test_value(value)
 
         # Координаты в XLS таблицах имеют вид
         # (3, 0). 3 - Номер столбца. Нумерация с нуля
         #         0 - Номер строки. Нумерация с нуля.
         assert isinstance(value[0], int)
 
-class CalculateNextCursor(AbstractCalculateNextCursor):
+class CalculateNextCursorXLS(AbstractCalculateNextCursor):
     """
     """
 
@@ -36,3 +36,7 @@ class CalculateNextCursor(AbstractCalculateNextCursor):
     def get_first_row(self):
 
         return 0
+
+    def calculate_indent(self, column, w):
+
+        return column - w
