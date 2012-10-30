@@ -45,7 +45,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                 val = cell.value
 
-                cty = xlrd.XL_CELL_EMPTY
+                cty = xlrd.XL_CELL_TEXT
                 for key, value in params.items():
                     if key in unicode(cell.value):
                         # Тип ячейки
