@@ -47,7 +47,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                 cty = cell.ctype
                 for key, value in params.items():
-                    if key in unicode(cell.value):
+                    if unicode(cell.value).count(''.join(['#', key, '#'])):
                         # Тип ячейки
                         cty = self.get_value_type(value=value, default_type=cell.ctype)
                         value = unicode(value)
