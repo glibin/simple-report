@@ -1,13 +1,18 @@
 #coding: utf-8
 from datetime import datetime
 import sys
+import os
+import subprocess
 sys.path.append('/home/vahotin/dev/simple_report/src')
+sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 from simple_report.converter.abstract import FileConverter
 from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
 from simple_report.xlsx.section import Section, MergeXLSX
-from simple_report.xlsx.spreadsheet_ml import SectionException, SectionNotFoundException
+from simple_report.xlsx.spreadsheet_ml import (SectionException,
+                                               SectionNotFoundException)
 from simple_report.xlsx.formula import Formula
+
 
 sys.path.append('.')
 
@@ -22,13 +27,13 @@ sys.path.append('../')
 import os
 import unittest
 
-from simple_report.report import (SpreadsheetReport, ReportGeneratorException, DocumentReport,
-                                  )
+from simple_report.report import (SpreadsheetReport, ReportGeneratorException,
+                                  DocumentReport)
 from simple_report.xls.document import DocumentXLS
 from simple_report.xls.section import MergeXLS
 
 from simple_report.converter.abstract import FileConverter
-from simple_report.utils import ColumnHelper, date_to_float
+from simple_report.utils import ColumnHelper, date_to_float, FormulaWriteExcel
 
 
 class TestXLSX(object):
@@ -41,12 +46,13 @@ class TestXLSX(object):
 
     def setUp(self):
         assert self.SUBDIR
-        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xlsx', )
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'test_data', self.SUBDIR, 'xlsx', )
         self.dst_dir = self.src_dir
 
         self.test_files = dict([(path, os.path.join(self.src_dir, path))
-        for path in os.listdir(self.src_dir) if path.startswith('test')])
-
+                                for path in os.listdir(self.src_dir)
+                                if path.startswith('test')])
 
     @skip_python26
     def test_range_cols(self):
@@ -129,7 +135,6 @@ class TestXLSX(object):
 
         self.assertEqual(os.path.exists(dst), True)
 
-
     def test_workbook_with_2_6_python(self):
         src = self.test_files['test-simple.xlsx']
         dst = os.path.join(self.dst_dir, 'res-simple.xlsx')
@@ -159,7 +164,9 @@ class TestXLSX(object):
         report.build(dst)
         self.assertEqual(os.path.exists(dst), True)
 
-class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase):
+
+class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks,
+                    unittest.TestCase):
     SUBDIR = 'linux'
 
     @skip_python26
@@ -197,46 +204,104 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         row_not_change = report.get_section('row_not_change')
         column_not_change = report.get_section('column_not_change')
         other_section = report.get_section('other_section')
+        row_insert_formula_section = report.get_section('row_insert_formula')
+        check_insert_formula_section = report.get_section(
+            'check_insert_formula')
 
         all_change_formula = '(A1+B1)*3'
         all_not_change_formula = '($A$1+B1)*3'
         row_not_change_formula = '(A$1+B1)*3'
         column_not_change_formula = '($A1+B1)*3'
 
-        all_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        all_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(all_change_formula).formula, '(A2+B2)*3')
+        all_change.flush({'p1': 1, 'p2': 1},
+                         oriented=ISpreadsheetSection.VERTICAL)
+        all_change.flush({'p1': 2, 'p2': 2},
+                         oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_change_formula).formula,
+                         '(A2+B2)*3')
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        all_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(all_change_formula).formula, '(A4+B4)*3')
+        all_change.flush({'p1': 3, 'p2': 3},
+                         oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_change_formula).formula,
+                         '(A4+B4)*3')
 
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        all_not_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(all_not_change_formula).formula, '($A$1+B1)*3')
-        all_not_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(all_not_change_formula).formula, '($A$1+B2)*3')
+        all_not_change.flush({'p1': 1, 'p2': 1},
+                             oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_not_change_formula).formula,
+                         '($A$1+B1)*3')
+        all_not_change.flush({'p1': 2, 'p2': 2},
+                             oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_not_change_formula).formula,
+                         '($A$1+B2)*3')
+        other_section.flush({'p1': 1},
+                            oriented=ISpreadsheetSection.VERTICAL)
+        all_not_change.flush({'p1': 3, 'p2': 3},
+                             oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(all_not_change_formula).formula,
+                         '($A$1+B4)*3')
+
+        other_section.flush({'p1': 1},
+                            oriented=ISpreadsheetSection.VERTICAL)
+        row_not_change.flush({'p1': 1, 'p2': 1},
+                             oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(row_not_change_formula).formula,
+                         '(A$1+B1)*3')
+        row_not_change.flush({'p1': 2, 'p2': 2},
+                             oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(row_not_change_formula).formula,
+                         '(A$1+B2)*3')
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        all_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(all_not_change_formula).formula, '($A$1+B4)*3')
+        row_not_change.flush({'p1': 3, 'p2': 3},
+                             oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(Formula.get_instance(row_not_change_formula).formula,
+                         '(A$1+B4)*3')
 
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        row_not_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(row_not_change_formula).formula, '(A$1+B1)*3')
-        row_not_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(row_not_change_formula).formula, '(A$1+B2)*3')
-        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        row_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(row_not_change_formula).formula, '(A$1+B4)*3')
-
-        other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        column_not_change.flush({'p1': 1, 'p2': 1}, oriented=ISpreadsheetSection.VERTICAL)
-        self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+B1)*3')
+        column_not_change.flush({'p1': 1, 'p2': 1},
+                                oriented=ISpreadsheetSection.VERTICAL)
+        self.assertEqual(
+            Formula.get_instance(
+                column_not_change_formula
+            ).formula, '($A1+B1)*3'
+        )
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
-        column_not_change.flush({'p1': 2, 'p2': 2}, oriented=ISpreadsheetSection.HORIZONTAL)
-        self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+F1)*3')
+        column_not_change.flush({'p1': 2, 'p2': 2},
+                                oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(
+            Formula.get_instance(
+                column_not_change_formula
+            ).formula, '($A1+F1)*3'
+        )
         other_section.flush({'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
-        column_not_change.flush({'p1': 3, 'p2': 3}, oriented=ISpreadsheetSection.HORIZONTAL)
-        self.assertEqual(Formula.get_instance(column_not_change_formula).formula, '($A1+J1)*3')
+        column_not_change.flush({'p1': 3, 'p2': 3},
+                                oriented=ISpreadsheetSection.HORIZONTAL)
+        self.assertEqual(
+            Formula.get_instance(
+                column_not_change_formula
+            ).formula, '($A1+J1)*3'
+        )
+
+        insert_formulas(row_insert_formula_section,
+                        check_insert_formula_section)
+        # Проверяем, что вписанные формулы попали в дерево и правильно
+        # записались
+        found_B21 = found_C21 = False
+        for row in report.sheets[0].sheet_data.write_data.getchildren():
+            if row.tag == 'row':
+                for c_ in row.getchildren():
+                    if c_.tag == 'c':
+                        if c_.attrib.get('r') == "B21":
+                            found_B21 = True
+                            func = c_.find('f')
+                            assert func is not None
+                            assert func.text == 'AVERAGE(B17:B20)'
+                        elif c_.attrib.get('r') == "C21":
+                            found_C21 = True
+                            func = c_.find('f')
+                            assert func is not None
+                            assert func.text == 'SUM(A17,A18,A19,A20)'
+        assert found_B21 and found_C21
 
         return report.build(dst)
 
@@ -261,34 +326,50 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         s5.flush({'p5': 2}, oriented=ISpreadsheetSection.VERTICAL)
         s5.flush({'p5': 3}, oriented=ISpreadsheetSection.HORIZONTAL)
 
-        m1 = MergeXLSX(s1, s2, {'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+        m1 = MergeXLSX(s1, s2, {'p1': 1},
+                       oriented=ISpreadsheetSection.HORIZONTAL)
         with m1:
-            with MergeXLSX(s2, s3, {'p21': 1, 'p22': 21}, oriented=ISpreadsheetSection.HORIZONTAL):
-                m3 = MergeXLSX(s3, s4, {'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+            with MergeXLSX(s2, s3, {'p21': 1, 'p22': 21},
+                           oriented=ISpreadsheetSection.HORIZONTAL):
+                m3 = MergeXLSX(s3, s4, {'p3': 1},
+                               oriented=ISpreadsheetSection.HORIZONTAL)
                 with m3:
-                    s4.flush({'p4': 1}, oriented=ISpreadsheetSection.RIGHT)
+                    s4.flush({'p4': 1},
+                             oriented=ISpreadsheetSection.RIGHT)
                     for i in range(2, 4):
-                        s4.flush({'p4': i}, oriented=ISpreadsheetSection.VERTICAL)
+                        s4.flush({'p4': i},
+                                 oriented=ISpreadsheetSection.VERTICAL)
 
-                m3_exp = (m3._begin_merge_col=='J' and m3._end_merge_col=='J' and m3.begin_row_merge==4 and m3.end_row_merge==6)
+                m3_exp = (m3._begin_merge_col == 'J'
+                          and m3._end_merge_col == 'J'
+                          and m3.begin_row_merge == 4
+                          and m3.end_row_merge == 6)
                 self.assertEqual(m3_exp, True)
 
-                with MergeXLSX(s3, s4, {'p3': 2}, oriented=ISpreadsheetSection.HIERARCHICAL):
+                with MergeXLSX(s3, s4, {'p3': 2},
+                               oriented=ISpreadsheetSection.HIERARCHICAL):
                     s4.flush({'p4': 1}, oriented=ISpreadsheetSection.RIGHT)
                     s4.flush({'p4': 2}, oriented=ISpreadsheetSection.VERTICAL)
 
-            with MergeXLSX(s2, s3, {'p21': 2, 'p22': 21}, oriented=ISpreadsheetSection.HIERARCHICAL):
-                with MergeXLSX(s3, s4, {'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL):
+            with MergeXLSX(s2, s3, {'p21': 2, 'p22': 21},
+                           oriented=ISpreadsheetSection.HIERARCHICAL):
+                with MergeXLSX(s3, s4, {'p3': 1},
+                               oriented=ISpreadsheetSection.HORIZONTAL):
                     s4.flush({'p4': 1}, oriented=ISpreadsheetSection.RIGHT)
                     s4.flush({'p4': 2}, oriented=ISpreadsheetSection.VERTICAL)
 
-        m1_exp = (m1._begin_merge_col=='G' and m1._end_merge_col=='G' and m1.begin_row_merge==4 and m1.end_row_merge==10)
+        m1_exp = (m1._begin_merge_col == 'G' and m1._end_merge_col == 'G'
+                  and m1.begin_row_merge == 4 and m1.end_row_merge == 10)
         self.assertEqual(m1_exp, True)
 
-        with MergeXLSX(s1, s2, {'p1': 2}, oriented=ISpreadsheetSection.HIERARCHICAL):
-            with MergeXLSX(s2, s3, {'p21': 1, 'p22': 21}, oriented=ISpreadsheetSection.HORIZONTAL):
-                with MergeXLSX(s3, s4, {'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL):
-                    s4.flush({'p4': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+        with MergeXLSX(s1, s2, {'p1': 2},
+                       oriented=ISpreadsheetSection.HIERARCHICAL):
+            with MergeXLSX(s2, s3, {'p21': 1, 'p22': 21},
+                           oriented=ISpreadsheetSection.HORIZONTAL):
+                with MergeXLSX(s3, s4, {'p3': 1},
+                               oriented=ISpreadsheetSection.HORIZONTAL):
+                    s4.flush({'p4': 1},
+                             oriented=ISpreadsheetSection.HORIZONTAL)
 
         return report.build(dst)
 
@@ -329,7 +410,6 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         self.assertIn(u'#glavbuh#', params_footer)
         self.assertIn(u'#username#', params_footer)
 
-
     def test_empty_cell(self):
         """
 
@@ -364,11 +444,10 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
         self.assertEqual(header.sheet_data.cursor.column, ('B', 3))
 
-        #result_file, result_url = create_office_template_tempnames(template_name)
+#result_file, result_url = create_office_template_tempnames(template_name)
         res_file_name = 'res-' + file_name
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
-
 
     def test_wide_cell_1(self):
         """
@@ -404,11 +483,10 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         self.assertEqual(header.sheet_data.cursor.row, ('A', 4))
         self.assertEqual(header.sheet_data.cursor.column, ('B', 3))
 
-        #result_file, result_url = create_office_template_tempnames(template_name)
+#result_file, result_url = create_office_template_tempnames(template_name)
         res_file_name = 'res-' + file_name
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
-
 
     def test_wide_cell_2(self):
         file_name = 'test-wide-section-2.xlsx'
@@ -441,7 +519,7 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         self.assertEqual(header.sheet_data.cursor.row, ('A', 10))
         self.assertEqual(header.sheet_data.cursor.column, ('D', 7))
 
-        #result_file, result_url = create_office_template_tempnames(template_name)
+#result_file, result_url = create_office_template_tempnames(template_name)
         res_file_name = 'res-' + file_name
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
@@ -457,13 +535,12 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         for head in range(10):
             head_section.flush({'head_name': str(head)}, 1)
 
-        #result_file, result_url = create_office_template_tempnames(template_name)
+#result_file, result_url = create_office_template_tempnames(template_name)
         res_file_name = 'res-' + file_name
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
 
         return res_file_name
-
 
     def test_purchases_book(self):
         """
@@ -492,7 +569,6 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         res_file_name = 'res-' + file_name
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
-
 
     def test_operations_journal(self):
         """
@@ -540,7 +616,7 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
 
         for i in range(10):
             report.get_section('B1').flush({'nbr': i,
-                                            'fio': u'Иванов %d' %i,
+                                            'fio': u'Иванов %d' % i,
                                             'sectior': u'Какой-то сектор'})
 
             self.assertEqual(s_gor.sheet_data.cursor.row, ('A', i + 6))
@@ -562,6 +638,7 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks, unittest.TestCase
         self.assertEqual(section_last.sheet_data.cursor.row, ('A', 16))
         self.assertEqual(section_last.sheet_data.cursor.column, ('D', 15))
 
+
 class TestWriteXLSX(unittest.TestCase):
     """
     Тестируем правильность вывода для XLSX
@@ -571,11 +648,13 @@ class TestWriteXLSX(unittest.TestCase):
 
     def setUp(self):
         assert self.SUBDIR
-        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xlsx', )
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'test_data', self.SUBDIR, 'xlsx', )
         self.dst_dir = self.src_dir
 
         self.test_files = dict([(path, os.path.join(self.src_dir, path))
-        for path in os.listdir(self.src_dir) if path.startswith('test')])
+                                for path in os.listdir(self.src_dir)
+                                if path.startswith('test')])
 
     def test_left_down(self, report=None):
         if report is None:
@@ -583,8 +662,9 @@ class TestWriteXLSX(unittest.TestCase):
         for i in range(2):
             section1 = report.get_section('Section1')
             section1.flush({'section1': i}, oriented=Section.LEFT_DOWN)
-            self.assertEqual(section1.sheet_data.cursor.row, ('A', 2*i + 3))
-            self.assertEqual(section1.sheet_data.cursor.column, ('C', 2*i + 1))
+            self.assertEqual(section1.sheet_data.cursor.row, ('A', 2 * i + 3))
+            self.assertEqual(section1.sheet_data.cursor.column,
+                             ('C', 2 * i + 1))
 
     def test_left_down2(self, report=None):
         if report is None:
@@ -592,8 +672,9 @@ class TestWriteXLSX(unittest.TestCase):
         for i in range(2):
             section3 = report.get_section('Section3')
             section3.flush({'section3': 100}, oriented=Section.LEFT_DOWN)
-            self.assertEqual(section3.sheet_data.cursor.row, ('A', 2*i + 11))
-            self.assertEqual(section3.sheet_data.cursor.column, ('C', 2*i + 9))
+            self.assertEqual(section3.sheet_data.cursor.row, ('A', 2 * i + 11))
+            self.assertEqual(section3.sheet_data.cursor.column,
+                             ('C', 2 * i + 9))
 
     def test_right_up(self, report=None):
         if report is None:
@@ -609,8 +690,9 @@ class TestWriteXLSX(unittest.TestCase):
         for i in range(3):
             section2 = report.get_section('Section2')
             section2.flush({'section2': i}, oriented=Section.VERTICAL)
-            self.assertEqual(section2.sheet_data.cursor.row, ('C', 2*i + 5))
-            self.assertEqual(section2.sheet_data.cursor.column, ('E', 2*i + 3))
+            self.assertEqual(section2.sheet_data.cursor.row, ('C', 2 * i + 5))
+            self.assertEqual(section2.sheet_data.cursor.column,
+                             ('E', 2 * i + 3))
 
     def test_horizontal(self, report=None):
         if report is None:
@@ -620,7 +702,7 @@ class TestWriteXLSX(unittest.TestCase):
             section3.flush({'section3': i}, oriented=Section.HORIZONTAL)
             self.assertEqual(section3.sheet_data.cursor.row, ('C', 9))
             self.assertEqual(section3.sheet_data.cursor.column,
-                (ColumnHelper.add('G', 2*i), 7))
+                             (ColumnHelper.add('G', 2 * i), 7))
 
     def test_report_write(self):
 
@@ -639,6 +721,7 @@ class TestWriteXLSX(unittest.TestCase):
 
         return report.build(dst)
 
+
 class TestWriteXLS(unittest.TestCase):
     """
     Тестируем правильность вывода для XSL
@@ -648,11 +731,13 @@ class TestWriteXLS(unittest.TestCase):
 
     def setUp(self):
         assert self.SUBDIR
-        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xls', )
+        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'test_data', self.SUBDIR, 'xls', )
         self.dst_dir = self.src_dir
 
         self.test_files = dict([(path, os.path.join(self.src_dir, path))
-        for path in os.listdir(self.src_dir) if path.startswith('test')])
+                                for path in os.listdir(self.src_dir)
+                                if path.startswith('test')])
 
     def test_left_down(self, report=None):
         if report is None:
@@ -660,8 +745,8 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(2):
             section1 = report.get_section('Section1')
             section1.flush({'section1': i}, oriented=Section.LEFT_DOWN)
-            self.assertEqual(section1.sheet_data.cursor.row, (0, 2*i + 2))
-            self.assertEqual(section1.sheet_data.cursor.column, (2, 2*i))
+            self.assertEqual(section1.sheet_data.cursor.row, (0, 2 * i + 2))
+            self.assertEqual(section1.sheet_data.cursor.column, (2, 2 * i))
 
     def test_left_down2(self, report=None):
         if report is None:
@@ -669,8 +754,8 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(2):
             section3 = report.get_section('Section3')
             section3.flush({'section3': 100}, oriented=Section.LEFT_DOWN)
-            self.assertEqual(section3.sheet_data.cursor.row, (0, 2*i + 10))
-            self.assertEqual(section3.sheet_data.cursor.column, (2, 2*i + 8))
+            self.assertEqual(section3.sheet_data.cursor.row, (0, 2 * i + 10))
+            self.assertEqual(section3.sheet_data.cursor.column, (2, 2 * i + 8))
 
     def test_right_up(self, report=None):
         if report is None:
@@ -686,8 +771,10 @@ class TestWriteXLS(unittest.TestCase):
         for i in range(3):
             section2 = report.get_section('Section2')
             section2.flush({'section2': i}, oriented=Section.VERTICAL)
-            self.assertEqual(section2.sheet_data.cursor.row, (2, 2*(i+1) + 2))
-            self.assertEqual(section2.sheet_data.cursor.column, (4, 2*(i+1)))
+            self.assertEqual(section2.sheet_data.cursor.row,
+                             (2, 2 * (i + 1) + 2))
+            self.assertEqual(section2.sheet_data.cursor.column,
+                             (4, 2 * (i + 1)))
 
     def test_horizontal(self, report=None):
         if report is None:
@@ -697,7 +784,7 @@ class TestWriteXLS(unittest.TestCase):
             section3.flush({'section3': i}, oriented=Section.HORIZONTAL)
             self.assertEqual(section3.sheet_data.cursor.row, (2, 8))
             self.assertEqual(section3.sheet_data.cursor.column,
-                (6 + 2*i, 6))
+                             (6 + 2 * i, 6))
 
     def test_report_write(self):
 
@@ -706,7 +793,8 @@ class TestWriteXLS(unittest.TestCase):
         if os.path.exists(dst):
             os.remove(dst)
 
-        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
+        report = SpreadsheetReport(src, wrapper=DocumentXLS,
+                                   type=FileConverter.XLS)
         self.test_left_down(report)
         self.test_right_up(report)
         self.test_vertical(report)
@@ -714,6 +802,7 @@ class TestWriteXLS(unittest.TestCase):
         self.test_left_down2(report)
 
         return report.build(dst)
+
 
 class TestReportFormatXLS(unittest.TestCase):
     """
@@ -724,15 +813,22 @@ class TestReportFormatXLS(unittest.TestCase):
 
     def setUp(self):
         assert self.SUBDIR
-        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', self.SUBDIR, 'xls', )
+        self.src_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'test_data',
+            self.SUBDIR,
+            'xls'
+        )
         self.dst_dir = self.src_dir
 
         self.test_files = dict([(path, os.path.join(self.src_dir, path))
-        for path in os.listdir(self.src_dir) if path.startswith('test')])
+                                for path in os.listdir(self.src_dir)
+                                if path.startswith('test')])
 
     def test_spreadsheet_with_flag(self):
         """
-        Тест на использование класса SpreadsheetReport с переданным в конструктор wrapper-ом.
+        Тест на использование класса SpreadsheetReport с переданным в
+        конструктор wrapper-ом.
         """
 
         src = self.test_files['test_xls.xls']
@@ -740,7 +836,8 @@ class TestReportFormatXLS(unittest.TestCase):
         if os.path.exists(dst):
             os.remove(dst)
 
-        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
+        report = SpreadsheetReport(src, wrapper=DocumentXLS,
+                                   type=FileConverter.XLS)
 
         section1 = report.get_section('Section1')
         section1.flush({'tag1': 1})
@@ -766,7 +863,8 @@ class TestReportFormatXLS(unittest.TestCase):
         if os.path.exists(dst):
             os.remove(dst)
 
-        report = SpreadsheetReport(src, wrapper=DocumentXLS, type=FileConverter.XLS)
+        report = SpreadsheetReport(src, wrapper=DocumentXLS,
+                                   type=FileConverter.XLS)
 
         s1 = report.get_section('s1')
         s2 = report.get_section('s2')
@@ -778,43 +876,97 @@ class TestReportFormatXLS(unittest.TestCase):
         s5.flush({'p5': 2}, oriented=ISpreadsheetSection.VERTICAL)
         s5.flush({'p5': 3}, oriented=ISpreadsheetSection.HORIZONTAL)
 
-        m1 = MergeXLS(s1, s2, {'p1': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+        m1 = MergeXLS(s1, s2, {'p1': 1},
+                      oriented=ISpreadsheetSection.HORIZONTAL)
         with m1:
-            m2 = MergeXLS(s2, s3, {'p21': 1, 'p22': 21}, oriented=ISpreadsheetSection.HORIZONTAL)
+            m2 = MergeXLS(s2, s3, {'p21': 1, 'p22': 21},
+                          oriented=ISpreadsheetSection.HORIZONTAL)
             with m2:
-                m3 = MergeXLS(s3, s4, {'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+                m3 = MergeXLS(s3, s4, {'p3': 1},
+                              oriented=ISpreadsheetSection.HORIZONTAL)
                 with m3:
                     s4.flush({'p4': 1}, oriented=ISpreadsheetSection.RIGHT)
                     for i in range(2, 4):
-                        s4.flush({'p4': i}, oriented=ISpreadsheetSection.VERTICAL)
+                        s4.flush({'p4': i},
+                                 oriented=ISpreadsheetSection.VERTICAL)
 
-                m3_exp = (m3._begin_merge_col == 9 and m3._end_merge_col == 9 and m3.begin_row_merge == 3 and m3.end_row_merge==5)
+                m3_exp = (m3._begin_merge_col == 9
+                          and m3._end_merge_col == 9
+                          and m3.begin_row_merge == 3
+                          and m3.end_row_merge == 5)
                 self.assertEqual(m3_exp, True)
 
-                m3 = MergeXLS(s3, s4, {'p3': 2}, oriented=ISpreadsheetSection.HIERARCHICAL)
+                m3 = MergeXLS(s3, s4, {'p3': 2},
+                              oriented=ISpreadsheetSection.HIERARCHICAL)
                 with m3:
                     s4.flush({'p4': 1}, oriented=ISpreadsheetSection.RIGHT)
                     s4.flush({'p4': 2}, oriented=ISpreadsheetSection.VERTICAL)
 
-            m2 = MergeXLS(s2, s3, {'p21': 2, 'p22': 21}, oriented=ISpreadsheetSection.HIERARCHICAL)
+            m2 = MergeXLS(s2, s3, {'p21': 2, 'p22': 21},
+                          oriented=ISpreadsheetSection.HIERARCHICAL)
             with m2:
-                m3 = MergeXLS(s3, s4, {'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+                m3 = MergeXLS(s3, s4, {'p3': 1},
+                              oriented=ISpreadsheetSection.HORIZONTAL)
                 with m3:
                     s4.flush({'p4': 1}, oriented=ISpreadsheetSection.RIGHT)
                     s4.flush({'p4': 2}, oriented=ISpreadsheetSection.VERTICAL)
 
-        m1_exp = (m1._begin_merge_col == 6 and m1._end_merge_col == 6 and m1.begin_row_merge == 3 and m1.end_row_merge==9)
+        m1_exp = (m1._begin_merge_col == 6 and m1._end_merge_col == 6
+                  and m1.begin_row_merge == 3 and m1.end_row_merge == 9)
         self.assertEqual(m1_exp, True)
 
-        m1 = MergeXLS(s1, s2, {'p1': 2}, oriented=ISpreadsheetSection.HIERARCHICAL)
+        m1 = MergeXLS(s1, s2, {'p1': 2},
+                      oriented=ISpreadsheetSection.HIERARCHICAL)
         with m1:
-            m2 = MergeXLS(s2, s3, {'p21': 1, 'p22': 21}, oriented=ISpreadsheetSection.HORIZONTAL)
+            m2 = MergeXLS(s2, s3, {'p21': 1, 'p22': 21},
+                          oriented=ISpreadsheetSection.HORIZONTAL)
             with m2:
-                m3 = MergeXLS(s3, s4, {'p3': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+                m3 = MergeXLS(s3, s4, {'p3': 1},
+                              oriented=ISpreadsheetSection.HORIZONTAL)
                 with m3:
-                    s4.flush({'p4': 1}, oriented=ISpreadsheetSection.HORIZONTAL)
+                    s4.flush({'p4': 1},
+                             oriented=ISpreadsheetSection.HORIZONTAL)
 
         return report.build(dst)
+
+    def test_xls_formula_generation(self):
+        """
+        Генерация формул в xls
+        """
+        src = self.test_files['test-formula_generation.xls']
+        dst = os.path.join(self.dst_dir, 'res-formula_generation.xls')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = SpreadsheetReport(src, wrapper=DocumentXLS,
+                                   type=FileConverter.XLS)
+
+        row_insert_formula_section = report.get_section('row_insert_formula')
+        check_insert_formula_section = report.get_section(
+            'check_insert_formula'
+        )
+
+        insert_formulas(row_insert_formula_section,
+                        check_insert_formula_section)
+        report.build(dst)
+        check_file = " Please, check output file %s with table proc." % dst
+        if os.name == 'posix':
+            openoffice = '/usr/bin/openoffice'
+            libreoffice = '/usr/bin/libreoffice'
+            office = None
+            if os.path.exists(libreoffice):
+                office = libreoffice
+            elif os.path.exists(openoffice):
+                office = openoffice
+            assert office, ("Didn't found neither openoffice nor libreoffice" +
+                            check_file)
+            subprocess.call([office, dst])
+        elif os.name == 'nt':
+            subprocess.call(['EXCEL.exe', dst])
+        # elif os.name == 'mac':
+        else:
+            raise Exception("Can't check xls formula generation.")
+
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):
     SUBDIR = 'win'
@@ -826,12 +978,17 @@ class TestLinuxDOCX(unittest.TestCase):
     """
 
     def setUp(self):
-        self.src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'linux', 'docx', )
+        self.src_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'test_data',
+            'linux',
+            'docx'
+        )
         self.dst_dir = self.src_dir
 
         self.test_files = dict([(path, os.path.join(self.src_dir, path))
-        for path in os.listdir(self.src_dir) if path.startswith('test')])
-
+                                for path in os.listdir(self.src_dir)
+                                if path.startswith('test')])
 
     def test_simple_docx(self):
         """
@@ -844,7 +1001,8 @@ class TestLinuxDOCX(unittest.TestCase):
         res_file_name = 'res-' + template_name
         dst = os.path.join(self.dst_dir, res_file_name)
 
-        doc.build(dst, {'Employee_name': u'Иванов И.И.', 'region_name': u'Казань'})
+        doc.build(dst, {'Employee_name': u'Иванов И.И.',
+                        'region_name': u'Казань'})
         self.assertEqual(os.path.exists(dst), True)
 
     def test_spreadsheet_docx(self):
@@ -881,8 +1039,10 @@ class TestLinuxDOCX(unittest.TestCase):
         for tag in doc.get_all_parameters():
             tags.append(tag)
 
-        self.assertFalse(tags[0] != '#brandgroupname#' and tags[0] != '#category#')
-        self.assertFalse(tags[1] != '#brandgroupname#' and tags[1] != '#category#')
+        self.assertFalse(tags[0] != '#brandgroupname#'
+                         and tags[0] != '#category#')
+        self.assertFalse(tags[1] != '#brandgroupname#'
+                         and tags[1] != '#category#')
 
         doc.build(dst, {'brandgroupname': u'Брэнд', 'category': u'Категория'})
         self.assertEqual(os.path.exists(dst), True)
@@ -962,6 +1122,21 @@ class TestUtils(unittest.TestCase):
 
         date_float = date_to_float(datetime(1900, 1, 1, 6))
         self.assertEqual(date_float, 2.25)
+
+
+def insert_formulas(row_insert_formula_section, check_insert_formula_section):
+    for j in range(4):
+        row_insert_formula_section.flush(
+            {'p1': 5 + j, 'p2': 6 - j, 'p3': 4 * j},
+            used_formulas={'p1': ['p1', 't1'], 'p2': ['p2']}
+        )
+    check_insert_formula_section.flush(
+        {
+            'f2': FormulaWriteExcel('p2', 'AVERAGE', True),
+            'f3': FormulaWriteExcel('p1', 'SUM', False)
+        },
+        oriented=ISpreadsheetSection.VERTICAL
+    )
 
 if __name__ == '__main__':
     unittest.main()

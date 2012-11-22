@@ -18,6 +18,10 @@ class TestOO(object):
         port = 2002
         try:
             OOWrapper(port)
+        except ImportError as e:
+            print u'Тесты для OpenOffice не были запущены, '\
+                  u'т.к. не установленн пакет python-uno'
+            return False
         except OOWrapperException as e:
             # self.fail('OOWrapper() raised OOWrapperException - %s ' % str(e))
             print u'Тесты для OpenOffice не были запущены, '\

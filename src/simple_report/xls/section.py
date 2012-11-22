@@ -4,12 +4,25 @@ from datetime import datetime, date, time
 
 import re
 import xlrd
+import xlwt
 from xlwt.Style import default_style
 from simple_report.interface import ISpreadsheetSection
 
 from simple_report.core.exception import XLSReportWriteException
-from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
+from simple_report.core.spreadsheet_section import (SpreadsheetSection,
+                                                    AbstractMerge)
 from simple_report.xls.cursor import CalculateNextCursorXLS
+from simple_report.utils import FormulaWriteExcel
+
+# for k, v in xlwt.ExcelMagic.all_funcs_by_name.items():
+#     xlwt.ExcelMagic.all_funcs_by_name[k] = list(v)
+#     xlwt.ExcelMagic.all_funcs_by_name[k][2] = 100
+
+xlwt.ExcelMagic.all_funcs_by_name['SUM'] = (4, 1, 100, 'V', 'D+')
+
+
+FORMULA_XLS_TYPE = 'formula_xls'
+
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
     """
@@ -21,11 +34,14 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         super(Section, self).__init__(sheet, name, begin, end)
 
         self.sheet_data = sheet
+        self.sheet_data.formula_id_dict = {}
 
         self.writer = writer
 
-    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
-
+    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
+              used_formulas=None):
+        if used_formulas is None:
+            used_formulas = {}
         begin_row, begin_column = self.begin
         end_row, end_column = self.end
 
@@ -46,10 +62,48 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                 val = cell.value
 
                 cty = cell.ctype
+                f_id = None
                 for key, value in params.items():
                     if unicode(cell.value).count(''.join(['#', key, '#'])):
+                        if used_formulas:
+                            formula_id_list = used_formulas.get(key)
+                            if formula_id_list:
+                                for formula_id in formula_id_list:
+                                    self.sheet_data.formula_id_dict.setdefault(
+                                        formula_id, []
+                                    ).append(
+                                        ''.join([xlrd.colname(wtcolx),
+                                                str(wtrowx + 1)])
+                                    )
+
+                        if isinstance(value, FormulaWriteExcel):
+                            # Если приходит формула, то заменяем на
+                            # ее значение с указанием списка ячеек
+                            formula = value.excel_function
+                            f_id = value.formula_id
+
+                            if formula is not None and f_id is not None:
+                                formula_cells = self.sheet_data.formula_id_dict.get(
+                                    f_id
+                                )
+                                if formula_cells:
+                                    if value.ranged:
+                                        val = '%s(%s)' % (formula, ':'.join(
+                                            [formula_cells[0],
+                                             formula_cells[-1]]))
+                                    else:
+                                        val = '%s(%s)' % (formula, ','.join(
+                                            formula_cells))
+                                    self.sheet_data.formula_id_dict[f_id] = []
+                                    cty = FORMULA_XLS_TYPE
+                                else:
+                                    val = ''
+                                    cty = xlrd.XL_CELL_TEXT
+                                break
+
                         # Тип ячейки
-                        cty = self.get_value_type(value=value, default_type=cell.ctype)
+                        cty = self.get_value_type(value=value,
+                                                  default_type=cell.ctype)
                         value = unicode(value)
                         val = val.replace(u'#%s#' % key, value)
 
@@ -61,7 +115,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                             break
 
                 # Копирование всяких свойств из шаблона в результирующий отчет.
-                if wtcolx not in self.writer.wtcols and rdcolx in self.writer.rdsheet.colinfo_map:
+                if (wtcolx not in self.writer.wtcols
+                        and rdcolx in self.writer.rdsheet.colinfo_map):
                     rdcol = self.writer.rdsheet.colinfo_map[rdcolx]
                     wtcol = self.writer.wtsheet.col(wtcolx)
                     wtcol.width = rdcol.width
@@ -86,7 +141,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
                 if rdcoords2d in self.writer.merged_cell_top_left_map:
 
-                    rlo, rhi, clo, chi = self.writer.merged_cell_top_left_map[rdcoords2d]
+                    rlo, rhi, clo, chi = self.writer.merged_cell_top_left_map[
+                        rdcoords2d
+                    ]
                     assert (rlo, clo) == rdcoords2d
                     self.writer.wtsheet.write_merge(
                         wtrowx, wtrowx + rhi - rlo - 1,
@@ -116,8 +173,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         begin_row, begin_column = self.begin
         end_row, end_column = self.end
 
-        current_col, current_row = CalculateNextCursorXLS().get_next_cursor(self.sheet_data.cursor, (begin_column, begin_row),
-                                                (end_column, end_row), oriented, section=self)
+        current_col, current_row = CalculateNextCursorXLS().get_next_cursor(
+            self.sheet_data.cursor, (begin_column, begin_row),
+            (end_column, end_row), oriented, section=self)
 
         return current_col, current_row
 
@@ -159,7 +217,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
         # Вывод
         wtrow = self.writer.wtsheet.row(wtrowx)
-        if cell_type == xlrd.XL_CELL_TEXT or cell_type == xlrd.XL_CELL_EMPTY:
+        if cell_type == FORMULA_XLS_TYPE:
+            self.writer.wtsheet.write(wtrowx, wtcolx, xlwt.Formula(value),
+                                      style)
+        elif cell_type == xlrd.XL_CELL_TEXT or cell_type == xlrd.XL_CELL_EMPTY:
             wtrow.set_cell_text(wtcolx, value, style)
         elif cell_type == xlrd.XL_CELL_NUMBER:
             wtrow.set_cell_number(wtcolx, value, style)

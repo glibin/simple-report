@@ -8,7 +8,8 @@ from lxml.etree import QName, SubElement
 from simple_report.core.shared_table import SharedStringsTable
 from simple_report.core.tags import TemplateTags
 from simple_report.interface import ISpreadsheetSection
-from simple_report.utils import ColumnHelper, get_addr_cell, date_to_float
+from simple_report.utils import (ColumnHelper, get_addr_cell, date_to_float,
+    FormulaWriteExcel)
 from simple_report.xlsx.cursor import Cursor
 from simple_report.core.spreadsheet_section import SpreadsheetSection, AbstractMerge
 from simple_report.core.exception import SheetDataException
@@ -60,7 +61,7 @@ class SheetData(object):
     def __init__(self, sheet_xml, tags, cursor, ns, shared_table):
         # namespace
         self.ns = ns
-
+        self.formula_id_dict = {}
         # Шаблонные теги
         assert isinstance(tags, TemplateTags)
         self.tags = tags
@@ -151,7 +152,7 @@ class SheetData(object):
         assert isinstance(value, Cursor)
         self._last_section = value
 
-    def flush(self, begin, end, start_cell, params):
+    def flush(self, begin, end, start_cell, params, used_formulas=None):
         """
         Вывод секции
         @param begin: Начало секции, пример ('A', 1)
@@ -159,7 +160,7 @@ class SheetData(object):
         @param start_cell: ячейка с которой надо выводить
         @param params: данные для вывода
         """
-        self.set_section(begin, end, start_cell, params)
+        self.set_section(begin, end, start_cell, params, used_formulas)
         self.set_merge_cells(begin, end, start_cell)
         self.set_dimension()
 
@@ -305,12 +306,23 @@ class SheetData(object):
             cell_el = SubElement(row_el, 'c', attrib=attrib_cell)
         return cell_el
 
-    def set_section(self, begin, end, start_cell, params):
+    # def _add_formula_to_calc_chain(self, row, column):
+    #     """
+    #     Добавление формулы в цепочку вычислений (если файл есть в
+    #         шаблоне)
+    #     """
+    #     if self.calc_chain:
+    #         calc = SubElement(self.calc_chain._root, 'c')
+    #         calc.attrib['r'] = '%s%s' % (column, row)
+
+    def set_section(self, begin, end, start_cell, params, used_formulas=None):
         """
 
         """
         range_rows, range_cols = self._range(begin, end)
         start_column, start_row = start_cell
+        if used_formulas is None:
+            used_formulas = {}
 
         for i, num_row, row in self._find_rows(range_rows):
             attrib_row = dict(row.items())
@@ -333,6 +345,7 @@ class SheetData(object):
                 formula = self._get_tag_formula(cell)
                 if formula is not None:
                     formula_el = SubElement(cell_el, 'f')
+
                     row_cursor_column, row_cursor_row = self.cursor.row
                     column_cursor_column, column_cursor_row = self.cursor.column
                     formula_el.text = Formula.get_instance(formula.text).get_next_formula(row_cursor_row,
@@ -361,7 +374,16 @@ class SheetData(object):
                                 param_name = found_param[1:-1]
 
                                 param_value = params.get(param_name)
-
+                                if used_formulas:
+                                    formula_id_list = used_formulas.get(param_name)
+                                    assert (formula_id_list is None or
+                                    isinstance(formula_id_list, (list, tuple))), "used_formulas values must be lists or tuples"
+                                    if formula_id_list is not None:
+                                        for formula_id in formula_id_list:
+                                            cell_string = ''.join([col_index,
+                                                                str(row_index)])
+                                            self.formula_id_dict.setdefault(
+                                                formula_id, []).append(cell_string)
                                 # Находим теги шаблонов, если есть таковые
                                 if param_name[0] == self.PREFIX_TAG and param_name[-1] == self.PREFIX_TAG:
                                     param_value = self.tags.get(param_name[1:-1])
@@ -389,8 +411,41 @@ class SheetData(object):
                                     cell_el.attrib['t'] = 'n' # type - number
                                     value_el.text = unicode(param_value)
 
-                                elif param_value:
+                                elif isinstance(param_value, basestring):
                                     # Строковые параметры
+
+                                    value_string = value_string.replace(found_param, unicode(param_value))
+
+                                elif isinstance(param_value, FormulaWriteExcel):
+                                    # Записываем формулу, которой не было в
+                                    # шаблоне
+                                    func_ = param_value.excel_function
+                                    f_id = param_value.formula_id
+                                    if f_id and func_:
+                                        attrib_cell['t'] = 'e'
+                                        # тип вычислимого по формуле поля
+                                        cell_el.remove(value_el)
+                                        # значения в ячейке с формулой нет
+                                        formula_el = SubElement(cell_el, 'f')
+                                        row_cursor_column, row_cursor_row = self.cursor.row
+                                        column_cursor_column, column_cursor_row = self.cursor.column
+                                        f_cells = self.formula_id_dict.get(
+                                            f_id, [])
+                                        if param_value.ranged and f_cells:
+                                            formula_el.text = '%s(%s)' % (
+                                                func_, ':'.join([f_cells[0],
+                                                                f_cells[-1]])
+                                                )
+                                        else:
+                                            formula_el.text = '%s(%s)' % (
+                                                func_, ','.join(f_cells))
+                                        self.formula_id_dict[f_id] = []
+                                    else:
+                                        continue
+
+                                elif param_value:
+                                    # любой объект, например список или
+                                    # словарь. Вынесено для производительности
 
                                     value_string = value_string.replace(found_param, unicode(param_value))
 
@@ -695,7 +750,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         return self.__str__()
 
 
-    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN):
+    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
+            used_formulas=None):
         """
         Вывод. Имеется два механизма вывода. Для использования старого не передавать direction
         """
@@ -722,7 +778,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
         ColumnHelper.difference(end_col, begin_col) ), current_row + end_row - begin_row)
 
-        self.sheet_data.flush(self.begin, self.end, (current_col, current_row), params)
+        self.sheet_data.flush(self.begin, self.end, (current_col, current_row),
+            params, used_formulas)
 
     def get_all_parameters(self):
         u"""
