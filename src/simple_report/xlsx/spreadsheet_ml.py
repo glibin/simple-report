@@ -6,6 +6,7 @@ Created on 24.11.2011
 '''
 
 import re
+import os
 
 from lxml.etree import QName, tostring
 from simple_report.core import XML_DEFINITION
@@ -158,7 +159,8 @@ class WorkbookSheet(ReletionOpenXMLFile):
     NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 
 
-    def __init__(self, shared_table, tags, name, sheet_id, *args, **kwargs):
+    def __init__(self, shared_table, tags, name, sheet_id,
+            *args, **kwargs):
         super(WorkbookSheet, self).__init__(*args, **kwargs)
         self.name = name
         self.sheet_id = sheet_id
@@ -168,7 +170,8 @@ class WorkbookSheet(ReletionOpenXMLFile):
             cursor=Cursor(),
             ns=self.NS,
             shared_table=shared_table,
-            tags=tags, )
+            tags=tags,
+            )
 
         self.drawing, self.comments = self.walk_reletion()
 
@@ -261,7 +264,12 @@ class Workbook(ReletionOpenXMLFile):
 
         self.tags = tags
 
-        self.workbook_style, tmp_sheets, self.shared_strings = self.walk_reletions()
+        (
+            self.workbook_style,
+            tmp_sheets,
+            self.shared_strings,
+            self.calc_chain
+                                ) = self.walk_reletions()
         self.sheets = self.walk(tmp_sheets)
 
         if self.sheets:
@@ -271,7 +279,7 @@ class Workbook(ReletionOpenXMLFile):
             raise SheetNotFoundException('Sheets not found')
 
     def walk_reletions(self):
-        workbook_style = shared_strings = None
+        workbook_style = shared_strings = calc_chain = None
         sheets = {}
         for elem in self._reletion_root:
             param = (elem.attrib['Id'], elem.attrib['Target'])
@@ -283,8 +291,11 @@ class Workbook(ReletionOpenXMLFile):
 
             elif elem.attrib['Type'] == ReletionTypes.SHARED_STRINGS:
                 shared_strings = self._get_shared_strings(*param)
+            elif elem.attrib['Type'] == ReletionTypes.CALC_CHAIN:
+                calc_chain = self._get_calc_chain(*param)
+                self._reletion_root.remove(elem)
 
-        return workbook_style, sheets, shared_strings
+        return workbook_style, sheets, shared_strings, calc_chain
 
     def walk(self, sheet_reletion):
         """
@@ -308,11 +319,15 @@ class Workbook(ReletionOpenXMLFile):
         """
 
     def _get_worksheet(self, rel_id, target, name, sheet_id):
-        worksheet = WorkbookSheet.create(self.shared_table, self.tags, name, sheet_id, rel_id, *self._get_path(target))
+        worksheet = WorkbookSheet.create(self.shared_table, self.tags,
+            name, sheet_id, rel_id, *self._get_path(target))
         return worksheet
 
     def _get_shared_strings(self, _id, target):
         return SharedStrings.create(_id, *self._get_path(target))
+
+    def _get_calc_chain(self, _id, target):
+        return CalcChain.create(_id, *self._get_path(target))
 
     def get_section(self, name):
         """
@@ -339,6 +354,8 @@ class Workbook(ReletionOpenXMLFile):
         map(lambda x: x.build(), self.sheets)
 
         self.shared_strings.build()
+        if self.calc_chain:
+            self.calc_chain.build()
 
     @property
     def shared_table(self):
@@ -359,3 +376,24 @@ class CommonPropertiesXLSX(CommonProperties):
         """
         """
         return Workbook.create(self.tags, _id, *self._get_path(target))
+
+
+class CalcChain(OpenXMLFile):
+    """
+    Цепочка вычислений. Указывает порядок вычислений в ячейках а также
+    является кешем значений.
+    (http://stackoverflow.com/questions/9004848/working-with-office-open-xml-just-how-hard-is-it)
+    Поскольку довольно сложно в автоматическом режиме указывать порядок
+    вычисления, просто удаляем файл + ссылки на него.
+    Еще 1 плюс такого подхода - больше не должна повторяться ошибка при
+    открытии файла в MS Office 2007/2010, шаблон которого был сохранен
+    то в Libre/Openoffice, то в MS Office
+    """
+
+    NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+
+    def build(self):
+        """
+        Удаляем файл с цепочкой вычислений
+        """
+        os.remove(self.file_path)

@@ -158,3 +158,5 @@ class ReletionTypes(object):
 
     COMMENTS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
     DRAWING = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing"
+
+    CALC_CHAIN = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain"

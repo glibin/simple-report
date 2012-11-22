@@ -12,6 +12,7 @@ import shutil
 from tempfile import gettempdir
 import uuid
 import zipfile
+from collections import namedtuple
 
 class FileException(Exception):
     pass
@@ -68,7 +69,7 @@ class ZipProxy(object):
                     # Абсолютный путь до файла
                     abs_path = os.path.join(root, file_name)
 
-                    # Путь до директории 
+                    # Путь до директории
                     dir_path = abs_path[len(src_files_path) + len(os.sep):]
 
                     zip_file.write(abs_path, dir_path, compress_type=zipfile.ZIP_DEFLATED)
@@ -142,12 +143,12 @@ class FileProxy(object):
 class ColumnHelper(object):
     """
     Существенно облегчает работу с ячейками
-    
-    По данными ('ALC'), ('AVB') возврашает итератор по диапазону ячеек 
+
+    По данными ('ALC'), ('AVB') возврашает итератор по диапазону ячеек
     ('ALC', 'ALD', 'ALE', ..., 'AVA', 'AVB')
-    
-    Так же умеет работать, если переданы данные: ('A'), ('ALP') 
-    
+
+    Так же умеет работать, если переданы данные: ('A'), ('ALP')
+
     """
 
     @classmethod
@@ -231,3 +232,8 @@ def date_to_float(date):
     minute = date.time().minute - date_1900.time().minute
 
     return days + (hours + minute / 60.0) / 24.0
+
+
+FormulaWriteExcel = namedtuple('FormulaWriteExcel',
+                                ['formula_id', 'excel_function', 'ranged'],
+                                verbose=False)
