@@ -8,7 +8,7 @@ Created on 24.11.2011
 import re
 import os
 
-from lxml.etree import QName, tostring
+from lxml.etree import QName, tostring, fromstring
 from simple_report.core import XML_DEFINITION
 from simple_report.core.xml_wrap import OpenXMLFile, ReletionOpenXMLFile, ReletionTypes, CommonProperties
 from simple_report.core.shared_table import SharedStringsTable
@@ -396,4 +396,14 @@ class CalcChain(OpenXMLFile):
         """
         Удаляем файл с цепочкой вычислений
         """
-        os.remove(self.file_path)
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+
+    @classmethod
+    def from_file(cls, file_path):
+        assert file_path
+        # if os.path.exists(file_path):
+        #     with open(file_path) as f:
+        #         return parse(f).getroot()
+        # else:
+        return fromstring("<fake_root/>")
