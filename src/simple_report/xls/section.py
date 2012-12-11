@@ -184,6 +184,19 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         """
         """
 
+    def get_cell_final_type(self, value, cell_type):
+        """
+        Окончательный тип значения ячейки. Нужна, для того, чтобы точно
+        определить, является ли ячейка числовой
+        """
+        cty = cell_type
+        try:
+            float(value)
+            cty = xlrd.XL_CELL_NUMBER
+        except ValueError:
+            pass
+        return cty
+
     def get_value_type(self, value, default_type=xlrd.XL_CELL_TEXT):
         """
         Возвращаем тип значения для выходного элемента
@@ -198,11 +211,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         elif value is None:
             cty = xlrd.XL_CELL_EMPTY
         else:
-            try:
-                float(value)
-                cty = xlrd.XL_CELL_NUMBER
-            except ValueError:
-                cty = default_type
+            cty = default_type
+            # try:
+            #     float(value)
+            #     cty = xlrd.XL_CELL_NUMBER
+            # except ValueError:
+            #     cty = default_type
 
         return cty
 
@@ -210,8 +224,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         """
         Выводим в ячейку с координатами write_coords значение value.
         Стиль вывода определяется параметров style
-        cty - тип ячейки
+        cell_type - тип ячейки
         """
+
+        cell_type = get_cell_final_type(value, cell_type)
 
         wtcolx, wtrowx = write_coords
 
