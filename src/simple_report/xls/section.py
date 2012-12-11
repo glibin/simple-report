@@ -227,7 +227,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         cell_type - тип ячейки
         """
 
-        cell_type = get_cell_final_type(value, cell_type)
+        cell_type = self.get_cell_final_type(value, cell_type)
 
         wtcolx, wtrowx = write_coords
 
