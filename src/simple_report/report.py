@@ -8,6 +8,7 @@ Created on 24.11.2011
 import abc
 import os
 from simple_report.core.document_wrap import BaseDocument
+from simple_report.core.exception import WrongDocumentType
 from simple_report.core.tags import TemplateTags
 from simple_report.docx.document import DocumentDOCX
 
@@ -110,6 +111,9 @@ class DocumentReport(Report, IDocumentReport):
         """
         return self._wrapper.get_all_parameters()
 
+    def get_section(self, section_name):
+        return self._wrapper.get_section(section_name)
+
 
 class SpreadsheetReport(Report, ISpreadsheetReport):
 
@@ -135,6 +139,8 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
         u"""
         Возвращает секцию по имени
         """
+        if not hasattr(self._wrapper, 'get_section'):
+            raise WrongDocumentType()
         return self._wrapper.get_section(section_name)
 
     @property

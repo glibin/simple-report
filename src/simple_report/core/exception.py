@@ -48,3 +48,9 @@ class XLSXReportWriteException(Exception):
     """
     Ошибка вывода в отчетах XLSX
     """
+
+class WrongDocumentType(Exception):
+    """
+    Ошибка формата документа
+    """
+    # Например, в Word-документе не предусмотрена генерация таблиц
