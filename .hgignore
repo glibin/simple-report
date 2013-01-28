@@ -15,6 +15,10 @@ relre:~[0-9]+
 glob:src/m3/externals/KLADR.dbf
 glob:src/m3/externals/STREET.dbf
 glob:.idea/*
+glob:.tags
+glob:*.sublime-project
+glob:*.sublime-workspace
+glob:.ropeproject/*
 relre:class$
 glob:docs/build/
 glob:.project

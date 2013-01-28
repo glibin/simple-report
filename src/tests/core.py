@@ -12,6 +12,7 @@ from simple_report.xlsx.section import Section, MergeXLSX
 from simple_report.xlsx.spreadsheet_ml import (SectionException,
                                                SectionNotFoundException)
 from simple_report.xlsx.formula import Formula
+from simple_report.utils import ColumnHelper, date_to_float, FormulaWriteExcel
 
 
 sys.path.append('.')
@@ -32,8 +33,16 @@ from simple_report.report import (SpreadsheetReport, ReportGeneratorException,
 from simple_report.xls.document import DocumentXLS
 from simple_report.xls.section import MergeXLS
 
-from simple_report.converter.abstract import FileConverter
-from simple_report.utils import ColumnHelper, date_to_float, FormulaWriteExcel
+
+LOREM_IPSUM = (
+    'Lorem ipsum dolor sit amet, consectetur adipisicing elit, '
+    'sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '
+    'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris '
+    'nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in '
+    'reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla '
+    'pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa '
+    'qui officia deserunt mollit anim id est laborum.'
+)
 
 
 class TestXLSX(object):
@@ -1098,6 +1107,39 @@ class TestLinuxDOCX(unittest.TestCase):
         report.build(dst, params)
 
         self.assertEqual(os.path.exists(dst), True)
+
+    def test_tables_flush(self):
+        template_name = 'test_table.docx'
+        path = self.test_files[template_name]
+
+        res_file_name = 'res-table_flush.docx'
+        dst = os.path.join(self.dst_dir, res_file_name)
+
+        report = DocumentReport(path)
+        # report.set_docx_table_sections()
+        s1 = report.get_section('section1')
+        s2 = report.get_section('section2')
+        s2.flush({'test': u'Lorem ipsum'})
+        s1.flush({
+            'test_table_row1col1': u'Hello',
+            'test_table_row1col2': u'simple_report',
+            'test_table_row1col3': u'user',
+            'test_table_row1col4': LOREM_IPSUM,
+        })
+        params = {}
+        report.build(dst, params)
+
+    def test_table_section_double(self):
+        template_name = 'test_table_double_section.docx'
+        path = self.test_files[template_name]
+
+        report = DocumentReport(path)
+        try:
+            report.get_section('section1')
+        except SectionException:
+            pass
+        else:
+            raise Exception('Docx tables sections doubling test failed')
 
 
 class TestUtils(unittest.TestCase):
