@@ -1,4 +1,5 @@
 #coding: utf-8
+
 from datetime import datetime
 import sys
 import os
@@ -13,7 +14,7 @@ from simple_report.xlsx.spreadsheet_ml import (SectionException,
                                                SectionNotFoundException)
 from simple_report.xlsx.formula import Formula
 from simple_report.utils import ColumnHelper, date_to_float, FormulaWriteExcel
-
+from simple_report.xls.section import XLSImage
 
 sys.path.append('.')
 
@@ -975,6 +976,33 @@ class TestReportFormatXLS(unittest.TestCase):
         # elif os.name == 'mac':
         else:
             raise Exception("Can't check xls formula generation.")
+
+    def test_xls_image_insertion(self):
+        """
+        Вставка изображений
+        """
+        src = self.test_files['test_insert_image.xls']
+        src_image1 = self.test_files['test_image1.bmp']
+        src_image2 = self.test_files['test_image2.bmp']
+        dst = os.path.join(self.dst_dir, 'res-insert_image.xls')
+        if os.path.exists(dst):
+            os.remove(dst)
+
+        report = SpreadsheetReport(src, wrapper=DocumentXLS,
+                                   type=FileConverter.XLS)
+
+        row_section = report.get_section('row')
+        row_section.flush({
+            'image1': XLSImage(src_image1)
+        })
+        row_section.flush({
+            'image2': XLSImage(src_image2)
+        })
+        row_section.flush({
+            'image1': XLSImage(src_image2),
+            'image2': XLSImage(src_image1)
+        })
+        report.build(dst)
 
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):

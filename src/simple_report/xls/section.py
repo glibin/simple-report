@@ -9,8 +9,9 @@ from xlwt.Style import default_style
 from simple_report.interface import ISpreadsheetSection
 
 from simple_report.core.exception import XLSReportWriteException
-from simple_report.core.spreadsheet_section import (SpreadsheetSection,
-                                                    AbstractMerge)
+from simple_report.core.spreadsheet_section import (
+    SpreadsheetSection, AbstractMerge
+)
 from simple_report.xls.cursor import CalculateNextCursorXLS
 from simple_report.utils import FormulaWriteExcel
 
@@ -22,6 +23,7 @@ xlwt.ExcelMagic.all_funcs_by_name['SUM'] = (4, 1, 100, 'V', 'D+')
 
 
 FORMULA_XLS_TYPE = 'formula_xls'
+EXCEL_IMAGE_TYPE = 'excel_image'
 
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
@@ -53,7 +55,6 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                 # Вычисляем координаты ячейки для записи.
                 wtcolx = current_col + rdcolx - begin_column
                 wtrowx = current_row + rdrowx - begin_row
-
                 try:
                     cell = self.writer.rdsheet.cell(rdrowx, rdcolx)
                 except IndexError:
@@ -100,7 +101,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                                     val = ''
                                     cty = xlrd.XL_CELL_TEXT
                                 break
-
+                        elif isinstance(value, XLSImage):
+                            cty = EXCEL_IMAGE_TYPE
+                            val = value
+                            break
                         # Тип ячейки
                         cty = self.get_value_type(value=value,
                                                   default_type=cell.ctype)
@@ -226,10 +230,14 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         Стиль вывода определяется параметров style
         cell_type - тип ячейки
         """
+        wtcolx, wtrowx = write_coords
+        if cell_type == EXCEL_IMAGE_TYPE:
+            self.writer.wtsheet.insert_bitmap(
+                value.path, wtrowx - 1 , wtcolx - 1
+            )
+            return
 
         cell_type = self.get_cell_final_type(value, cell_type)
-
-        wtcolx, wtrowx = write_coords
 
         # Вывод
         wtrow = self.writer.wtsheet.row(wtrowx)
@@ -270,3 +278,12 @@ class MergeXLS(AbstractMerge):
         last_section_column = column - 1
 
         return first_section_column, last_section_column
+
+
+class XLSImage(object):
+    """
+    Рисунок
+    """
+
+    def __init__(self, path):
+        self.path = path
