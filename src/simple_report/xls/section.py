@@ -248,7 +248,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         wtcolx, wtrowx = write_coords
         if cell_type == EXCEL_IMAGE_TYPE:
             self.writer.wtsheet.insert_bitmap(
-                value.path, wtrowx - 1, wtcolx - 1
+                value.path, wtrowx, wtcolx
             )
             return
 
