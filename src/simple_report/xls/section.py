@@ -149,6 +149,21 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                         rdcoords2d
                     ]
                     assert (rlo, clo) == rdcoords2d
+                    if isinstance(val, XLSImage):
+                        self.writer.wtsheet.merge(
+                            wtrowx,
+                            wtrowx + rhi - rlo - 1,
+                            wtcolx,
+                            wtcolx + chi - clo - 1,
+                            style
+                        )
+                        #TODO: вынести в метод записи
+                        self.writer.wtsheet.insert_bitmap(
+                            val.path,
+                            wtrowx,
+                            wtcolx
+                        )
+                        continue
                     self.writer.wtsheet.write_merge(
                         wtrowx, wtrowx + rhi - rlo - 1,
                         wtcolx, wtcolx + chi - clo - 1,
@@ -233,7 +248,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         wtcolx, wtrowx = write_coords
         if cell_type == EXCEL_IMAGE_TYPE:
             self.writer.wtsheet.insert_bitmap(
-                value.path, wtrowx - 1 , wtcolx - 1
+                value.path, wtrowx - 1, wtcolx - 1
             )
             return
 
