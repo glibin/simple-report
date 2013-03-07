@@ -50,11 +50,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         current_col, current_row = self.calc_next_cursor(oriented=oriented)
 
         for rdrowx in range(begin_row, end_row + 1):
+            # индекс строки независит от колонок
+            wtrowx = current_row + rdrowx - begin_row
             for rdcolx in range(begin_column, end_column + 1):
 
                 # Вычисляем координаты ячейки для записи.
                 wtcolx = current_col + rdcolx - begin_column
-                wtrowx = current_row + rdrowx - begin_row
                 try:
                     cell = self.writer.rdsheet.cell(rdrowx, rdcolx)
                 except IndexError:
@@ -174,6 +175,11 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                     continue
 
                 self.write_result((wtcolx, wtrowx), val, style, cty)
+
+            # перетащим заодно и высоту текущей строки
+            rdrow = self.writer.rdsheet.rowinfo_map[rdrowx]
+            wtrow = self.writer.wtsheet.rows[wtrowx]
+            wtrow.height = rdrow.height
 
     def get_width(self):
         """
