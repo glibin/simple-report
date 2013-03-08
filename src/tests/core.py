@@ -1004,6 +1004,36 @@ class TestReportFormatXLS(unittest.TestCase):
         })
         report.build(dst)
 
+    def test_rows_height(self):
+        """
+        Тест на выставление высоты строк
+        """
+        src = self.test_files['test_rows_height.xls']
+        dst = os.path.join(self.dst_dir, 'res-rows-height.xls')
+
+        if os.path.exists(dst):
+            os.remove(dst)
+        report = SpreadsheetReport(
+            src,
+            wrapper=DocumentXLS,
+            type=FileConverter.XLS
+        )
+        report.get_section('row1').flush({
+            't1': LOREM_IPSUM[:20],
+            't2': u'. '.join([
+                u'Проверка на автоподбор высоты',
+                LOREM_IPSUM
+            ])
+        })
+
+        report.get_section('row2').flush({
+            't1': LOREM_IPSUM[:20],
+            't2': u'. '.join([
+                u'Проверка на высоту строки, взятую из шаблона',
+                LOREM_IPSUM
+            ])
+        })
+        report.build(dst)
 
 class TestWindowsXLSX(TestXLSX, unittest.TestCase):
     SUBDIR = 'win'
@@ -1210,3 +1240,4 @@ def insert_formulas(row_insert_formula_section, check_insert_formula_section):
 
 if __name__ == '__main__':
     unittest.main()
+
