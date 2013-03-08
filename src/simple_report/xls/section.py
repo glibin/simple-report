@@ -52,6 +52,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         for rdrowx in range(begin_row, end_row + 1):
             # индекс строки независит от колонок
             wtrowx = current_row + rdrowx - begin_row
+
             for rdcolx in range(begin_column, end_column + 1):
 
                 # Вычисляем координаты ячейки для записи.
@@ -175,11 +176,19 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                     continue
 
                 self.write_result((wtcolx, wtrowx), val, style, cty)
-
             # перетащим заодно и высоту текущей строки
-            rdrow = self.writer.rdsheet.rowinfo_map[rdrowx]
-            wtrow = self.writer.wtsheet.rows[wtrowx]
-            wtrow.height = rdrow.height
+            rdrow = self.writer.rdsheet.rowinfo_map.get(rdrowx)
+            wtrow = self.writer.wtsheet.rows.get(wtrowx)
+            if rdrow is not None and wtrow is not None:
+                # Выставляем стиль строки.
+                # Стиль строки не влияет на стиль ячеек в ней
+                row_style = xlwt.easyxf('font:height {0};'.format(
+                    int(rdrow.height * 0.785)
+                    #TODO: заменить магический коэффициент перевода
+                    #высоты строки в высоту шрифта
+                    #TODO: заменить хак нормальным выставлением высоты
+                ))
+                wtrow.set_style(row_style)
 
     def get_width(self):
         """
