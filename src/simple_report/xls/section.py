@@ -180,15 +180,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             rdrow = self.writer.rdsheet.rowinfo_map.get(rdrowx)
             wtrow = self.writer.wtsheet.rows.get(wtrowx)
             if rdrow is not None and wtrow is not None:
-                # Выставляем стиль строки.
-                # Стиль строки не влияет на стиль ячеек в ней
-                row_style = xlwt.easyxf('font:height {0};'.format(
-                    int(rdrow.height * 0.785)
-                    #TODO: заменить магический коэффициент перевода
-                    #высоты строки в высоту шрифта
-                    #TODO: заменить хак нормальным выставлением высоты
-                ))
-                wtrow.set_style(row_style)
+                wtrow.height = rdrow.height
+                # height_mismatch нужен для того, чтобы применилась высота
+                wtrow.height_mismatch = rdrow.height_mismatch
 
     def get_width(self):
         """
