@@ -5,7 +5,7 @@ requires = []
 with open('src/requires.txt', 'r') as f:
     requires.extend(f.readlines())
 
-setup(name='simple_report',
+setup(name='simple-report',
       version='1.3',
       url='https://src.bars-open.ru/py/m3/m3_contrib/simple_report',
       license='Apache License, Version 2.0',
