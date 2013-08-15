@@ -18,6 +18,9 @@ from simple_report.xlsx.cursor import CalculateNextCursorXLSX
 
 __author__ = 'prefer'
 
+XLSX_GROUPING_COUNT = 30
+
+
 class SheetData(object):
     u"""
     self.read_data:
@@ -436,9 +439,23 @@ class SheetData(object):
                                                 func_, ':'.join([f_cells[0],
                                                                 f_cells[-1]])
                                                 )
-                                        else:
+                                        elif f_cells:
+                                            # Группируем по 30 элементов
+                                            cells_number = int(
+                                                len(f_cells) / XLSX_GROUPING_COUNT
+                                            ) + 1
+                                            val_list = []
+                                            for x in range(cells_number):
+                                                sub_val = '(%s)' % (
+                                                    ','.join(f_cells[x * XLSX_GROUPING_COUNT:(x + 1) * XLSX_GROUPING_COUNT])
+                                                )
+                                                val_list.append(sub_val)
+
                                             formula_el.text = '%s(%s)' % (
-                                                func_, ','.join(f_cells))
+                                                func_,
+                                                ', '.join(val_list)
+                                            )
+
                                         self.formula_id_dict[f_id] = []
                                     else:
                                         continue
