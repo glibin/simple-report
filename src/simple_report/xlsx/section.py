@@ -446,10 +446,16 @@ class SheetData(object):
                                             ) + 1
                                             val_list = []
                                             for x in range(cells_number):
-                                                sub_val = '(%s)' % (
-                                                    ','.join(f_cells[x * XLSX_GROUPING_COUNT:(x + 1) * XLSX_GROUPING_COUNT])
+                                                sub_args = (
+                                                    ','.join(
+                                                        f_cells[x * XLSX_GROUPING_COUNT:(x + 1) * XLSX_GROUPING_COUNT]
+                                                    )
                                                 )
-                                                val_list.append(sub_val)
+                                                if sub_args:
+                                                    sub_val = '(%s)' % (
+                                                        sub_args
+                                                    )
+                                                    val_list.append(sub_val)
 
                                             formula_el.text = '%s(%s)' % (
                                                 func_,
