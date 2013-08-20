@@ -19,6 +19,9 @@ from simple_report.xls.document import DocumentXLS
 from simple_report.xls.output_options import XSL_OUTPUT_SETTINGS
 from simple_report.utils import FileProxy
 
+
+
+
 class ReportGeneratorException(Exception):
     """
     """
@@ -31,7 +34,8 @@ class Report(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, src_file, converter=None, tags=None, wrapper = None, type = None, **kwargs):
+    def __init__(self, src_file, converter=None, tags=None, wrapper=None,
+                 type=None, **kwargs):
         """
         """
 

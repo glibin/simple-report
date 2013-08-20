@@ -21,6 +21,7 @@ from simple_report.utils import FormulaWriteExcel
 
 xlwt.ExcelMagic.all_funcs_by_name['SUM'] = (4, 1, 100, 'V', 'D+')
 
+KEEP_TEXT_TYPE = False
 
 FORMULA_XLS_TYPE = 'formula_xls'
 EXCEL_IMAGE_TYPE = 'excel_image'
@@ -218,6 +219,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         определить, является ли ячейка числовой
         """
         cty = cell_type
+        if KEEP_TEXT_TYPE and cell_type == xlrd.XL_CELL_TEXT:
+            return cty
         try:
             float(value)
             cty = xlrd.XL_CELL_NUMBER
