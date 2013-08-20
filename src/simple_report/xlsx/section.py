@@ -459,7 +459,7 @@ class SheetData(object):
 
                                             formula_el.text = '%s(%s)' % (
                                                 func_,
-                                                ', '.join(val_list)
+                                                ','.join(val_list)
                                             )
 
                                         self.formula_id_dict[f_id] = []
