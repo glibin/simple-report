@@ -22,6 +22,7 @@ class WorkbookSheet():
         self.writer = writer
         self.cursor = CursorXLS()
         self.sections = {}
+        self.formula_id_dict = {}
 
     def get_section(self, name):
 
