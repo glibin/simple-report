@@ -37,7 +37,6 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         super(Section, self).__init__(sheet, name, begin, end)
 
         self.sheet_data = sheet
-        self.sheet_data.formula_id_dict = {}
 
         self.writer = writer
 
