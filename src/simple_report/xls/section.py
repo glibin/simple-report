@@ -1,6 +1,7 @@
 #coding:utf-8
 
 from datetime import datetime, date, time
+import numbers
 
 import re
 import xlrd
@@ -25,6 +26,7 @@ KEEP_TEXT_TYPE = False
 
 FORMULA_XLS_TYPE = 'formula_xls'
 EXCEL_IMAGE_TYPE = 'excel_image'
+TEXT_CELL_FORMAT = '@'
 
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
@@ -46,6 +48,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             used_formulas = {}
         begin_row, begin_column = self.begin
         end_row, end_column = self.end
+        book = self.sheet_data.sheet.book
 
         current_col, current_row = self.calc_next_cursor(oriented=oriented)
 
@@ -63,6 +66,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                     continue
 
                 val = cell.value
+                # доставем формат ячейки
+                xf_index = cell.xf_index
+                xf = book.xf_list[xf_index]
+                format_key = xf.format_key
+                format_ = book.format_map[format_key]
+                format_str = format_.format_str
 
                 cty = cell.ctype
                 f_id = None
@@ -175,6 +184,18 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                 if rdcoords2d in self.writer.merged_cell_already_set:
                     continue
 
+                # если поле текстовое и
+                # стоит настройка "Сохранять текстовые поля"
+                # то не преобразуем текст в число
+                if KEEP_TEXT_TYPE and format_str == TEXT_CELL_FORMAT:
+                    pass
+                else:
+                    try:
+                        long(val)
+                        cty = xlrd.XL_CELL_NUMBER
+                    except ValueError:
+                        pass
+
                 self.write_result((wtcolx, wtrowx), val, style, cty)
             # перетащим заодно и высоту текущей строки
             rdrow = self.writer.rdsheet.rowinfo_map.get(rdrowx)
@@ -221,7 +242,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         if KEEP_TEXT_TYPE and cell_type == xlrd.XL_CELL_TEXT:
             return cty
         try:
-            float(value)
+            long(value)
             cty = xlrd.XL_CELL_NUMBER
         except ValueError:
             pass
@@ -240,10 +261,16 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             cty = xlrd.XL_CELL_BOOLEAN
         elif value is None:
             cty = xlrd.XL_CELL_EMPTY
+        # elif isinstance(value, numbers.Number):
+        #     if default_type == xlrd.XL_CELL_TEXT and KEEP_TEXT_TYPE:
+        #         return default_type
+        #     cty = xlrd.XL_CELL_NUMBER
         else:
             cty = default_type
+            # if default_type == xlrd.XL_CELL_TEXT and KEEP_TEXT_TYPE:
+            #     return cty
             # try:
-            #     float(value)
+            #     long(value)
             #     cty = xlrd.XL_CELL_NUMBER
             # except ValueError:
             #     cty = default_type
@@ -263,7 +290,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             )
             return
 
-        cell_type = self.get_cell_final_type(value, cell_type)
+        # cell_type = self.get_cell_final_type(value, cell_type)
 
         # Вывод
         wtrow = self.writer.wtsheet.row(wtrowx)
