@@ -1,7 +1,7 @@
 #coding:utf-8
 
 from datetime import datetime, date, time
-import numbers
+import decimal
 
 import re
 import xlrd
@@ -191,9 +191,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                     pass
                 else:
                     try:
-                        long(val)
+                        val1 = val
+                        if isinstance(val1, float):
+                            val1 = str(val1)
+                        decimal.Decimal(val1)
                         cty = xlrd.XL_CELL_NUMBER
-                    except ValueError:
+                    except decimal.InvalidOperation:
                         pass
 
                 self.write_result((wtcolx, wtrowx), val, style, cty)
