@@ -96,13 +96,17 @@ class Workbook(object):
         self.sheets = self._sheet_list()
 
         if self.sheets:
-            self._active_sheet = self.sheets[0]
-            self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
+            pass
+            # self.init_active_sheet()
         else:
             raise SheetNotFoundException('Sheets not found')
 
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def init_active_sheet(self):
+        self._active_sheet = self.sheets[0]
+        self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
 
     def configure_writer(self):
         """
@@ -137,6 +141,9 @@ class Workbook(object):
             self.xlwt_writer.wtsheet.footer_str = (u'&P из &N')
 
     def get_section(self, name):
+        if not hasattr(self, '_active_sheet'):
+            self._active_sheet = self.sheets[0]
+            self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
         return self._active_sheet.get_section(name)
 
     def get_sections(self):
