@@ -310,7 +310,7 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks,
                             found_C21 = True
                             func = c_.find('f')
                             assert func is not None
-                            assert func.text == 'SUM(A17,A18,A19,A20)'
+                            assert func.text == 'SUM((A17,A18,A19,A20))'
         assert found_B21 and found_C21
 
         return report.build(dst)

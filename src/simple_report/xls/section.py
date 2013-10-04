@@ -196,7 +196,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                             val1 = str(val1)
                         decimal.Decimal(val1)
                         cty = xlrd.XL_CELL_NUMBER
-                    except decimal.InvalidOperation:
+                    except (decimal.InvalidOperation, TypeError):
                         pass
 
                 self.write_result((wtcolx, wtrowx), val, style, cty)
