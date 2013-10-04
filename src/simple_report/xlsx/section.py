@@ -357,7 +357,7 @@ class SheetData(object):
                     continue
 
                 value = self._get_tag_value(cell)
-                if not value is  None:
+                if not value is None:
                     value_el = SubElement(cell_el, 'v')
 
                     if attrib_cell.get('t') in ('n', None): # number
@@ -370,7 +370,6 @@ class SheetData(object):
                         value_string = self.shared_table.get_value(index_value)
 
                         who_found_params = self._get_values_by_re(value_string)
-
                         is_int = False
                         if who_found_params:
                             for found_param in who_found_params:
@@ -379,8 +378,13 @@ class SheetData(object):
                                 param_value = params.get(param_name)
                                 if used_formulas:
                                     formula_id_list = used_formulas.get(param_name)
-                                    assert (formula_id_list is None or
-                                    isinstance(formula_id_list, (list, tuple))), "used_formulas values must be lists or tuples"
+                                    assert (
+                                        formula_id_list is None or
+                                        isinstance(
+                                            formula_id_list,
+                                            (list, tuple))
+                                    ), ("used_formulas values must be "
+                                        "lists or tuples")
                                     if formula_id_list is not None:
                                         for formula_id in formula_id_list:
                                             cell_string = ''.join([col_index,
@@ -400,14 +404,20 @@ class SheetData(object):
                                         cell_el.attrib['t'] = 'n' # type - number
                                         value_el.text = unicode(days)
                                     else:
-                                        date_less_1900 = '%s.%s.%s' % (param_value.date().day,
-                                                                       param_value.date().month, param_value.date().year
-                                                                       ,)
+                                        date_less_1900 = '%s.%s.%s' % (
+                                            param_value.date().day,
+                                            param_value.date().month,
+                                            param_value.date().year
+                                        )
                                         # strftime(param_value, locale.nl_langinfo(locale.D_FMT)) - неработает для 1900 и ниже
                                         value_string = value_string.replace(found_param, unicode(date_less_1900))
 
-
-                                elif isinstance(param_value, (int, float, Decimal)) and found_param == value_string:
+                                # Добавил long, возможно нужно использовать
+                                # общего предка numbers.Number
+                                elif isinstance(
+                                    param_value,
+                                    (int, float, long, Decimal)
+                                ) and found_param == value_string:
                                     # В первую очередь добавляем числовые значения
                                     is_int = True
 
