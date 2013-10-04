@@ -101,6 +101,7 @@ class SheetData(object):
 
         # Ссылка на тег данных строк и столбцов листа с очищенными значениями
         self.write_data = self._write_xml.find(QName(self.ns, 'sheetData'))
+        self.write_data_dict = {}
         if not self.write_data is None:
             self.write_data.clear()
 
@@ -295,7 +296,20 @@ class SheetData(object):
 
     def _create_or_get_output_row(self, row_index, attrib_row):
         # найдем существующую строку в результирующих данных
+        key = self.XPATH_TEMPLATE_ROW % row_index
+        row_el = self.write_data_dict.get(key)
+
+        if row_el is None:
+            # если не нашли - создадим
+            row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
+            self.write_data_dict[key] = row_el
+        return row_el
+
+
+    def _create_or_get_output_row_old(self, row_index, attrib_row):
+        # найдем существующую строку в результирующих данных
         row_el = self.write_data.find(self.XPATH_TEMPLATE_ROW % row_index)
+
         if row_el is None:
             # если не нашли - создадим
             row_el = SubElement(self.write_data, 'row', attrib=attrib_row)
@@ -317,7 +331,7 @@ class SheetData(object):
     #     if self.calc_chain:
     #         calc = SubElement(self.calc_chain._root, 'c')
     #         calc.attrib['r'] = '%s%s' % (column, row)
-
+    #@profile
     def set_section(self, begin, end, start_cell, params, used_formulas=None):
         """
 
@@ -332,7 +346,7 @@ class SheetData(object):
 
             row_index = start_row + i
             attrib_row['r'] = str(row_index)
-
+            # следующая строка создает линейное время для флаша от числа флашей
             row_el = self._create_or_get_output_row(row_index, attrib_row)
 
             for j, col, cell in self._find_cells(range_cols, num_row, row):

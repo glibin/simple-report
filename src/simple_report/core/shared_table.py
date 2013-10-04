@@ -14,6 +14,7 @@ class SharedStringsTable(object):
         # Ключами являются строки, индексами значения
         self.new_elements_dict = {}
         self.new_elements_list = []
+        self._new_elements_dict = {}
 
         assert isinstance(root, _Element)
         #assert 'count' in root.attrib # TODO: Разобраться почему нет в виндовых шаблонах
@@ -25,7 +26,23 @@ class SharedStringsTable(object):
 
         self.elements = [''.join(t.text or '' for t in si) for si in root]
 
+
     def get_new_index(self, value_string):
+        """
+        Возвращаем индекс нового элемента таблицы shared string
+        Ищем в множестве, иначе получаем нелинейное время flush секции
+        """
+
+        new_index = self._new_elements_dict.get(value_string)
+        if new_index is None:
+            new_index = self.uniq_elements
+            self.new_elements_list.append(value_string)
+            self._new_elements_dict[new_index] = value_string
+            self.uniq_elements += 1
+
+        return str(new_index)
+
+    def get_new_index_old(self, value_string):
         """
         Возвращаем индекс нового элемента таблицы shared string
         """
