@@ -3,6 +3,7 @@
 import copy
 
 from lxml.etree import tostring
+import re
 
 from simple_report.core import XML_DEFINITION
 from simple_report.core.exception import (
@@ -42,19 +43,58 @@ class Wordprocessing(ReletionOpenXMLFile):
     def set_params(self, params):
         """
         """
-
+        #
+        self.merge_same_nodes()
         text_nodes = self._root.xpath(
             self.XPATH_QUERY.format('w'), namespaces={'w': self.NS_W}
         )
         self._set_params(text_nodes, params)
 
+    def get_signature(self, node):
+        signature = []
+        for subnode in list(node):
+            if subnode.tag != '{%s}lang' % self.NS_W:
+                signature.append((subnode.tag, sorted(subnode.items())))
+        return signature
+
+    def merge_same_nodes(self):
+        paragraphs = list(self._root.xpath(
+            './/{0}:p'.format('w'), namespaces={'w': self.NS_W}
+        ))
+
+        t_tag = '{%s}t' % self.NS_W
+        r_tag = '{%s}r' % self.NS_W
+        for paragraph in paragraphs:
+            par_nodes = list(paragraph)
+            old_signature = None
+            signature = None
+            old_node = None
+
+            for par_node in par_nodes:
+                if par_node.tag != r_tag:
+                    continue
+                for node in list(par_node):
+                    if node.tag == '{%s}rPr' % self.NS_W:
+                        old_signature = signature
+                        signature = self.get_signature(node)
+                    elif node.tag == '{%s}t' % self.NS_W:
+                        if old_node is not None and old_signature == signature:
+                            # delete r node
+                            old_node[1].text = old_node[1].text + node.text
+                            #old_node = (par_node, node)
+                            paragraph.remove(par_node)
+                        else:
+                            old_node = (par_node, node)
     @classmethod
     def _set_params(cls, text_nodes, params):
+
         for node in text_nodes:
             for key_param, value in params.items():
                 if key_param in node.text:
-                    if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
-                        node.text = node.text.replace('#%s#' % key_param, unicode(value))
+                    #if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
+                    text_to_replace = '#%s#' % key_param
+                    if text_to_replace in node.text:
+                        node.text = node.text.replace(text_to_replace, unicode(value))
                     else:
                         node.text = node.text.replace(key_param, unicode(value))
 

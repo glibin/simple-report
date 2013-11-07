@@ -1199,6 +1199,41 @@ class TestLinuxDOCX(unittest.TestCase):
         else:
             raise Exception('Docx tables sections doubling test failed')
 
+    def test_divisible_keys(self):
+        template_name = 'test_divisibles.docx'
+        path = self.test_files[template_name]
+        report = DocumentReport(path)
+        res_file_name = 'res-divisibles.docx'
+        dst = os.path.join(self.dst_dir, res_file_name)
+        params = {
+            "tasks": "",
+            "kind_tostring": u"документарная и выездная",
+            "normative_list": "",
+            "finish_date": "13.12.2012",
+            "expert_list": "",
+            "docs": "",
+            "num": "1",
+            "purpose": "",
+            "address": u"420101, Респ Татарстан (Татарстан), г Казань, ул Карбышева, д. 37, кв. 44",
+            "events": "",
+            "subject3": "x",
+            "articles": "",
+            "inspectors_list": "",
+            "supervisionobj_name": u"Малыши и малышки",
+            "oyear": 2013,
+            "type_tostring": u"внеплановая",
+            "start_date": "14.02.2013",
+            "subject1": "x",
+            "subject2": "x",
+            "oday": 21,
+            "subject4": "x",
+            "subject5": "x",
+            "subject6": "x",
+            "subject7": "x",
+            "authority_parent": "",
+            "omonth": 3
+        }
+        report.build(dst, params)
 
 class TestUtils(unittest.TestCase):
     def test_date_to_float(self):
