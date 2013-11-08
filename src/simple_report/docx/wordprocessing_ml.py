@@ -88,8 +88,13 @@ class Wordprocessing(ReletionOpenXMLFile):
     @classmethod
     def _set_params(cls, text_nodes, params):
 
+        def sorting_key((k, v)):
+            if not isinstance(k, basestring):
+                return 1
+            return -len(k)
+
         for node in text_nodes:
-            for key_param, value in params.items():
+            for key_param, value in sorted(params.items(), key=sorting_key):
                 if key_param in node.text:
                     #if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
                     text_to_replace = '#%s#' % key_param
