@@ -1235,6 +1235,21 @@ class TestLinuxDOCX(unittest.TestCase):
         }
         report.build(dst, params)
 
+    def test_flush_order(self):
+        template_name = 'test_flush_order.docx'
+        path = self.test_files[template_name]
+        report = DocumentReport(path)
+        res_file_name = 'res-flush_order.docx'
+        dst = os.path.join(self.dst_dir, res_file_name)
+        params = {
+            "example": "output_one",
+            "example_two": "ouput_two",
+            "example_two_three": "output_two_three",
+            "exampl": "no_output"
+        }
+        report.build(dst, params)
+
+
 class TestUtils(unittest.TestCase):
     def test_date_to_float(self):
         """
