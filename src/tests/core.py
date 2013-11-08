@@ -1249,6 +1249,21 @@ class TestLinuxDOCX(unittest.TestCase):
         }
         report.build(dst, params)
 
+    def test_tabs(self):
+        template_name = 'test_tabs.docx'
+        path = self.test_files[template_name]
+        report = DocumentReport(path)
+        res_file_name = 'res-tabs.docx'
+        dst = os.path.join(self.dst_dir, res_file_name)
+        params = {
+            "tfoms_to": "TFOMS",
+            "tfoms_to_address": "TFOMS_ADDRESS",
+            "tfoms_to_director_fio": "TFOMS_TO_DIR_FIO"
+        }
+        report.build(dst, params)
+
+
+
 
 class TestUtils(unittest.TestCase):
     def test_date_to_float(self):
