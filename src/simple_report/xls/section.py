@@ -76,7 +76,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                 cty = cell.ctype
                 f_id = None
                 for key, value in params.items():
-                    if unicode(cell.value).count(''.join(['#', key, '#'])):
+                    if unicode(cell.value).count(u''.join(['#', key, '#'])):
                         if used_formulas:
                             formula_id_list = used_formulas.get(key)
                             if formula_id_list:
