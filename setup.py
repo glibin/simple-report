@@ -6,7 +6,7 @@ with open('src/requires.txt', 'r') as f:
     requires.extend(f.readlines())
 
 setup(name='simple-report',
-      version='1.3.4.2',
+      version='1.3.4.3',
       url='https://src.bars-open.ru/py/m3/m3_contrib/simple_report',
       license='Apache License, Version 2.0',
       author='BARS Group',

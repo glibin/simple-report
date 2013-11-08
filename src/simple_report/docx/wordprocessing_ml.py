@@ -64,6 +64,8 @@ class Wordprocessing(ReletionOpenXMLFile):
 
         t_tag = '{%s}t' % self.NS_W
         r_tag = '{%s}r' % self.NS_W
+        rpr_tag = '{%s}rPr' % self.NS_W
+        tab_tag = '{%s}tab' % self.NS_W
         for paragraph in paragraphs:
             par_nodes = list(paragraph)
             old_signature = None
@@ -74,10 +76,12 @@ class Wordprocessing(ReletionOpenXMLFile):
                 if par_node.tag != r_tag:
                     continue
                 for node in list(par_node):
-                    if node.tag == '{%s}rPr' % self.NS_W:
+                    if node.tag == rpr_tag:
                         old_signature = signature
                         signature = self.get_signature(node)
-                    elif node.tag == '{%s}t' % self.NS_W:
+                    elif node.tag == tab_tag:
+                        old_node = None
+                    elif node.tag == t_tag:
                         if old_node is not None and old_signature == signature:
                             # delete r node
                             old_node[1].text = old_node[1].text + node.text
