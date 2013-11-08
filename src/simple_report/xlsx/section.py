@@ -55,8 +55,8 @@ class SheetData(object):
 
     PREFIX_TAG = '%'
 
-    FIND_PARAMS = re.compile(u'#[A-zА-яёЁ]+#')
-    FIND_TEMPLATE_TAGS = re.compile(u'#{0}[A-zА-яёЁ]+{0}#'.format(PREFIX_TAG))
+    FIND_PARAMS = re.compile(u'#[A-zА-яёЁ_0-9]+#')
+    FIND_TEMPLATE_TAGS = re.compile(u'#{0}[A-zА-яёЁ_0-9]+{0}#'.format(PREFIX_TAG))
 
     COLUMN_INDEX = re.compile('[A-Z]+')
     ROW_INDEX = re.compile('[1-9][0-9]*')
