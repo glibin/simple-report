@@ -14,12 +14,11 @@ from simple_report.docx.document import DocumentDOCX
 
 from simple_report.interface import ISpreadsheetReport, IDocumentReport
 from simple_report.converter.abstract import FileConverter
+from simple_report.rtf.document import DocumentRTF
 from simple_report.xlsx.document import DocumentXLSX
 from simple_report.xls.document import DocumentXLS
 from simple_report.xls.output_options import XSL_OUTPUT_SETTINGS
 from simple_report.utils import FileProxy
-
-
 
 
 class ReportGeneratorException(Exception):
@@ -97,8 +96,11 @@ class DocumentReport(Report, IDocumentReport):
 
     def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentDOCX, type=FileConverter.DOCX):
 
-        assert issubclass(wrapper, DocumentDOCX)
-        assert (type == FileConverter.DOCX)
+        assert (
+            issubclass(wrapper, DocumentDOCX) or
+            issubclass(wrapper, DocumentRTF)
+        ), "wrong wrapper type"
+        assert (type in (FileConverter.DOCX, FileConverter.RTF))
 
         super(DocumentReport, self).__init__(src_file, converter, tags, wrapper, type)
 
