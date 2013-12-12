@@ -54,8 +54,8 @@ class TestRTF(unittest.TestCase):
 
         doc.build(
             dst_file,
-            {'Employee_na32': u'Иванов И.И.',
-             'region_name': u'Казань',
+            {'Employee_name': u'Иванов И.И.',
+             #'region_name': u'Казань',
              'test': 'adsgh'},
             file_type=FileConverter.RTF
         )
