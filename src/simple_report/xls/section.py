@@ -44,6 +44,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
               used_formulas=None):
+        for k, v in params.items():
+            if v is None:
+                params[k] = ''
         if used_formulas is None:
             used_formulas = {}
         begin_row, begin_column = self.begin
