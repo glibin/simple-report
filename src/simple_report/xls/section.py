@@ -16,6 +16,8 @@ from simple_report.core.spreadsheet_section import (
 from simple_report.xls.cursor import CalculateNextCursorXLS
 from simple_report.utils import FormulaWriteExcel
 
+from xlwt import Formatting as xlwt_formatting
+
 # for k, v in xlwt.ExcelMagic.all_funcs_by_name.items():
 #     xlwt.ExcelMagic.all_funcs_by_name[k] = list(v)
 #     xlwt.ExcelMagic.all_funcs_by_name[k][2] = 100
@@ -27,6 +29,16 @@ KEEP_TEXT_TYPE = False
 FORMULA_XLS_TYPE = 'formula_xls'
 EXCEL_IMAGE_TYPE = 'excel_image'
 TEXT_CELL_FORMAT = '@'
+
+
+def _get_out_cell(out_sheet, col_index, row_index):
+    """ HACK: Extract the internal xlwt cell representation. """
+    row = out_sheet._Worksheet__rows.get(row_index)
+    if not row:
+        return None
+
+    cell = row._Row__cells.get(col_index)
+    return cell
 
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
@@ -201,8 +213,14 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                         cty = xlrd.XL_CELL_NUMBER
                     except (decimal.InvalidOperation, TypeError):
                         pass
-
-                self.write_result((wtcolx, wtrowx), val, style, cty)
+                runlist = self.writer.rdsheet.rich_text_runlist_map.get(
+                    (rdrowx, rdcolx)
+                )
+                self.write_result((wtcolx, wtrowx),
+                                  val,
+                                  style,
+                                  cty,
+                                  (runlist, rdrowx, rdcolx))
             # перетащим заодно и высоту текущей строки
             rdrow = self.writer.rdsheet.rowinfo_map.get(rdrowx)
             wtrow = self.writer.wtsheet.rows.get(wtrowx)
@@ -283,7 +301,62 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
         return cty
 
-    def write_result(self, write_coords, value, style, cell_type):
+    def get_rich_text_list(self, text, runlist, default_font):
+        rtl = []
+        len_runlist = len(runlist)
+        counter = 0
+        # для первых символов берется дефолтный шрифт
+        if len_runlist:
+            rtl.append(
+                (text[:runlist[0][0]], default_font)
+            )
+        # затем строка разбивается на куски
+        for char_num, font_id in runlist:
+            if char_num > len(text):
+                break
+            if counter == len_runlist - 1:
+                end_char_num = None
+            else:
+                end_char_num = runlist[counter + 1][0]
+            rtl.append(
+                (text[char_num:end_char_num], self.get_font(font_id))
+            )
+            counter += 1
+        return rtl
+
+    def get_font(self, font_index):
+        if not hasattr(self, 'fonts'):
+            self.fonts = {}
+
+        wt_font = self.fonts.get(font_index)
+        if not wt_font:
+            wt_font = self.create_font(font_index)
+            self.fonts[font_index] = wt_font
+            return wt_font
+
+    def create_font(self, rd_font_index):
+        font_list = self.writer.rdbook.font_list
+        rdf = font_list[rd_font_index]
+        # Далее копипаста из xlutils
+        wtf = xlwt_formatting.Font()
+        wtf.height = rdf.height
+        wtf.italic = rdf.italic
+        wtf.struck_out = rdf.struck_out
+        wtf.outline = rdf.outline
+        wtf.shadow = rdf.outline
+        wtf.colour_index = rdf.colour_index
+        wtf.bold = rdf.bold #### This attribute is redundant, should be driven by weight
+        wtf._weight = rdf.weight #### Why "private"?
+        wtf.escapement = rdf.escapement
+        wtf.underline = rdf.underline_type ####
+        # wtf.???? = rdf.underline #### redundant attribute, set on the fly when writing
+        wtf.family = rdf.family
+        wtf.charset = rdf.character_set
+        wtf.name = rdf.name
+        # Конец копипасты
+        return wtf
+
+    def write_result(self, write_coords, value, style, cell_type, (runlist, rdrowx, rdcolx)):
         """
         Выводим в ячейку с координатами write_coords значение value.
         Стиль вывода определяется параметров style
@@ -297,14 +370,26 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             return
 
         # cell_type = self.get_cell_final_type(value, cell_type)
-
+        #cell = _get_out_cell(self.writer.wtsheet, wtcolx, wtrowx)
+        #xf_idx = cell.xf_idx
         # Вывод
         wtrow = self.writer.wtsheet.row(wtrowx)
+
         if cell_type == FORMULA_XLS_TYPE:
             self.writer.wtsheet.write(wtrowx, wtcolx, xlwt.Formula(value),
                                       style)
         elif cell_type == xlrd.XL_CELL_TEXT or cell_type == xlrd.XL_CELL_EMPTY:
-            wtrow.set_cell_text(wtcolx, value, style)
+
+
+            if runlist is not None:
+                rich_text_list = self.get_rich_text_list(value,
+                                                         runlist,
+                                                         style.font)
+
+                self.writer.wtsheet.write_rich_text(
+                    wtrowx, wtcolx, rich_text_list, style=style)
+            else:
+                wtrow.set_cell_text(wtcolx, value, style)
         elif cell_type == xlrd.XL_CELL_NUMBER:
             wtrow.set_cell_number(wtcolx, value, style)
         elif cell_type == xlrd.XL_CELL_DATE:
@@ -317,6 +402,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             wtrow.set_cell_error(wtcolx, value, style)
         else:
             raise XLSReportWriteException
+        cell = _get_out_cell(self.writer.wtsheet, wtcolx, wtrowx)
+        #if xf_idx:
+        #    cell.xf_idx = xf_idx
 
 
 class MergeXLS(AbstractMerge):
