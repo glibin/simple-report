@@ -1,20 +1,18 @@
-#coding: utf-8
-
+#!coding:utf-8
 import copy
-
 from lxml.etree import tostring
-import re
-
 from simple_report.core import XML_DEFINITION
 from simple_report.core.exception import (
-    SectionNotFoundException, SectionException
-)
-from simple_report.core.xml_wrap import ReletionOpenXMLFile, CommonProperties
+    SectionNotFoundException, SectionException)
+from simple_report.core.xml_wrap import (
+    ReletionOpenXMLFile, CommonProperties)
+
 
 __author__ = 'prefer'
 
 
 class Wordprocessing(ReletionOpenXMLFile):
+
     """
 
     """
@@ -74,6 +72,7 @@ class Wordprocessing(ReletionOpenXMLFile):
 
             for par_node in par_nodes:
                 if par_node.tag != r_tag:
+                    old_node = None
                     continue
                 for node in list(par_node):
                     if node.tag == rpr_tag:
@@ -89,6 +88,7 @@ class Wordprocessing(ReletionOpenXMLFile):
                             paragraph.remove(par_node)
                         else:
                             old_node = (par_node, node)
+
     @classmethod
     def _set_params(cls, text_nodes, params):
 
@@ -100,20 +100,28 @@ class Wordprocessing(ReletionOpenXMLFile):
         for node in text_nodes:
             for key_param, value in sorted(params.items(), key=sorting_key):
                 if key_param in node.text:
-                    #if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
+                    # if len(node.text) > 0 and node.text[0] == '#' and
+                    # node.text[-1] == '#':
                     text_to_replace = '#%s#' % key_param
                     if text_to_replace in node.text:
-                        node.text = node.text.replace(text_to_replace, unicode(value))
+                        node.text = node.text.replace(
+                            text_to_replace, unicode(value))
                     else:
-                        node.text = node.text.replace(key_param, unicode(value))
+                        node.text = node.text.replace(
+                            key_param, unicode(value))
 
     def get_all_parameters(self):
         """
         """
-        text_nodes = self._root.xpath(self.XPATH_QUERY.format('w'), namespaces={'w':self.NS_W})
+        text_nodes = self._root.xpath(
+            self.XPATH_QUERY.format('w'), namespaces={'w': self.NS_W})
 
         for node in text_nodes:
-            if len(node.text) > 0 and node.text[0] == '#' and node.text[-1] == '#':
+            if (
+                len(node.text) > 0 and
+                node.text[0] == '#' and
+                node.text[-1] == '#'
+            ):
                 yield node.text
 
     def get_tables(self):
@@ -176,7 +184,9 @@ class Wordprocessing(ReletionOpenXMLFile):
             )
         return section
 
+
 class CommonPropertiesDOCX(CommonProperties):
+
     """
 
     """
@@ -188,6 +198,7 @@ class CommonPropertiesDOCX(CommonProperties):
 
 
 class Section(object):
+
     """
     Секция таблицы docx документа. Поддерживает ограниченное число операций
     В частности, строчки таблицы выводятся полностью, т.е. минимальной
@@ -211,4 +222,3 @@ class Section(object):
             Wordprocessing._set_params(text_nodes, params)
 
             self.table.append(new_row)
-
