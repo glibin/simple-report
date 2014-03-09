@@ -6,6 +6,7 @@ __author__ = 'prefer'
 
 class SharedStringsTable(object):
     """
+    Таблица общих строк
     """
 
     def __init__(self, root):
@@ -58,15 +59,16 @@ class SharedStringsTable(object):
 
     def get_value(self, index):
         """
-        Возвращает значение ячейки по индексу
-        @type index: int
+        @summary:
+        @param index: индекс
+        @result: значение ячейки по индексу
         """
         return self.elements[index]
 
     def to_xml(self):
         u"""
-        Переводит таблицу в xml
-        Возвращает корневой узел xml
+        @summary: Переводит таблицу в xml
+        @result: корневой узел xml
         """
         root = Element('sst', {'count': str(len(self.new_elements_list)),
                                'uniqueCount': str(self.uniq_elements)},

@@ -11,6 +11,7 @@ from simple_report.docx.wordprocessing_ml import CommonPropertiesDOCX
 
 class DocumentDOCX(DocumentOpenXML):
     """
+    Отчет в формате docx
     """
 
     def __init__(self, *args, **kwargs):
@@ -25,24 +26,29 @@ class DocumentDOCX(DocumentOpenXML):
 
     def build(self, dst_file):
         """
+        Сборка отчета
+        @param dst_file: путь до выходного файла
+        @type dst_file: str
         """
         self.word.build()
         super(DocumentDOCX, self).build(dst_file)
 
     def set_params(self, *args, **kwargs):
         """
-
+        Установка параметров отчета
         """
         self.word.set_params(*args, **kwargs)
 
     def get_all_parameters(self):
         """
-
+        Получение всех параметров
         """
         return self.word.get_all_parameters()
 
     def get_section(self, section_name):
         """
         Получение секции из таблицы в docx
+        @param section_name: название секции
+        @type section_name: str
         """
         return self.word.get_section(section_name)

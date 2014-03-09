@@ -11,6 +11,7 @@ class AbstractSectionException(Exception):
 
 class SectionException(AbstractSectionException):
     """
+    Исключение работы с секциями
     """
 
 
@@ -30,7 +31,7 @@ class SheetException(Exception):
 
 class SheetNotFoundException(SheetException):
     """
-    Исключение лист не найден
+    Исключение "Лист не найден"
     """
 
 

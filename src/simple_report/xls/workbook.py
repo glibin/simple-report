@@ -25,6 +25,11 @@ class WorkbookSheet():
         self.formula_id_dict = {}
 
     def get_section(self, name):
+        """
+        @summary: Получение секции по имени
+        @param name: имя секции
+        @result: секция
+        """
 
         assert name, 'Section name is empty'
         if name not in self.sections:
@@ -75,9 +80,17 @@ class WorkbookSheet():
         return self.sections[name]
 
     def get_sections(self):
+        """
+        @summary: Получение всех секций
+        @result: словарь секций
+        """
         return self.sections
 
     def get_name(self):
+        """
+        @summary: Получение названия листа
+        @result: название листа
+        """
         return self.sheet.name
 
 
@@ -105,6 +118,10 @@ class Workbook(object):
             setattr(self, k, v)
 
     def init_active_sheet(self):
+        """
+        @summary: инициализация активного листа
+        @result: None
+        """
         self._active_sheet = self.sheets[0]
         self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
 
@@ -141,12 +158,21 @@ class Workbook(object):
             self.xlwt_writer.wtsheet.footer_str = (u'&P из &N')
 
     def get_section(self, name):
+        """
+        @summary: Получение секции по имени
+        @param name: имя секции
+        @result: секция
+        """
         if not hasattr(self, '_active_sheet'):
             self._active_sheet = self.sheets[0]
             self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
         return self._active_sheet.get_section(name)
 
     def get_sections(self):
+        """
+        @summary: Получение всех секций
+        @result: словарь с секциями
+        """
 
         workbook_sections = {}
 
@@ -192,6 +218,9 @@ class Workbook(object):
 
     def build(self, dest_file):
         """
+        @summary: Сборка книги
+        @param dest_file: выходной путь
+        @result: None
         """
 
         self.configure_writer()
@@ -215,7 +244,8 @@ class Workbook(object):
 
     def write_sheet_count(self):
         """
-        Подсчитываем количество листов в которых есть секции (другими словами в них будет производиться запись)
+        Подсчитываем количество листов в которых есть секции
+        (другими словами в них будет производиться запись)
         """
 
         # Берём листы из шаблона

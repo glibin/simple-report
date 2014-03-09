@@ -9,7 +9,7 @@ __author__ = 'prefer'
 
 class OpenXMLFile(object):
     """
-
+    Файл XML в структуре OpenXML
     """
     __metaclass__ = ABCMeta
 
@@ -24,7 +24,10 @@ class OpenXMLFile(object):
 
     def _get_path(self, target):
         """
-            Возвращает относительный путь, название файла, полный путь
+        @summary: получение путей файла
+        @param target: целевой путь
+        @result: относительный путь, название файла, полный путь
+
             """
         split_path = os.path.split(target)
         relative_path = os.path.join(self.current_folder, *split_path[:-1])
@@ -34,10 +37,20 @@ class OpenXMLFile(object):
 
 
     def get_root(self):
+        """
+        @summary: Получение корневого элемента
+        @result: корневой элемент
+        """
         return self._root
 
     @classmethod
     def from_file(cls, file_path):
+        """
+        @summary: Парсинг файла
+        @param cls:
+        @param file_path: путь до файла
+        @result: корневой элемент
+        """
         assert file_path
         with open(file_path) as f:
             return parse(f).getroot()
@@ -46,13 +59,14 @@ class OpenXMLFile(object):
     @classmethod
     def create(cls, *args, **kwargs):
         """
+        Инстанцирование класса
         """
         return cls(*args, **kwargs)
 
 
 class ReletionOpenXMLFile(OpenXMLFile):
     """
-
+    Файл связей
     """
     __metaclass__ = ABCMeta
 
@@ -97,6 +111,7 @@ class CommonProperties(ReletionOpenXMLFile):
 
     def walk(self):
         """
+        Проход по корневому элементу
         """
         for elem in self._root:
             param = (elem.attrib['Id'], elem.attrib['Target'])
@@ -122,6 +137,14 @@ class CommonProperties(ReletionOpenXMLFile):
 
     @classmethod
     def create(cls, folder, tags):
+        """
+        @summary: Получение экземпляра класса
+        @param cls: класс
+        @param folder: путь до директории с распакованным XML-документом
+        @param tags: теги
+        @result: Экземпляр класса
+        """
+
         reletion_path = os.path.join(folder, cls.RELETION_FOLDER, cls.RELETION_EXT)
         rel_id = None # Корневой файл связей
         file_name = '' # Не имеет названия, т.к. состоит из расширения .rels
@@ -146,6 +169,7 @@ class Core(OpenXMLFile):
 
 class ReletionTypes(object):
     """
+    Типы связей
     """
     MAIN = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
     APP = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"

@@ -23,9 +23,15 @@ class SpreadsheetSection(object):
     @abc.abstractmethod
     def get_width(self):
         """
+        @summary получение ширины секции
+        @result: ширина секции
         """
 
     def get_indent(self):
+        """
+        @summary: получение полного сдвига
+        @result: сдвиг с учетом дочерних секций
+        """
 
         indent = self.get_width()
         if hasattr(self, 'child'):
@@ -71,17 +77,25 @@ class AbstractMerge(object):
     @abc.abstractmethod
     def _calculate_merge_column(self, column):
         """
-        Вычисление столбца, строки которого будем мержить. По сути вернуть предыдущий столбец
+        @summary: Вычисление столбца, строки которого будем мержить.
+        По сути вернуть предыдущий столбец
+        @param column: предыдущая колонка
+        @result: новая колонка
         """
 
     @abc.abstractmethod
     def _merge(self):
         """
+        Слияние
         """
 
     def _get_border_row(self, top_border=True):
-        # Функция вычисляет и возвращает номер строки с которой необходимо
-        # начать и закончить мержить.
+        """
+        Вычисление номера строки с которой необходимо
+        начать и закончить мержить
+        @param top_border: Верхняя граница
+        @type top_border: bool
+        """
         # Результат работы зависит от курсора.
         # Параметр begin указывает на то, какая граница вычисляется.
         # top_border = True - Верхняя граница

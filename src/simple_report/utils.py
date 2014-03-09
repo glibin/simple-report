@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 '''
 Created on 24.11.2011
 
@@ -15,13 +15,16 @@ import zipfile
 from collections import namedtuple
 
 class FileException(Exception):
-    pass
+    u"""
+    Исключение работы с файл-прокси
+    """
 
 
 class ZipFileAdapter(object):
     """
-    Из-за того, что в версии начиная с 2.7 модуль zipfile умеет работать с менеджером контекста, а вот ниже версии - не умеет.
-     Будем поддерживать версию 2.6
+    Из-за того, что в версии начиная с 2.7 модуль zipfile умеет работать
+    с менеджером контекста, а вот ниже версии - не умеет.
+    Будем поддерживать версию 2.6
     """
 
     def __init__(self, *args, **kwargs):
@@ -52,16 +55,27 @@ class ZipProxy(object):
 
     @classmethod
     def _extract(cls, src_file_path, dst_files_path):
-        u"""
-        Распоковывает zip файл
+        """
+        Распаковывает zip файл
+        
+        @param src_file_path: путь до исходного файла
+        @type src_file_path: str
+        @param dst_files_path: путь до выходного файла/директории
+        @type dst_files_path: str
+        
         """
         with ZipFileAdapter(src_file_path) as zip_file:
             zip_file.extractall(dst_files_path)
 
     @classmethod
     def _pack(cls, dst_file_path, src_files_path):
-        u"""
+        """
         Запаковывает zip файл
+        
+        @param dst_file_path: путь до выходного файла
+        @type dst_file_path: str
+        @param src_files_path: путь до директории с входными файлами
+        @type src_files_path: str
         """
         with ZipFileAdapter(dst_file_path, 'w') as zip_file:
             for root, _, file_names in os.walk(src_files_path):
@@ -72,13 +86,20 @@ class ZipProxy(object):
                     # Путь до директории
                     dir_path = abs_path[len(src_files_path) + len(os.sep):]
 
-                    zip_file.write(abs_path, dir_path, compress_type=zipfile.ZIP_DEFLATED)
+                    zip_file.write(
+                        abs_path, dir_path, compress_type=zipfile.ZIP_DEFLATED)
 
     @classmethod
     def extract(cls, src_file):
+        """
+        Распаковывает zip архив во временную папку
+        
+        @param src_file: путь до архива
+        @type src_file: str
+        """
         assert isinstance(src_file, FileProxy)
 
-        # Распаковываем zip архив во временную папку
+        #
         extract_folder = os.path.join(gettempdir(),
             '_'.join([str(uuid.uuid4())[:8], src_file.get_file_name()]))
 
@@ -88,8 +109,13 @@ class ZipProxy(object):
 
     @classmethod
     def pack(cls, dst_file, extract_folder):
-        u"""
-        Запаковать в файл
+        """
+        Запаковывает директорию в архив и удаляет ее
+        
+        @param dst_file: выходной файл
+        @type dst_file: FileProxy
+        @param extract_folder: исходная директория
+        @type extract_folder: str
         """
         assert isinstance(dst_file, FileProxy)
         cls._pack(dst_file.get_path(), extract_folder)
@@ -98,9 +124,17 @@ class ZipProxy(object):
 
 class FileProxy(object):
     u"""
+    Прокси работы с файлами
     """
 
     def __init__(self, file_like_object, new_file=False):
+        """
+        
+        @param file_like_object: Путь до файла
+        @type file_like_object: str
+        @param new_file: создавать ли новый файл?
+        @type new_file: bool
+        """
         if isinstance(file_like_object, FileProxy):
             file_like_object = file_like_object.file
 
@@ -154,12 +188,19 @@ class ColumnHelper(object):
     @classmethod
     def number_to_column(cls, n):
         """
+        Преобразует номер колонки в ее строковое представление
+        @param n: номер колонки
+        @type n: int
         """
         return ~n and cls.number_to_column(n / 26 - 1) + chr(65 + n % 26) or ''
 
     @classmethod
     def column_to_number(cls, index):
         """
+        Преобразует строковое представление колонки в число
+        
+        @param index: номер
+        @type index: int
         """
         s = 0
         pow_ = 1
@@ -170,10 +211,16 @@ class ColumnHelper(object):
             # excel starts column numeration from 1
         return s - 1
 
-
     @classmethod
     def get_range(cls, begin, end):
-        """
+        u"""
+        Итератор, выдающий строковые представления колонок между
+        начальной и конечной колонкой 
+        
+        @param begin: строковое представление начальной колонки
+        @type begin: str
+        @param end: строковое представление конечной колонки
+        @type end: str
         """
         for i in xrange(cls.column_to_number(begin), cls.column_to_number(end) + 1):
             yield cls.number_to_column(i)
@@ -182,13 +229,23 @@ class ColumnHelper(object):
     def add(cls, column, i):
         """
         Добавляет к колонке column i колонок
+        
+        @param column: строковое представление колонки
+        @type column: str
+        @param i: число дополнительных колонок
+        @type i: int
         """
         return cls.number_to_column(cls.column_to_number(column) + i)
 
     @classmethod
     def difference(cls, col1, col2):
         """
-        Разница между двумя колонками
+        Разница (расстояние) между двумя колонками
+        
+        @param col1: строковое представление первой колонки
+        @type col1: str
+        @param col2: строковое представление второй колонки
+        @type col2: str
         """
         return cls.column_to_number(col1) - cls.column_to_number(col2)
 
@@ -197,6 +254,9 @@ def get_addr_cell(text):
     """
     Возвращает адрес ячейки
     То есть из представления 'AZ12' выдается ('AZ', 12)
+    
+    @param text: полное строковое представление ячейки
+    @type text: str
     """
     for i, s in enumerate(text):
         if s.isdigit():
@@ -220,6 +280,9 @@ def date_to_float(date):
 
     ps: Спасибо Вадиму, который предотвратил распространение кастылей,
     типо кастомного форматирования параметров
+    
+    @param date: Дата-время
+    @type date: datetime.datetime
     """
     assert isinstance(date, datetime)
 

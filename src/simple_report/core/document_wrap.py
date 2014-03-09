@@ -16,6 +16,8 @@ class BaseDocument(object):
     @abstractmethod
     def build(self):
         """
+        @summary: Сборка документа
+        @result:
         """
 
 
@@ -26,6 +28,7 @@ class SpreadsheetDocument(object):
     @abstractproperty
     def workbook(self):
         """
+        Рабочая книга
         """
 
     def get_sections(self):
@@ -42,6 +45,9 @@ class SpreadsheetDocument(object):
 
     @property
     def sheets(self):
+        """
+        Листы отчета
+        """
         return self.workbook.sheets
 
 
@@ -59,5 +65,6 @@ class DocumentOpenXML(BaseDocument):
 
     def build(self, dst_file):
         """
+        Сборка отчета
         """
         ZipProxy.pack(dst_file, self.extract_folder)

@@ -23,20 +23,41 @@ class CursorXLS(AbstractCursor):
 
 class CalculateNextCursorXLS(AbstractCalculateNextCursor):
     """
+    Получение следующего курсора
     """
 
     def get_next_column(self, current_column, end_col, begin_col):
+        """
+        @summary: Получение следующей колонки
+        @param current_column: текущая колонка
+        @param end_col: конечная колонка
+        @param begin_col: начальная колонка
+        @result: следующая колонка
+        """
 
         return current_column + end_col - begin_col + 1
 
     def get_first_column(self):
+        """
+        @summary: Получение первой колонки
+        @result: номер первой колонки
+        """
         # Колонки нумеруются и номер первой нуль.
         return 0
 
     def get_first_row(self):
-
+        """
+        @summary: Получение первой строки
+        @result: номер первой строки
+        """
         return 0
 
     def calculate_indent(self, column, w):
+        """
+        @summary: Вычисление сдвига
+        @param column: колонка
+        @param w: ширина сдвига
+        @result: разница между номером колонки и шириной сдвига
+        """
 
         return column - w

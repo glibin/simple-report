@@ -56,6 +56,14 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
               used_formulas=None):
+        """
+        @summary: Запись секции в отчет
+        @param params: словарь с параметрами подстановки
+        @param oriented: направление вывода секции
+        @param used_formulas: используемые формулы - нужны для записи
+        простых формул в отчет
+        @result: None
+        """
         for k, v in params.items():
             if v is None:
                 params[k] = ''
@@ -231,6 +239,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def get_width(self):
         """
+        Получение ширины секции
         """
 
         begin_row, begin_col = self.begin
@@ -255,6 +264,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
     #TODO реализовать для поддержки интерфейса ISpreadsheetSection
     def get_all_parameters(self):
         """
+        @summary: Получение всех параметров секции.
+        @result: None
         """
 
     def get_cell_final_type(self, value, cell_type):
@@ -274,7 +285,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def get_value_type(self, value, default_type=xlrd.XL_CELL_TEXT):
         """
-        Возвращаем тип значения для выходного элемента
+        @summary: Возвращаем тип значения для выходного элемента
+        @param value: значение
+        @param default_type: тип по умолчанию
+        @result: тип ячейки
         """
 
         if isinstance(value, basestring):
@@ -302,6 +316,13 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         return cty
 
     def get_rich_text_list(self, text, runlist, default_font):
+        """
+        @summary: получение списка строк для rich_text
+        @param text:
+        @param runlist:
+        @param default_font:
+        @result:
+        """
         rtl = []
         len_runlist = len(runlist)
         counter = 0
@@ -325,6 +346,11 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         return rtl
 
     def get_font(self, font_index):
+        """
+        @summary: Получение шрифта по индексу
+        @param font_index: индекс шрифта
+        @result: шрифт
+        """
         if not hasattr(self, 'fonts'):
             self.fonts = {}
 
@@ -335,6 +361,11 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
             return wt_font
 
     def create_font(self, rd_font_index):
+        """
+        @summary: Создание шрифта
+        @param rd_font_index: индекс шрифта в исходном файле
+        @result: шрифт в выходном файле
+        """
         font_list = self.writer.rdbook.font_list
         rdf = font_list[rd_font_index]
         # Далее копипаста из xlutils
@@ -356,11 +387,20 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         # Конец копипасты
         return wtf
 
-    def write_result(self, write_coords, value, style, cell_type, (runlist, rdrowx, rdcolx)):
+    def write_result(
+        self, write_coords, value, style, cell_type, (runlist, rdrowx, rdcolx)
+    ):
         """
-        Выводим в ячейку с координатами write_coords значение value.
-        Стиль вывода определяется параметров style
-        cell_type - тип ячейки
+        @summary: Выводим в ячейку с координатами `write_coords`
+        значение `value`.
+        @param write_coords: координаты ячейки
+        @param value: значение
+        @param style: стиль вывода
+        @param cell_type: тип ячейки
+        @param runlist:
+        @param rdrowx: строка в исходном файле
+        @param rdcolx: колонка в исходном файле
+        @result:
         """
         wtcolx, wtrowx = write_coords
         if cell_type == EXCEL_IMAGE_TYPE:
@@ -420,6 +460,11 @@ class MergeXLS(AbstractMerge):
                                           self._end_merge_col)
 
     def _calculate_merge_column(self, column):
+        """
+        @summary: Подсчет колонок слияния
+        @param column: текущая колонка
+        @result: (1 колонка секции, 2 колонка секции)
+        """
 
         first_section_column = column - self.section.get_width()
         last_section_column = column - 1
@@ -429,7 +474,7 @@ class MergeXLS(AbstractMerge):
 
 class XLSImage(object):
     """
-    Рисунок
+    Рисунок. Может быть использован при записи в секцию методом `flush`
     """
 
     def __init__(self, path):

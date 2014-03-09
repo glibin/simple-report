@@ -12,9 +12,8 @@ __author__ = 'prefer'
 
 
 class Wordprocessing(ReletionOpenXMLFile):
-
     """
-
+    Основной файл формата DOCX
     """
     NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
@@ -33,13 +32,16 @@ class Wordprocessing(ReletionOpenXMLFile):
 
     def build(self):
         """
-
+        Сборка файла
         """
         with open(self.file_path, 'w') as f:
             f.write(XML_DEFINITION + tostring(self._root))
 
     def set_params(self, params):
         """
+        @summary: Подстановка параметров
+        @param params: параметры подстановки
+        @result: None
         """
         #
         self.merge_same_nodes()
@@ -56,6 +58,11 @@ class Wordprocessing(ReletionOpenXMLFile):
         return signature
 
     def merge_same_nodes(self):
+        """
+        @summary: Слияние одинаковых нод - нужно, т.к. редакторы DOCX
+        привносят свои специфичные изменения, которые нам не нужны
+        @result:
+        """
         paragraphs = list(self._root.xpath(
             './/{0}:p'.format('w'), namespaces={'w': self.NS_W}
         ))
@@ -112,6 +119,7 @@ class Wordprocessing(ReletionOpenXMLFile):
 
     def get_all_parameters(self):
         """
+        Получение всех параметров
         """
         text_nodes = self._root.xpath(
             self.XPATH_QUERY.format('w'), namespaces={'w': self.NS_W})
@@ -134,6 +142,10 @@ class Wordprocessing(ReletionOpenXMLFile):
         )
 
     def set_docx_table_sections(self):
+        """
+        @summary: установка секций таблиц в документах DOCX
+        @result: None
+        """
         tables = self.get_tables()
         for table in tables:
             text_nodes = table.findall(
@@ -175,6 +187,11 @@ class Wordprocessing(ReletionOpenXMLFile):
                 row_node.getparent().remove(row_node)
 
     def get_section(self, section_name):
+        """
+        @summary: Получение секции таблицы в документе DOCX по имени
+        @param section_name: имя секции
+        @result: секция
+        """
         if not self.table_sections:
             self.set_docx_table_sections()
         section = self.table_sections.get(section_name)
@@ -198,7 +215,6 @@ class CommonPropertiesDOCX(CommonProperties):
 
 
 class Section(object):
-
     """
     Секция таблицы docx документа. Поддерживает ограниченное число операций
     В частности, строчки таблицы выводятся полностью, т.е. минимальной
