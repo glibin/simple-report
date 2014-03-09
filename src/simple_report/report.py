@@ -38,16 +38,16 @@ class Report(object):
                  type=None, **kwargs):
         """
         
-        @param src_file: путь до файла с шаблоном
-        @type src_file: basestring
-        @param converter: конвертор
-        @type converter:
-        @param tags: теги
-        @type tags:
-        @param wrapper: обертка над форматом отчета
-        @type wrapper: type (class) 
-        @param type: тип отчета
-        @type type: str
+        :param src_file: путь до файла с шаблоном
+        :type src_file: basestring
+        :param converter: конвертор
+        :type converter:
+        :param tags: теги
+        :type tags:
+        :param wrapper: обертка над форматом отчета
+        :type wrapper: type (class) 
+        :param type: тип отчета
+        :type type: str
         """
 
 
@@ -72,10 +72,10 @@ class Report(object):
         """
         Преобразование файла в определенный формат
         
-        @param src_file: исходный файл
-        @type src_file: FileProxy
-        @param to_format: формат, в который конвертируем
-        @type to_format: str
+        :param src_file: исходный файл
+        :type src_file: FileProxy
+        :param to_format: формат, в который конвертируем
+        :type to_format: str
         """
         if self.converter is not None:
             self.converter.set_src_file(src_file)
@@ -88,10 +88,10 @@ class Report(object):
         Построение отчета. Параметр `file_type` используется для конвертации
         полученного xlsx файла в нужный формат
          
-        @param dst_file_path: Путь до выходного файла
-        @type dst_file_path: basestring
-        @param file_type: тип файла
-        @type file_type: str
+        :param dst_file_path: Путь до выходного файла
+        :type dst_file_path: basestring
+        :param file_type: тип файла
+        :type file_type: str
         """
         assert self.TYPE, 'Document Type is not defined'
 
@@ -135,13 +135,13 @@ class DocumentReport(Report, IDocumentReport):
     def build(self, dst_file_path, params, file_type=FileConverter.DOCX):
         u"""
         Генерирует выходной файл в нужном формате
-        @param dst_file_path: Путь до выходного файла
-        @type dst_file_path: basestring
-        @param params: словарь с ключом - параметром шаблона,
+        :param dst_file_path: Путь до выходного файла
+        :type dst_file_path: basestring
+        :param params: словарь с ключом - параметром шаблона,
                 значением - заменяемой строкой
-        @type params: dict
-        @param file_type: тип файла
-        @type file_type: str, FileConverter.*
+        :type params: dict
+        :param file_type: тип файла
+        :type file_type: str, FileConverter.*
         """
         self._wrapper.set_params(params)
         return super(DocumentReport, self).build(dst_file_path, file_type)
@@ -155,8 +155,8 @@ class DocumentReport(Report, IDocumentReport):
     def get_section(self, section_name):
         """
         Получение секции
-        @param section_name: имя секции таблицы
-        @type section_name: str
+        :param section_name: имя секции таблицы
+        :type section_name: str
         """
         return self._wrapper.get_section(section_name)
 
@@ -169,16 +169,16 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
     def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX, **kwargs):
         """
         
-        @param src_file: путь до исходного файла
-        @type src_file: str
-        @param converter: конвертор
-        @type converter:
-        @param tags: теги
-        @type tags:
-        @param wrapper: обертка над форматом отчета
-        @type wrapper: core.document_wrap.SpreadsheetDocument
-        @param type: тип документа 
-        @type type: str, FileConverter.*
+        :param src_file: путь до исходного файла
+        :type src_file: str
+        :param converter: конвертор
+        :type converter:
+        :param tags: теги
+        :type tags:
+        :param wrapper: обертка над форматом отчета
+        :type wrapper: core.document_wrap.SpreadsheetDocument
+        :param type: тип документа 
+        :type type: str, FileConverter.*
         """
 
         assert issubclass(wrapper, DocumentXLSX) or issubclass(wrapper, DocumentXLS)
@@ -203,8 +203,8 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
         """
         Возвращает секцию по имени
         
-        @param section_name: имя секции
-        @type section_name: basestring
+        :param section_name: имя секции
+        :type section_name: basestring
         """
         if not hasattr(self._wrapper, 'get_section'):
             raise WrongDocumentType()

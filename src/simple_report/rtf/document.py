@@ -27,7 +27,7 @@ class DocumentRTF(BaseDocument):
     def set_params(self, params):
         """
         Подстановка параметров
-        @param params: словарь с параметрами отчета
+        :param params: словарь с параметрами отчета
         @result: None
         """
         assert isinstance(params, dict), 'wrong params type'

@@ -26,8 +26,8 @@ class WorkbookSheet():
 
     def get_section(self, name):
         """
-        @summary: Получение секции по имени
-        @param name: имя секции
+         Получение секции по имени
+        :param name: имя секции
         @result: секция
         """
 
@@ -81,14 +81,14 @@ class WorkbookSheet():
 
     def get_sections(self):
         """
-        @summary: Получение всех секций
+         Получение всех секций
         @result: словарь секций
         """
         return self.sections
 
     def get_name(self):
         """
-        @summary: Получение названия листа
+         Получение названия листа
         @result: название листа
         """
         return self.sheet.name
@@ -119,7 +119,7 @@ class Workbook(object):
 
     def init_active_sheet(self):
         """
-        @summary: инициализация активного листа
+         инициализация активного листа
         @result: None
         """
         self._active_sheet = self.sheets[0]
@@ -159,8 +159,8 @@ class Workbook(object):
 
     def get_section(self, name):
         """
-        @summary: Получение секции по имени
-        @param name: имя секции
+         Получение секции по имени
+        :param name: имя секции
         @result: секция
         """
         if not hasattr(self, '_active_sheet'):
@@ -170,7 +170,7 @@ class Workbook(object):
 
     def get_sections(self):
         """
-        @summary: Получение всех секций
+         Получение всех секций
         @result: словарь с секциями
         """
 
@@ -218,8 +218,8 @@ class Workbook(object):
 
     def build(self, dest_file):
         """
-        @summary: Сборка книги
-        @param dest_file: выходной путь
+         Сборка книги
+        :param dest_file: выходной путь
         @result: None
         """
 

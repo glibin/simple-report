@@ -24,8 +24,8 @@ class DocumentXLSX(DocumentOpenXML, SpreadsheetDocument):
         """
         Сохранение отчета в файл
         
-        @param dst_file: путь до выходного файла
-        @type dst_file: str
+        :param dst_file: путь до выходного файла
+        :type dst_file: str
         """
         self.workbook.build()
         super(DocumentXLSX, self).build(dst_file)

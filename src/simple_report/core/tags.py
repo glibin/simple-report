@@ -24,8 +24,8 @@ class TemplateTags(object):
 
     def get(self, key):
         """
-        @summary: Получение значений из словаря тегов
-        @param key: ключ словаря
+         Получение значений из словаря тегов
+        :param key: ключ словаря
         @result: значение словаря
         """
         return self.tags[key]

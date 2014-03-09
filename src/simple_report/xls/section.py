@@ -57,10 +57,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
     def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
               used_formulas=None):
         """
-        @summary: Запись секции в отчет
-        @param params: словарь с параметрами подстановки
-        @param oriented: направление вывода секции
-        @param used_formulas: используемые формулы - нужны для записи
+         Запись секции в отчет
+        :param params: словарь с параметрами подстановки
+        :param oriented: направление вывода секции
+        :param used_formulas: используемые формулы - нужны для записи
         простых формул в отчет
         @result: None
         """
@@ -264,7 +264,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
     #TODO реализовать для поддержки интерфейса ISpreadsheetSection
     def get_all_parameters(self):
         """
-        @summary: Получение всех параметров секции.
+         Получение всех параметров секции.
         @result: None
         """
 
@@ -285,9 +285,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def get_value_type(self, value, default_type=xlrd.XL_CELL_TEXT):
         """
-        @summary: Возвращаем тип значения для выходного элемента
-        @param value: значение
-        @param default_type: тип по умолчанию
+         Возвращаем тип значения для выходного элемента
+        :param value: значение
+        :param default_type: тип по умолчанию
         @result: тип ячейки
         """
 
@@ -317,10 +317,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def get_rich_text_list(self, text, runlist, default_font):
         """
-        @summary: получение списка строк для rich_text
-        @param text:
-        @param runlist:
-        @param default_font:
+         получение списка строк для rich_text
+        :param text:
+        :param runlist:
+        :param default_font:
         @result:
         """
         rtl = []
@@ -347,8 +347,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def get_font(self, font_index):
         """
-        @summary: Получение шрифта по индексу
-        @param font_index: индекс шрифта
+         Получение шрифта по индексу
+        :param font_index: индекс шрифта
         @result: шрифт
         """
         if not hasattr(self, 'fonts'):
@@ -362,8 +362,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def create_font(self, rd_font_index):
         """
-        @summary: Создание шрифта
-        @param rd_font_index: индекс шрифта в исходном файле
+         Создание шрифта
+        :param rd_font_index: индекс шрифта в исходном файле
         @result: шрифт в выходном файле
         """
         font_list = self.writer.rdbook.font_list
@@ -391,15 +391,15 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         self, write_coords, value, style, cell_type, (runlist, rdrowx, rdcolx)
     ):
         """
-        @summary: Выводим в ячейку с координатами `write_coords`
+         Выводим в ячейку с координатами `write_coords`
         значение `value`.
-        @param write_coords: координаты ячейки
-        @param value: значение
-        @param style: стиль вывода
-        @param cell_type: тип ячейки
-        @param runlist:
-        @param rdrowx: строка в исходном файле
-        @param rdcolx: колонка в исходном файле
+        :param write_coords: координаты ячейки
+        :param value: значение
+        :param style: стиль вывода
+        :param cell_type: тип ячейки
+        :param runlist:
+        :param rdrowx: строка в исходном файле
+        :param rdcolx: колонка в исходном файле
         @result:
         """
         wtcolx, wtrowx = write_coords
@@ -461,8 +461,8 @@ class MergeXLS(AbstractMerge):
 
     def _calculate_merge_column(self, column):
         """
-        @summary: Подсчет колонок слияния
-        @param column: текущая колонка
+         Подсчет колонок слияния
+        :param column: текущая колонка
         @result: (1 колонка секции, 2 колонка секции)
         """
 

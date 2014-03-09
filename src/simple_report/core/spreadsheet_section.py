@@ -29,7 +29,7 @@ class SpreadsheetSection(object):
 
     def get_indent(self):
         """
-        @summary: получение полного сдвига
+         получение полного сдвига
         @result: сдвиг с учетом дочерних секций
         """
 
@@ -77,9 +77,9 @@ class AbstractMerge(object):
     @abc.abstractmethod
     def _calculate_merge_column(self, column):
         """
-        @summary: Вычисление столбца, строки которого будем мержить.
+         Вычисление столбца, строки которого будем мержить.
         По сути вернуть предыдущий столбец
-        @param column: предыдущая колонка
+        :param column: предыдущая колонка
         @result: новая колонка
         """
 
@@ -93,8 +93,8 @@ class AbstractMerge(object):
         """
         Вычисление номера строки с которой необходимо
         начать и закончить мержить
-        @param top_border: Верхняя граница
-        @type top_border: bool
+        :param top_border: Верхняя граница
+        :type top_border: bool
         """
         # Результат работы зависит от курсора.
         # Параметр begin указывает на то, какая граница вычисляется.

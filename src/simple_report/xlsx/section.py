@@ -149,8 +149,8 @@ class SheetData(object):
     def cursor(self, value):
         u"""
         Установка курсора
-        @param value: новый курсор
-        @type value: Cursor
+        :param value: новый курсор
+        :type value: Cursor
         """
         assert isinstance(value, Cursor)
         self._cursor = value
@@ -166,8 +166,8 @@ class SheetData(object):
     def last_section(self, value):
         """
         Установка последней секции
-        @param value: курсор
-        @type value: Cursor
+        :param value: курсор
+        :type value: Cursor
         """
         assert isinstance(value, Cursor)
         self._last_section = value
@@ -175,10 +175,10 @@ class SheetData(object):
     def flush(self, begin, end, start_cell, params, used_formulas=None):
         """
         Вывод секции
-        @param begin: Начало секции, пример ('A', 1)
-        @param end: Конец секции, пример ('E', 6)
-        @param start_cell: ячейка с которой надо выводить
-        @param params: данные для вывода
+        :param begin: Начало секции, пример ('A', 1)
+        :param end: Конец секции, пример ('E', 6)
+        :param start_cell: ячейка с которой надо выводить
+        :param params: данные для вывода
         """
         self.set_section(begin, end, start_cell, params, used_formulas)
         self.set_merge_cells(begin, end, start_cell)
@@ -209,12 +209,12 @@ class SheetData(object):
         """
         Объединение ячеек
         
-        @param section_begin: начало секции
-        @type section_begin: 2-tuple
-        @param section_end: конец секции
-        @type section_end: 2-tuple
-        @param start_cell: стартовая ячейка
-        @type start_cell: 2-tuple
+        :param section_begin: начало секции
+        :type section_begin: 2-tuple
+        :param section_end: конец секции
+        :type section_end: 2-tuple
+        :param start_cell: стартовая ячейка
+        :type start_cell: 2-tuple
         """
 
         def cell_dimensions(section, merge_cell, start_cell):
@@ -222,12 +222,12 @@ class SheetData(object):
             Получение координаты ячейки после смещения из-за
             объединения ячеек
             
-            @param section: начало секции
-            @type section: 2-tuple
-            @param merge_cell: начало объединенной ячейки
-            @type merge_cell: 2-tuple
-            @param start_cell: стартовая ячейка
-            @type start_cell: 2-tuple
+            :param section: начало секции
+            :type section: 2-tuple
+            :param merge_cell: начало объединенной ячейки
+            :type merge_cell: 2-tuple
+            :param start_cell: стартовая ячейка
+            :type start_cell: 2-tuple
             """
 
             section_begin_col, section_begin_row = section
@@ -264,8 +264,8 @@ class SheetData(object):
         """
         Итератор по строкам
         
-        @param range_rows: номера строк
-        @type range_rows: iterable
+        :param range_rows: номера строк
+        :type range_rows: iterable
         """
         for i, num_row in enumerate(range_rows):
             row = self.read_data.find(self.XPATH_TEMPLATE_ROW % num_row)
@@ -276,12 +276,12 @@ class SheetData(object):
         """
         Итератор по ячейкам
         
-        @param range_cols: диапазон колонок
-        @type range_cols: iterable
-        @param num_row: номер строки
-        @type num_row: int
-        @param row: объект строки
-        @type row: lxml.etree.Element
+        :param range_cols: диапазон колонок
+        :type range_cols: iterable
+        :param num_row: номер строки
+        :type num_row: int
+        :param row: объект строки
+        :type row: lxml.etree.Element
         """
         for j, col in enumerate(range_cols):
             cell = row.find(self.XPATH_TEMPLATE_CELL % (col + str(num_row)))
@@ -293,16 +293,16 @@ class SheetData(object):
         """
         Получение значения ячейки
         
-        @param cell: ячейка
-        @type cell: lxml.etree.Element
+        :param cell: ячейка
+        :type cell: lxml.etree.Element
         """
         return cell.find(QName(self.ns, 'v'))
 
     def _get_params(self, cell):
         """
         Получение параметров ячейки 
-        @param cell: ячейка
-        @type cell: lxml.etree.Element
+        :param cell: ячейка
+        :type cell: lxml.etree.Element
         """
         value = self._get_tag_value(cell)
 
@@ -318,10 +318,10 @@ class SheetData(object):
         """
         Получение значений по регулярному выражению
          
-        @param value_string: строка, в которой ищем
-        @type value_string: basestring
-        @param what_found: регулярное выражение
-        @type what_found: regexp
+        :param value_string: строка, в которой ищем
+        :type value_string: basestring
+        :param what_found: регулярное выражение
+        :type what_found: regexp
         """
         """
         """
@@ -340,10 +340,10 @@ class SheetData(object):
         """
         Получение всех параметров
         
-        @param begin: начальная ячейка
-        @type begin: 2-tuple
-        @param end: конечная ячейка
-        @type end: 2-tuple
+        :param begin: начальная ячейка
+        :type begin: 2-tuple
+        :param end: конечная ячейка
+        :type end: 2-tuple
         """
         range_rows, range_cols = self._range(begin, end)
         for i, num_row, row in self._find_rows(range_rows):
@@ -355,8 +355,8 @@ class SheetData(object):
         u"""
         Получение тега с формулой
         
-        @param cell: ячейка
-        @type cell: lxml.etree.Element
+        :param cell: ячейка
+        :type cell: lxml.etree.Element
         """
         return cell.find(QName(self.ns, 'f'))
 
@@ -364,10 +364,10 @@ class SheetData(object):
         u"""
         Получение выходной строки
         
-        @param row_index: индекс строки
-        @type row_index: int
-        @param attrib_row: атрибуты строки
-        @type attrib_row: dict
+        :param row_index: индекс строки
+        :type row_index: int
+        :param attrib_row: атрибуты строки
+        :type attrib_row: dict
         """
         # найдем существующую строку в результирующих данных
         key = self.XPATH_TEMPLATE_ROW % row_index
@@ -384,10 +384,10 @@ class SheetData(object):
         """
         Deprecated/unused
         
-        @param row_index:
-        @type row_index:
-        @param attrib_row:
-        @type attrib_row:
+        :param row_index:
+        :type row_index:
+        :param attrib_row:
+        :type attrib_row:
         """
         # найдем существующую строку в результирующих данных
         row_el = self.write_data.find(self.XPATH_TEMPLATE_ROW % row_index)
@@ -401,12 +401,12 @@ class SheetData(object):
         """
         Получение выходной ячейки
         
-        @param row_el: элемент строки
-        @type row_el: lxml.etree.Element
-        @param cell_index: индекс ячейки
-        @type cell_index: int
-        @param attrib_cell: атрибуты ячейки
-        @type attrib_cell: dict
+        :param row_el: элемент строки
+        :type row_el: lxml.etree.Element
+        :param cell_index: индекс ячейки
+        :type cell_index: int
+        :param attrib_cell: атрибуты ячейки
+        :type attrib_cell: dict
         """
         # найдем существующую ячейку в строке
         cell_el = row_el.find(self.XPATH_TEMPLATE_CELL % cell_index)
@@ -428,16 +428,16 @@ class SheetData(object):
         u"""
         Вывод секции
         
-        @param begin: начальная ячейка секции
-        @type begin: 2-tuple
-        @param end: конечная ячейка секции
-        @type end: 2-tuple
-        @param start_cell: стартовая ячейка (с которой начинается запись)
-        @type start_cell: 2-tuple
-        @param params: параметры отчета
-        @type params: dict
-        @param used_formulas: используемые формулы
-        @type used_formulas: dict
+        :param begin: начальная ячейка секции
+        :type begin: 2-tuple
+        :param end: конечная ячейка секции
+        :type end: 2-tuple
+        :param start_cell: стартовая ячейка (с которой начинается запись)
+        :type start_cell: 2-tuple
+        :param params: параметры отчета
+        :type params: dict
+        :param used_formulas: используемые формулы
+        :type used_formulas: dict
         """
         # TODO: разбить на методы
         range_rows, range_cols = self._range(begin, end)
@@ -623,10 +623,10 @@ class SheetData(object):
         u"""
         Диапазон строк, колонок
         
-        @param begin: начальная ячейка 
-        @type begin: 2-tuple
-        @param end: конечная ячейка
-        @type end: 2-tuple
+        :param begin: начальная ячейка 
+        :type begin: 2-tuple
+        :param end: конечная ячейка
+        :type end: 2-tuple
         """
 
         # Если есть объединенная ячейка, и она попадает на конец секции, то адресс конца секции записывается как конец
@@ -645,12 +645,12 @@ class SheetData(object):
         u"""
         Проверяет, попадает ли адрес в диапазон
         
-        @param addr: адрес ячейки
-        @type addr: 2-tuple
-        @param begin: начальная ячейка диапазона
-        @type begin: 2-tuple
-        @param end: конечная ячейка диапазона
-        @type end: 2-tuple
+        :param addr: адрес ячейки
+        :type addr: 2-tuple
+        :param begin: начальная ячейка диапазона
+        :type begin: 2-tuple
+        :param end: конечная ячейка диапазона
+        :type end: 2-tuple
         """
         col, row = addr
         rows = xrange(begin[1], end[1] + 1)
@@ -661,8 +661,8 @@ class SheetData(object):
         """
         Получение (правого нижнего) конца ячейки
         
-        @param cell_addr: адрес ячейки
-        @type cell_addr: 2-tuple
+        :param cell_addr: адрес ячейки
+        :type cell_addr: 2-tuple
         """
         cell_end = cell_addr
         # Если указанный адрес пападает в объединенную ячейку, то адресс конца ячейки указывается как конец
@@ -701,10 +701,10 @@ class SheetData(object):
         Если не передали начальные данные, то колонка не создается,
         если не найдена,
         
-        @param col_index: индекс колонки
-        @type col_index: int
-        @param attrib_col: атрибуты элемента колонки
-        @type attrib_col: dict
+        :param col_index: индекс колонки
+        :type col_index: int
+        :param attrib_col: атрибуты элемента колонки
+        :type attrib_col: dict
         """
         # найдем интервал, в который попадаем искомый индекс
         col_index = ColumnHelper.column_to_number(col_index) + 1
@@ -730,12 +730,12 @@ class SheetData(object):
         Установка новой ширины колонки
         Особенность в том, что нужно разбивать интервалы, если потребуется
         
-        @param col_index: индекс колонки
-        @type col_index: int
-        @param src_col: элемент исходной колонки
-        @type src_col: lxml.etree.Element
-        @param dst_col: элемент выходной колонки
-        @type dst_col: lxml.etree.Element
+        :param col_index: индекс колонки
+        :type col_index: int
+        :param src_col: элемент исходной колонки
+        :type src_col: lxml.etree.Element
+        :param dst_col: элемент выходной колонки
+        :type dst_col: lxml.etree.Element
         """
         col_index = ColumnHelper.column_to_number(col_index) + 1
         # если ширина колонок отличается и колонка-приемник является интервалом,
@@ -766,12 +766,12 @@ class SheetData(object):
     def set_columns_width(self, begin, end, start_cell):
         """
         Копирование ширины колонок
-        @param begin: начало секции, пример ('A', 1)
-        @type begin: 2-tuple
-        @param end: конец секции, пример ('E', 6)
-        @type end: 2-tuple
-        @param start_cell: ячейка с которой выводилась секция
-        @type start_cell: 2-tuple
+        :param begin: начало секции, пример ('A', 1)
+        :type begin: 2-tuple
+        :param end: конец секции, пример ('E', 6)
+        :type end: 2-tuple
+        :param start_cell: ячейка с которой выводилась секция
+        :type start_cell: 2-tuple
         """
         # определим интервал столбцов из которых надо взять ширину
         end = self.get_cell_end(end)
@@ -812,8 +812,8 @@ class SheetData(object):
         """
         Добавление разделителей страниц по колонкам
         
-        @param colbreaks_list:
-        @type colbreaks_list:
+        :param colbreaks_list:
+        :type colbreaks_list:
         """
         # добавим разделители
         for new_col_index in colbreaks_list:
@@ -837,8 +837,8 @@ class SheetData(object):
         """
         Добавление разделителей страниц по строкам
         
-        @param rowbreaks_list:
-        @type rowbreaks_list:
+        :param rowbreaks_list:
+        :type rowbreaks_list:
         """
         # добавим разделители
         for new_row_index in rowbreaks_list:
@@ -861,12 +861,12 @@ class SheetData(object):
     def set_pagebreaks(self, begin, end, start_cell):
         """
         Копирование разделителей страниц
-        @param begin: начало секции, пример ('A', 1)
-        @type begin: 2-tuple
-        @param end: конец секции, пример ('E', 6)
-        @type end: 2-tuple
-        @param start_cell: ячейка с которой выводилась секция
-        @type start_cell: 2-tuple
+        :param begin: начало секции, пример ('A', 1)
+        :type begin: 2-tuple
+        :param end: конец секции, пример ('E', 6)
+        :type end: 2-tuple
+        :param start_cell: ячейка с которой выводилась секция
+        :type start_cell: 2-tuple
         """
         # определим интервал столбцов и колонок из которых надо взять разделители
         end = self.get_cell_end(end)
@@ -903,10 +903,10 @@ class SheetData(object):
         область перес. данную, то необходимо прежде всего удалить,
         то что уже имеется.
         
-        @param begin_new_merge: начало диапазона
-        @type begin_new_merge: 2-tuple
-        @param end_new_merge: конец диапазона
-        @type end_new_merge: 2-tuple
+        :param begin_new_merge: начало диапазона
+        :type begin_new_merge: 2-tuple
+        :param end_new_merge: конец диапазона
+        :type end_new_merge: 2-tuple
         """
 
         begin_new_column, begin_new_row = get_addr_cell(begin_new_merge)
@@ -935,10 +935,10 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
     def __init__(self, sheet_data, name, begin=None, end=None):
         """
-        @param sheet_data: Данные листа
-        @param name: Название секции
-        @param begin: Начало секции, пример ('A', 1)
-        @param end: Конец секции, пример ('E', 6)
+        :param sheet_data: Данные листа
+        :param name: Название секции
+        :param begin: Начало секции, пример ('A', 1)
+        :param end: Конец секции, пример ('E', 6)
         """
         super(Section, self).__init__(sheet_data, name, begin, end)
 
@@ -963,12 +963,12 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         Вывод. Имеется два механизма вывода.
         Для использования старого не передавать direction
         
-        @param params: параметры замены
-        @type params: dict
-        @param oriented: направление ориентации
-        @type oriented: ISpreadsheetSection
-        @param used_formulas: использованные формулы
-        @type used_formulas: dict
+        :param params: параметры замены
+        :type params: dict
+        :param oriented: направление ориентации
+        :type oriented: ISpreadsheetSection
+        :param used_formulas: использованные формулы
+        :type used_formulas: dict
         """
         assert isinstance(params, dict)
         assert oriented in (Section.VERTICAL,
