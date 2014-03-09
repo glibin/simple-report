@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 '''
 Created on 24.11.2011
 
@@ -19,7 +19,8 @@ from simple_report.xlsx.section import Section, SheetData
 
 
 class Comments(OpenXMLFile):
-    """
+    u"""
+    Комментарии в XLSX
     """
     NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     NS_XDR = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"
@@ -27,6 +28,11 @@ class Comments(OpenXMLFile):
     section_pattern = re.compile(u'[\+|\-]+[A-Za-zА-яА-я0-9_]+')
 
     def __init__(self, sheet_data, *args, **kwargs):
+        """
+        
+        @param sheet_data: данные для листа 
+        @type sheet_data: xlsx.section.SheetData
+        """
         super(Comments, self).__init__(*args, **kwargs)
 
         assert isinstance(sheet_data, SheetData)
@@ -42,7 +48,8 @@ class Comments(OpenXMLFile):
 
 
     def _test_sections(self):
-        """
+        u"""
+        Проверка секций на валидность
         """
         for section_object in self.sections.values():
             if not section_object.name or not section_object.begin or not section_object.end:
@@ -50,6 +57,10 @@ class Comments(OpenXMLFile):
 
     def _parse_sections(self, comment_list):
         """
+        Распознаем секции
+        
+        @param comment_list: Список комментариев
+        @type comment_list: iterable
         """
 
         for comment in comment_list:
@@ -61,7 +72,8 @@ class Comments(OpenXMLFile):
 
 
     def _create_section(self):
-        """
+        u"""
+        Создание объектов секций из комментариев
         """
 
         map(self._add_section, self._parse_sections(self.comment_list))
@@ -98,6 +110,9 @@ class Comments(OpenXMLFile):
     def _get_name_section(self, text):
         """
         Возвращает из наименования ++A - название секции
+        
+        @param text: комментарий
+        @type text: basestring
         """
         for i, s in enumerate(text):
             if s.isalpha():
@@ -107,6 +122,10 @@ class Comments(OpenXMLFile):
 
     def get_section(self, section_name):
         """
+        Получение секции по имени
+        
+        @param section_name:
+        @type section_name:
         """
         try:
             section = self.sections[section_name]
@@ -116,7 +135,8 @@ class Comments(OpenXMLFile):
             return section
 
     def get_sections(self):
-        """
+        u"""
+        Получение всех секций
         """
         return self.sections
 
@@ -125,7 +145,8 @@ class Comments(OpenXMLFile):
         return cls(cursor, *args, **kwargs)
 
     def build(self):
-        """
+        u"""
+        Сборка файла с комментариями, предварительно удалив их
         """
         if len(self.comment_list) > 0:
             self.comment_list.clear()
@@ -135,7 +156,9 @@ class Comments(OpenXMLFile):
 
 
 class SharedStrings(OpenXMLFile):
-    """
+    u"""
+    XML-файл с общими строками, на каждую из которых могут ссылаться из
+    других xml-файлов XLSX
     """
     NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 
@@ -144,7 +167,8 @@ class SharedStrings(OpenXMLFile):
         self.table = SharedStringsTable(self._root)
 
     def build(self):
-        """
+        u"""
+        Сборка файла
         """
         new_root = self.table.to_xml()
         with open(self.file_path, 'w') as f:
@@ -152,7 +176,8 @@ class SharedStrings(OpenXMLFile):
 
 
 class WorkbookSheet(ReletionOpenXMLFile):
-    """
+    u"""
+    Лист книги документа в формате XLSX
     """
 
     NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
@@ -161,6 +186,17 @@ class WorkbookSheet(ReletionOpenXMLFile):
 
     def __init__(self, shared_table, tags, name, sheet_id,
             *args, **kwargs):
+        """
+        
+        @param shared_table:
+        @type shared_table:
+        @param tags:
+        @type tags:
+        @param name:
+        @type name:
+        @param sheet_id:
+        @type sheet_id:
+        """
         super(WorkbookSheet, self).__init__(*args, **kwargs)
         self.name = name
         self.sheet_id = sheet_id
@@ -193,12 +229,14 @@ class WorkbookSheet(ReletionOpenXMLFile):
 
 
     def _get_comment(self, rel_id, target):
-        """
+        u"""
+        Получение объекта комментария
         """
         return Comments.create(self.sheet_data, rel_id, *self._get_path(target))
 
     def _get_drawing(self, rel_id, target):
-        """
+        u"""
+        Unused
         """
 
     def __str__(self):
@@ -218,17 +256,20 @@ class WorkbookSheet(ReletionOpenXMLFile):
 
 
     def get_section(self, name):
-        """
+        u"""
+        Получение секции по имени
         """
         return self.comments.get_section(name)
 
     def get_sections(self):
-        """
+        u"""
+        Получение всех секций
         """
         return self.sections
 
     def build(self):
-        """
+        u"""
+        Сборка xml-файла
         """
         new_root = self.sheet_data.new_sheet()
 
@@ -247,11 +288,13 @@ class WorkbookSheet(ReletionOpenXMLFile):
 
 class WorkbookStyles(OpenXMLFile):
     """
+    Unused
     """
 
 
 class Workbook(ReletionOpenXMLFile):
-    """
+    u"""
+    Книга в формате XLSX
     """
     NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     NS_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -259,6 +302,9 @@ class Workbook(ReletionOpenXMLFile):
 
     def __init__(self, tags, *args, **kwargs):
         """
+        
+        @param tags:
+        @type tags:
         """
         super(Workbook, self).__init__(*args, **kwargs)
 
@@ -279,6 +325,9 @@ class Workbook(ReletionOpenXMLFile):
             raise SheetNotFoundException('Sheets not found')
 
     def walk_reletions(self):
+        u"""
+        
+        """
         workbook_style = shared_strings = calc_chain = None
         sheets = {}
         for elem in self._reletion_root:
@@ -316,14 +365,35 @@ class Workbook(ReletionOpenXMLFile):
 
     def _get_style(self, _id, target):
         """
+        Unused
         """
 
     def _get_worksheet(self, rel_id, target, name, sheet_id):
+        """
+        Получение листа книги
+        @param rel_id:
+        @type rel_id:
+        @param target:
+        @type target:
+        @param name:
+        @type name:
+        @param sheet_id:
+        @type sheet_id:
+        """
         worksheet = WorkbookSheet.create(self.shared_table, self.tags,
             name, sheet_id, rel_id, *self._get_path(target))
         return worksheet
 
     def _get_shared_strings(self, _id, target):
+        """
+        Получение общих строк
+        
+        @param _id: идентификатор строки
+        @type _id:
+        @param target:
+        @type target:
+        """
+
         return SharedStrings.create(_id, *self._get_path(target))
 
     def _get_calc_chain(self, _id, target):

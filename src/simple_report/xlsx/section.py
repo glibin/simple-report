@@ -140,19 +140,35 @@ class SheetData(object):
 
     @property
     def cursor(self):
+        u"""
+        Курсор
+        """
         return self._cursor
 
     @cursor.setter
     def cursor(self, value):
+        u"""
+        Установка курсора
+        @param value: новый курсор
+        @type value: Cursor
+        """
         assert isinstance(value, Cursor)
         self._cursor = value
 
     @property
     def last_section(self):
+        u"""
+        Последняя секция
+        """
         return self._last_section
 
     @last_section.setter
     def last_section(self, value):
+        """
+        Установка последней секции
+        @param value: курсор
+        @type value: Cursor
+        """
         assert isinstance(value, Cursor)
         self._last_section = value
 
@@ -174,12 +190,13 @@ class SheetData(object):
         self.set_pagebreaks(begin, end, start_cell)
 
     def set_dimension(self):
-        """
+        u"""
+        Установка диапазона
         """
         _, row_index = self.cursor.row
         col_index, _ = self.cursor.column
 
-        dimension = 'A1:%s' %\
+        dimension = 'A1:%s' % \
                     (ColumnHelper.add(col_index, -1) + str(row_index - 1))
 
         self.write_dimension.set('ref', dimension)
@@ -190,10 +207,27 @@ class SheetData(object):
 
     def set_merge_cells(self, section_begin, section_end, start_cell):
         """
+        Объединение ячеек
+        
+        @param section_begin: начало секции
+        @type section_begin: 2-tuple
+        @param section_end: конец секции
+        @type section_end: 2-tuple
+        @param start_cell: стартовая ячейка
+        @type start_cell: 2-tuple
         """
 
         def cell_dimensions(section, merge_cell, start_cell):
             """
+            Получение координаты ячейки после смещения из-за
+            объединения ячеек
+            
+            @param section: начало секции
+            @type section: 2-tuple
+            @param merge_cell: начало объединенной ячейки
+            @type merge_cell: 2-tuple
+            @param start_cell: стартовая ячейка
+            @type start_cell: 2-tuple
             """
 
             section_begin_col, section_begin_row = section
@@ -228,7 +262,10 @@ class SheetData(object):
 
     def _find_rows(self, range_rows):
         """
-
+        Итератор по строкам
+        
+        @param range_rows: номера строк
+        @type range_rows: iterable
         """
         for i, num_row in enumerate(range_rows):
             row = self.read_data.find(self.XPATH_TEMPLATE_ROW % num_row)
@@ -237,7 +274,14 @@ class SheetData(object):
 
     def _find_cells(self, range_cols, num_row, row):
         """
-
+        Итератор по ячейкам
+        
+        @param range_cols: диапазон колонок
+        @type range_cols: iterable
+        @param num_row: номер строки
+        @type num_row: int
+        @param row: объект строки
+        @type row: lxml.etree.Element
         """
         for j, col in enumerate(range_cols):
             cell = row.find(self.XPATH_TEMPLATE_CELL % (col + str(num_row)))
@@ -247,17 +291,22 @@ class SheetData(object):
 
     def _get_tag_value(self, cell):
         """
-
+        Получение значения ячейки
+        
+        @param cell: ячейка
+        @type cell: lxml.etree.Element
         """
         return cell.find(QName(self.ns, 'v'))
 
     def _get_params(self, cell):
         """
-
+        Получение параметров ячейки 
+        @param cell: ячейка
+        @type cell: lxml.etree.Element
         """
         value = self._get_tag_value(cell)
 
-        if not value is None and cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+        if not value is None and cell.get('t') == 's':  # 't' = 's' - значит есть значения shared strings
             index_value = int(value.text)
             value_string = self.shared_table.get_value(index_value)
 
@@ -267,10 +316,18 @@ class SheetData(object):
 
     def _get_values_by_re(self, value_string, what_found=None):
         """
+        Получение значений по регулярному выражению
+         
+        @param value_string: строка, в которой ищем
+        @type value_string: basestring
+        @param what_found: регулярное выражение
+        @type what_found: regexp
+        """
+        """
         """
         if what_found is None:
             # Если значение поиска неопределено выводим поиск для всех параметров
-            return self._get_values_by_re(value_string, self.FIND_PARAMS) +\
+            return self._get_values_by_re(value_string, self.FIND_PARAMS) + \
                    self._get_values_by_re(value_string, self.FIND_TEMPLATE_TAGS)
 
         who_found_params = what_found.findall(value_string)
@@ -281,7 +338,12 @@ class SheetData(object):
 
     def find_all_parameters(self, begin, end):
         """
-
+        Получение всех параметров
+        
+        @param begin: начальная ячейка
+        @type begin: 2-tuple
+        @param end: конечная ячейка
+        @type end: 2-tuple
         """
         range_rows, range_cols = self._range(begin, end)
         for i, num_row, row in self._find_rows(range_rows):
@@ -290,11 +352,23 @@ class SheetData(object):
                     yield param
 
     def _get_tag_formula(self, cell):
-        """
+        u"""
+        Получение тега с формулой
+        
+        @param cell: ячейка
+        @type cell: lxml.etree.Element
         """
         return cell.find(QName(self.ns, 'f'))
 
     def _create_or_get_output_row(self, row_index, attrib_row):
+        u"""
+        Получение выходной строки
+        
+        @param row_index: индекс строки
+        @type row_index: int
+        @param attrib_row: атрибуты строки
+        @type attrib_row: dict
+        """
         # найдем существующую строку в результирующих данных
         key = self.XPATH_TEMPLATE_ROW % row_index
         row_el = self.write_data_dict.get(key)
@@ -307,6 +381,14 @@ class SheetData(object):
 
 
     def _create_or_get_output_row_old(self, row_index, attrib_row):
+        """
+        Deprecated/unused
+        
+        @param row_index:
+        @type row_index:
+        @param attrib_row:
+        @type attrib_row:
+        """
         # найдем существующую строку в результирующих данных
         row_el = self.write_data.find(self.XPATH_TEMPLATE_ROW % row_index)
 
@@ -316,6 +398,16 @@ class SheetData(object):
         return row_el
 
     def _create_or_get_output_cell(self, row_el, cell_index, attrib_cell):
+        """
+        Получение выходной ячейки
+        
+        @param row_el: элемент строки
+        @type row_el: lxml.etree.Element
+        @param cell_index: индекс ячейки
+        @type cell_index: int
+        @param attrib_cell: атрибуты ячейки
+        @type attrib_cell: dict
+        """
         # найдем существующую ячейку в строке
         cell_el = row_el.find(self.XPATH_TEMPLATE_CELL % cell_index)
         if cell_el is None:
@@ -331,11 +423,23 @@ class SheetData(object):
     #     if self.calc_chain:
     #         calc = SubElement(self.calc_chain._root, 'c')
     #         calc.attrib['r'] = '%s%s' % (column, row)
-    #@profile
+    # @profile
     def set_section(self, begin, end, start_cell, params, used_formulas=None):
+        u"""
+        Вывод секции
+        
+        @param begin: начальная ячейка секции
+        @type begin: 2-tuple
+        @param end: конечная ячейка секции
+        @type end: 2-tuple
+        @param start_cell: стартовая ячейка (с которой начинается запись)
+        @type start_cell: 2-tuple
+        @param params: параметры отчета
+        @type params: dict
+        @param used_formulas: используемые формулы
+        @type used_formulas: dict
         """
-
-        """
+        # TODO: разбить на методы
         range_rows, range_cols = self._range(begin, end)
         start_column, start_row = start_cell
         if used_formulas is None:
@@ -374,11 +478,11 @@ class SheetData(object):
                 if not value is None:
                     value_el = SubElement(cell_el, 'v')
 
-                    if attrib_cell.get('t') in ('n', None): # number
+                    if attrib_cell.get('t') in ('n', None):  # number
 
                         value_el.text = value.text
 
-                    elif attrib_cell.get('t') == 's': # 't' = 's' - значит есть значения shared strings
+                    elif attrib_cell.get('t') == 's':  # 't' = 's' - значит есть значения shared strings
 
                         index_value = int(value.text)
                         value_string = self.shared_table.get_value(index_value)
@@ -415,7 +519,7 @@ class SheetData(object):
                                     if days > 0:
                                         # Дата конвертируется в int, начиная с 31.12.1899
                                         is_int = True
-                                        cell_el.attrib['t'] = 'n' # type - number
+                                        cell_el.attrib['t'] = 'n'  # type - number
                                         value_el.text = unicode(days)
                                     else:
                                         date_less_1900 = '%s.%s.%s' % (
@@ -435,7 +539,7 @@ class SheetData(object):
                                     # В первую очередь добавляем числовые значения
                                     is_int = True
 
-                                    cell_el.attrib['t'] = 'n' # type - number
+                                    cell_el.attrib['t'] = 'n'  # type - number
                                     value_el.text = unicode(param_value)
 
                                 elif isinstance(param_value, basestring):
@@ -516,7 +620,13 @@ class SheetData(object):
                         raise SheetDataException("Unknown value '%s' for tag t" % attrib_cell.get('t'))
 
     def _range(self, begin, end):
-        """
+        u"""
+        Диапазон строк, колонок
+        
+        @param begin: начальная ячейка 
+        @type begin: 2-tuple
+        @param end: конечная ячейка
+        @type end: 2-tuple
         """
 
         # Если есть объединенная ячейка, и она попадает на конец секции, то адресс конца секции записывается как конец
@@ -532,17 +642,27 @@ class SheetData(object):
         return range_rows, range_cols
 
     def _addr_in_range(self, addr, begin, end):
-        """
+        u"""
         Проверяет, попадает ли адрес в диапазон
+        
+        @param addr: адрес ячейки
+        @type addr: 2-tuple
+        @param begin: начальная ячейка диапазона
+        @type begin: 2-tuple
+        @param end: конечная ячейка диапазона
+        @type end: 2-tuple
         """
         col, row = addr
-        rows = xrange(begin[1], end[1]+1)
+        rows = xrange(begin[1], end[1] + 1)
         cols = list(ColumnHelper.get_range(begin[0], end[0]))
         return all([col in cols, row in rows])
 
     def get_cell_end(self, cell_addr):
         """
         Получение (правого нижнего) конца ячейки
+        
+        @param cell_addr: адрес ячейки
+        @type cell_addr: 2-tuple
         """
         cell_end = cell_addr
         # Если указанный адрес пападает в объединенную ячейку, то адресс конца ячейки указывается как конец
@@ -578,10 +698,16 @@ class SheetData(object):
     def _create_or_get_output_col(self, col_index, attrib_col=None):
         """
         Найдем существующую колонку в результирующих данных
-        Если не передали начальные данные, то колонка не создается если не найдена,
+        Если не передали начальные данные, то колонка не создается,
+        если не найдена,
+        
+        @param col_index: индекс колонки
+        @type col_index: int
+        @param attrib_col: атрибуты элемента колонки
+        @type attrib_col: dict
         """
         # найдем интервал, в который попадаем искомый индекс
-        col_index = ColumnHelper.column_to_number(col_index)+1
+        col_index = ColumnHelper.column_to_number(col_index) + 1
         col_el = None
         for col in self.write_cols.getchildren():
             begin_col = int(col.attrib['min'])
@@ -603,25 +729,32 @@ class SheetData(object):
         """
         Установка новой ширины колонки
         Особенность в том, что нужно разбивать интервалы, если потребуется
+        
+        @param col_index: индекс колонки
+        @type col_index: int
+        @param src_col: элемент исходной колонки
+        @type src_col: lxml.etree.Element
+        @param dst_col: элемент выходной колонки
+        @type dst_col: lxml.etree.Element
         """
-        col_index = ColumnHelper.column_to_number(col_index)+1
+        col_index = ColumnHelper.column_to_number(col_index) + 1
         # если ширина колонок отличается и колонка-приемник является интервалом,
         # то нужно разбить интервал на части с разной шириной колонок
         if dst_col.attrib["width"] != src_col.attrib["width"]:
             begin_col = int(dst_col.attrib['min'])
             end_col = int(dst_col.attrib['max'])
             # если задано интервалом, то будем разбивать
-            if end_col-begin_col > 0:
+            if end_col - begin_col > 0:
                 if col_index > begin_col:
                     # предыдущий интервал: max = col-1
                     prev_attrib_col = dict(dst_col.items())
-                    prev_attrib_col['max'] = str(col_index-1)
+                    prev_attrib_col['max'] = str(col_index - 1)
                     prev_col_el = SubElement(self.write_cols, 'col', attrib=prev_attrib_col)
 
                 if col_index < end_col:
                     # следующий интервал: min = col+1
                     next_attrib_col = dict(dst_col.items())
-                    next_attrib_col["min"] = str(col_index+1)
+                    next_attrib_col["min"] = str(col_index + 1)
                     next_col_el = SubElement(self.write_cols, 'col', attrib=next_attrib_col)
 
                 # интервал для текущей колонки: min = max = col
@@ -634,8 +767,11 @@ class SheetData(object):
         """
         Копирование ширины колонок
         @param begin: начало секции, пример ('A', 1)
+        @type begin: 2-tuple
         @param end: конец секции, пример ('E', 6)
+        @type end: 2-tuple
         @param start_cell: ячейка с которой выводилась секция
+        @type start_cell: 2-tuple
         """
         # определим интервал столбцов из которых надо взять ширину
         end = self.get_cell_end(end)
@@ -658,10 +794,16 @@ class SheetData(object):
                 self._set_new_column_width(dst_col, src_col_el, dst_col_el)
 
     def get_rowbreaks(self):
+        u"""
+        Получение разрывов строк
+        """
         breaks = [elem.attrib['id'] for elem in self.write_rowbreaks.getchildren()]
         return tuple(breaks)
 
     def get_colbreaks(self):
+        u"""
+        Получение разрывов колонок
+        """
         breaks = [elem.attrib['id'] for elem in self.write_colbreaks.getchildren()]
         return tuple(breaks)
 
@@ -669,6 +811,9 @@ class SheetData(object):
     def _set_colpagebreaks(self, colbreaks_list):
         """
         Добавление разделителей страниц по колонкам
+        
+        @param colbreaks_list:
+        @type colbreaks_list:
         """
         # добавим разделители
         for new_col_index in colbreaks_list:
@@ -685,12 +830,15 @@ class SheetData(object):
                 elem = SubElement(self.write_colbreaks, 'brk', attrib=col_break_attr)
                 count = int(self.write_colbreaks.get('count', 0))
                 man_count = int(self.write_colbreaks.get('manualBreakCount', 0))
-                self.write_colbreaks.attrib['count'] = str(count+1)
-                self.write_colbreaks.attrib['manualBreakCount'] = str(man_count+1)
+                self.write_colbreaks.attrib['count'] = str(count + 1)
+                self.write_colbreaks.attrib['manualBreakCount'] = str(man_count + 1)
 
     def _set_rowpagebreaks(self, rowbreaks_list):
         """
         Добавление разделителей страниц по строкам
+        
+        @param rowbreaks_list:
+        @type rowbreaks_list:
         """
         # добавим разделители
         for new_row_index in rowbreaks_list:
@@ -707,15 +855,18 @@ class SheetData(object):
                 elem = SubElement(self.write_rowbreaks, 'brk', attrib=row_break_attr)
                 count = int(self.write_rowbreaks.get('count', 0))
                 man_count = int(self.write_rowbreaks.get('manualBreakCount', 0))
-                self.write_rowbreaks.attrib['count'] = str(count+1)
-                self.write_rowbreaks.attrib['manualBreakCount'] = str(man_count+1)
+                self.write_rowbreaks.attrib['count'] = str(count + 1)
+                self.write_rowbreaks.attrib['manualBreakCount'] = str(man_count + 1)
 
     def set_pagebreaks(self, begin, end, start_cell):
         """
         Копирование разделителей страниц
         @param begin: начало секции, пример ('A', 1)
+        @type begin: 2-tuple
         @param end: конец секции, пример ('E', 6)
+        @type end: 2-tuple
         @param start_cell: ячейка с которой выводилась секция
+        @type start_cell: 2-tuple
         """
         # определим интервал столбцов и колонок из которых надо взять разделители
         end = self.get_cell_end(end)
@@ -731,8 +882,8 @@ class SheetData(object):
         if self.read_colbreaks is not None:
             for elem in self.read_colbreaks.getchildren():
                 col_index = int(elem.attrib['id'])
-                if begin_col <= col_index-1 <= end_col:
-                    colbreaks.append(col_index-begin_col+new_begin_col)
+                if begin_col <= col_index - 1 <= end_col:
+                    colbreaks.append(col_index - begin_col + new_begin_col)
 
         self._set_colpagebreaks(colbreaks)
 
@@ -742,14 +893,20 @@ class SheetData(object):
             for elem in self.read_rowbreaks.getchildren():
                 row_index = int(elem.attrib['id'])
                 if begin_row <= row_index <= end_row:
-                    rowbreaks.append(row_index-begin_row+new_begin_row)
+                    rowbreaks.append(row_index - begin_row + new_begin_row)
 
         self._set_rowpagebreaks(rowbreaks)
 
     def prepare_merge(self, begin_new_merge, end_new_merge):
         """
-        Если в документе имеются смерженные ячейки и мы добавляем свою область перес. данную, то
-        необходимо прежде всего удалить, то что уже имеется.
+        Если в документе имеются объединенные ячейки и мы добавляем свою
+        область перес. данную, то необходимо прежде всего удалить,
+        то что уже имеется.
+        
+        @param begin_new_merge: начало диапазона
+        @type begin_new_merge: 2-tuple
+        @param end_new_merge: конец диапазона
+        @type end_new_merge: 2-tuple
         """
 
         begin_new_column, begin_new_row = get_addr_cell(begin_new_merge)
@@ -759,8 +916,8 @@ class SheetData(object):
         merge_cells = self._write_xml.xpath('.//mergeCell')
         for merge_cell in merge_cells:
 
-            ref_attr = merge_cell.attrib.get('ref') # D1:D3 Например
-            begin_old_merge, end_old_merge = ref_attr.split(':') # D1, D3
+            ref_attr = merge_cell.attrib.get('ref')  # D1:D3 Например
+            begin_old_merge, end_old_merge = ref_attr.split(':')  # D1, D3
 
             begin_old_column, begin_old_row = get_addr_cell(begin_old_merge)
             end_old_column, end_old_row = get_addr_cell(end_old_merge)
@@ -772,7 +929,8 @@ class SheetData(object):
 
 
 class Section(SpreadsheetSection, ISpreadsheetSection):
-    """
+    u"""
+    Секция отчета
     """
 
     def __init__(self, sheet_data, name, begin=None, end=None):
@@ -797,10 +955,20 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         return self.__str__()
 
 
-    def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
-            used_formulas=None):
+    def flush(
+        self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
+        used_formulas=None
+    ):
         """
-        Вывод. Имеется два механизма вывода. Для использования старого не передавать direction
+        Вывод. Имеется два механизма вывода.
+        Для использования старого не передавать direction
+        
+        @param params: параметры замены
+        @type params: dict
+        @param oriented: направление ориентации
+        @type oriented: ISpreadsheetSection
+        @param used_formulas: использованные формулы
+        @type used_formulas: dict
         """
         assert isinstance(params, dict)
         assert oriented in (Section.VERTICAL,
@@ -823,7 +991,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
         self.sheet_data.last_section.row = (current_col, current_row)
         self.sheet_data.last_section.column = (ColumnHelper.add(current_col,
-        ColumnHelper.difference(end_col, begin_col) ), current_row + end_row - begin_row)
+        ColumnHelper.difference(end_col, begin_col)), current_row + end_row - begin_row)
 
         self.sheet_data.flush(self.begin, self.end, (current_col, current_row),
             params, used_formulas)
@@ -835,7 +1003,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         return self.sheet_data.find_all_parameters(self.begin, self.end)
 
     def get_width(self):
-        """
+        u"""
+        Получение ширины секции
         """
 
         begin_col, begin_row = self.begin
@@ -845,6 +1014,9 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
 
 
 class MergeXLSX(AbstractMerge):
+    u"""
+    Менеджер контекста для объединения ячеек
+    """
 
     def _merge(self):
 

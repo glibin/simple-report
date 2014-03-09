@@ -1,11 +1,12 @@
-#coding: utf-8
+# coding: utf-8
 
 import re
 
 from simple_report.utils import ColumnHelper
+# TODO: кажется, нигде не используется
 
 class Formula(object):
-    """
+    u"""
     Изменение формулы для последующего вывода
     """
 
@@ -26,12 +27,17 @@ class Formula(object):
 
     @classmethod
     def get_instance(cls, formula):
+        """
+        Получение формулы
+        @param formula:
+        @type formula:
+        """
         return Formula._cache.get(formula) or Formula(formula)
 
     def __init__(self, formula):
         self.formula = formula
         # Флаг того, что формула вычисляется впервые. В этом случае изменять её,
-        # нет необходимости.
+        # нет необходимости
         self.first = True
 
         self._last_row = 0

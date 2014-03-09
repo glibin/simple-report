@@ -24,6 +24,10 @@ class AbstractCursor(object):
 
     @property
     def row(self):
+        """
+        @summary: Строка
+        @result: номер строки
+        """
         return self._row
 
     @row.setter
@@ -114,21 +118,30 @@ class AbstractCalculateNextCursor(object):
     @abstractmethod
     def get_next_column(self, current_col, end_col, begin_col):
         """
-        Вычисление следующей колон
+        @summary: Вычисление следующей колонки
+        @param current_col: текущая колонка
+        @param end_col: конечная колонка
+        @param begin_col: начальная колонка
+        @result: следующая колонка
         """
 
     @abstractmethod
     def get_first_column(self):
         """
+        Вычисление первой колонки
         """
 
     @abstractmethod
     def get_first_row(self):
         """
+        Вычисление первой строки
         """
 
     @abstractmethod
     def calculate_indent(self, column, w):
         """
-        Колонка - отступ
+        @summary: Подсчет сдвига колонки
+        @param column: колонка
+        @param w: ширина сдвига
+        @result: колонка после сдвига
         """

@@ -8,6 +8,7 @@ from simple_report.xls.output_options import XSL_OUTPUT_SETTINGS
 
 class DocumentXLS(BaseDocument, SpreadsheetDocument):
     """
+    Обертка для отчетов в формате XLS
     """
 
     def __init__(self, ffile, tags=None, **kwargs):
@@ -16,9 +17,18 @@ class DocumentXLS(BaseDocument, SpreadsheetDocument):
 
     @property
     def workbook(self):
+        """
+        @summary: Получение рабочей книги
+        @result: рабочая книга
+        """
         return self._workbook
 
     def build(self, dst):
+        """
+        @summary: Сборка отчета
+        @param dst: путь до выходного файла
+        @result:
+        """
         self._workbook.build(dst)
 
     def __setattr__(self, key, value):

@@ -1,9 +1,9 @@
-#coding: utf-8
-'''
+# coding: utf-8
+"""
 Created on 24.11.2011
 
 @author: prefer
-'''
+"""
 
 from abc import ABCMeta, abstractmethod
 
@@ -17,7 +17,9 @@ class IReport(object):
 
     @abstractmethod
     def build(self, *args, **kwargs):
-        pass
+        u"""
+        Построение отчета  
+        """
 
 
 class IDocumentReport(IReport):
@@ -25,8 +27,17 @@ class IDocumentReport(IReport):
 
     @abstractmethod
     def build(self, dst_file_path, params, file_type):
-        u"""
+        """
         Генерирует выходной файл в нужном формате
+        
+        @param dst_file_path: путь до выходного файла
+        @type dst_file_path: str
+        @param params: словарь ключ: параметр в шаблоне,
+                       значение: заменяющая строка
+                
+        @type params: dict
+        @param file_type: тип файла
+        @type file_type: str
         """
 
     @abstractmethod
@@ -47,14 +58,22 @@ class ISpreadsheetReport(IReport):
 
     @abstractmethod
     def get_section(self, section_name):
-        u"""
+        """
         Возвращает секцию по имени
+        
+        @param section_name: имя секции
+        @type section_name: str
         """
 
     @abstractmethod
     def build(self, dst_file_path, file_type):
-        u"""
+        """
         Генерирует выходной файл в нужном формате
+        
+        @param dst_file_path: путь до выходного файла
+        @type dst_file_path: str
+        @param file_type: тип файла
+        @type file_type: str
         """
 
 
@@ -72,7 +91,14 @@ class ISpreadsheetSection(object):
 
     @abstractmethod
     def flush(self, params, oriented=LEFT_DOWN):
-        pass
+        """
+        Записать данные в секцию
+        
+        @param params: словарь параметров
+        @type params: dict
+        @param oriented: направление вывода секций
+        @type oriented: int
+        """
 
 
     @abstractmethod

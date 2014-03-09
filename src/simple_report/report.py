@@ -1,9 +1,9 @@
-#coding: utf-8
-'''
+# coding: utf-8
+"""
 Created on 24.11.2011
 
 @author: prefer
-'''
+"""
 
 import abc
 import os
@@ -22,7 +22,8 @@ from simple_report.utils import FileProxy
 
 
 class ReportGeneratorException(Exception):
-    """
+    u"""
+    Исключение при генерации отчета
     """
 
 
@@ -36,7 +37,19 @@ class Report(object):
     def __init__(self, src_file, converter=None, tags=None, wrapper=None,
                  type=None, **kwargs):
         """
+        
+        @param src_file: путь до файла с шаблоном
+        @type src_file: basestring
+        @param converter: конвертор
+        @type converter:
+        @param tags: теги
+        @type tags:
+        @param wrapper: обертка над форматом отчета
+        @type wrapper: type (class) 
+        @param type: тип отчета
+        @type type: str
         """
+
 
         self.TYPE = type
 
@@ -57,6 +70,12 @@ class Report(object):
 
     def convert(self, src_file, to_format):
         """
+        Преобразование файла в определенный формат
+        
+        @param src_file: исходный файл
+        @type src_file: FileProxy
+        @param to_format: формат, в который конвертируем
+        @type to_format: str
         """
         if self.converter is not None:
             self.converter.set_src_file(src_file)
@@ -66,7 +85,13 @@ class Report(object):
 
     def build(self, dst_file_path, file_type=None):
         """
-
+        Построение отчета. Параметр `file_type` используется для конвертации
+        полученного xlsx файла в нужный формат
+         
+        @param dst_file_path: Путь до выходного файла
+        @type dst_file_path: basestring
+        @param file_type: тип файла
+        @type file_type: str
         """
         assert self.TYPE, 'Document Type is not defined'
 
@@ -92,6 +117,9 @@ class Report(object):
 
 
 class DocumentReport(Report, IDocumentReport):
+    u"""
+    Отчет в форматах DOCX, RTF
+    """
     #
 
     def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentDOCX, type=FileConverter.DOCX):
@@ -107,23 +135,51 @@ class DocumentReport(Report, IDocumentReport):
     def build(self, dst_file_path, params, file_type=FileConverter.DOCX):
         u"""
         Генерирует выходной файл в нужном формате
+        @param dst_file_path: Путь до выходного файла
+        @type dst_file_path: basestring
+        @param params: словарь с ключом - параметром шаблона,
+                значением - заменяемой строкой
+        @type params: dict
+        @param file_type: тип файла
+        @type file_type: str, FileConverter.*
         """
         self._wrapper.set_params(params)
         return super(DocumentReport, self).build(dst_file_path, file_type)
 
     def get_all_parameters(self):
-        """
-        Возвращаем параметры отчета.
+        u"""
+        Возвращает параметры отчета.
         """
         return self._wrapper.get_all_parameters()
 
     def get_section(self, section_name):
+        """
+        Получение секции
+        @param section_name: имя секции таблицы
+        @type section_name: str
+        """
         return self._wrapper.get_section(section_name)
 
 
 class SpreadsheetReport(Report, ISpreadsheetReport):
+    u"""
+    Отчет в форматах XSLX, XLS
+    """
 
     def __init__(self, src_file, converter=None, tags=None, wrapper=DocumentXLSX, type=FileConverter.XLSX, **kwargs):
+        """
+        
+        @param src_file: путь до исходного файла
+        @type src_file: str
+        @param converter: конвертор
+        @type converter:
+        @param tags: теги
+        @type tags:
+        @param wrapper: обертка над форматом отчета
+        @type wrapper: core.document_wrap.SpreadsheetDocument
+        @param type: тип документа 
+        @type type: str, FileConverter.*
+        """
 
         assert issubclass(wrapper, DocumentXLSX) or issubclass(wrapper, DocumentXLS)
         assert (type == FileConverter.XLSX) or (type == FileConverter.XLS)
@@ -132,18 +188,23 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
 
     @property
     def sections(self):
+        u"""
+        Секции отчета
+        """
         return self.get_sections()
 
     def get_sections(self):
         u"""
         Возвращает все секции
         """
-
         return self._wrapper.get_sections()
 
     def get_section(self, section_name):
-        u"""
+        """
         Возвращает секцию по имени
+        
+        @param section_name: имя секции
+        @type section_name: basestring
         """
         if not hasattr(self._wrapper, 'get_section'):
             raise WrongDocumentType()
@@ -151,10 +212,16 @@ class SpreadsheetReport(Report, ISpreadsheetReport):
 
     @property
     def workbook(self):
+        u"""
+        Возвращает объект книги XLS(X)
+        """
         return self._wrapper.workbook
 
     @property
     def sheets(self):
+        u"""
+        Возвращает объекты листов XLS(X)
+        """
         return self._wrapper.sheets
 
     def __setattr__(self, key, value):
