@@ -29,8 +29,8 @@ class Formula(object):
     def get_instance(cls, formula):
         """
         Получение формулы
-        @param formula:
-        @type formula:
+        :param formula:
+        :type formula:
         """
         return Formula._cache.get(formula) or Formula(formula)
 

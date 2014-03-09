@@ -59,15 +59,15 @@ class SharedStringsTable(object):
 
     def get_value(self, index):
         """
-        @summary:
-        @param index: индекс
+        
+        :param index: индекс
         @result: значение ячейки по индексу
         """
         return self.elements[index]
 
     def to_xml(self):
         u"""
-        @summary: Переводит таблицу в xml
+         Переводит таблицу в xml
         @result: корневой узел xml
         """
         root = Element('sst', {'count': str(len(self.new_elements_list)),

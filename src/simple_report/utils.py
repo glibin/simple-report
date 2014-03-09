@@ -58,10 +58,10 @@ class ZipProxy(object):
         """
         Распаковывает zip файл
         
-        @param src_file_path: путь до исходного файла
-        @type src_file_path: str
-        @param dst_files_path: путь до выходного файла/директории
-        @type dst_files_path: str
+        :param src_file_path: путь до исходного файла
+        :type src_file_path: str
+        :param dst_files_path: путь до выходного файла/директории
+        :type dst_files_path: str
         
         """
         with ZipFileAdapter(src_file_path) as zip_file:
@@ -72,10 +72,10 @@ class ZipProxy(object):
         """
         Запаковывает zip файл
         
-        @param dst_file_path: путь до выходного файла
-        @type dst_file_path: str
-        @param src_files_path: путь до директории с входными файлами
-        @type src_files_path: str
+        :param dst_file_path: путь до выходного файла
+        :type dst_file_path: str
+        :param src_files_path: путь до директории с входными файлами
+        :type src_files_path: str
         """
         with ZipFileAdapter(dst_file_path, 'w') as zip_file:
             for root, _, file_names in os.walk(src_files_path):
@@ -94,8 +94,8 @@ class ZipProxy(object):
         """
         Распаковывает zip архив во временную папку
         
-        @param src_file: путь до архива
-        @type src_file: str
+        :param src_file: путь до архива
+        :type src_file: str
         """
         assert isinstance(src_file, FileProxy)
 
@@ -112,10 +112,10 @@ class ZipProxy(object):
         """
         Запаковывает директорию в архив и удаляет ее
         
-        @param dst_file: выходной файл
-        @type dst_file: FileProxy
-        @param extract_folder: исходная директория
-        @type extract_folder: str
+        :param dst_file: выходной файл
+        :type dst_file: FileProxy
+        :param extract_folder: исходная директория
+        :type extract_folder: str
         """
         assert isinstance(dst_file, FileProxy)
         cls._pack(dst_file.get_path(), extract_folder)
@@ -130,10 +130,10 @@ class FileProxy(object):
     def __init__(self, file_like_object, new_file=False):
         """
         
-        @param file_like_object: Путь до файла
-        @type file_like_object: str
-        @param new_file: создавать ли новый файл?
-        @type new_file: bool
+        :param file_like_object: Путь до файла
+        :type file_like_object: str
+        :param new_file: создавать ли новый файл?
+        :type new_file: bool
         """
         if isinstance(file_like_object, FileProxy):
             file_like_object = file_like_object.file
@@ -189,8 +189,8 @@ class ColumnHelper(object):
     def number_to_column(cls, n):
         """
         Преобразует номер колонки в ее строковое представление
-        @param n: номер колонки
-        @type n: int
+        :param n: номер колонки
+        :type n: int
         """
         return ~n and cls.number_to_column(n / 26 - 1) + chr(65 + n % 26) or ''
 
@@ -199,8 +199,8 @@ class ColumnHelper(object):
         """
         Преобразует строковое представление колонки в число
         
-        @param index: номер
-        @type index: int
+        :param index: номер
+        :type index: int
         """
         s = 0
         pow_ = 1
@@ -217,10 +217,10 @@ class ColumnHelper(object):
         Итератор, выдающий строковые представления колонок между
         начальной и конечной колонкой 
         
-        @param begin: строковое представление начальной колонки
-        @type begin: str
-        @param end: строковое представление конечной колонки
-        @type end: str
+        :param begin: строковое представление начальной колонки
+        :type begin: str
+        :param end: строковое представление конечной колонки
+        :type end: str
         """
         for i in xrange(cls.column_to_number(begin), cls.column_to_number(end) + 1):
             yield cls.number_to_column(i)
@@ -230,10 +230,10 @@ class ColumnHelper(object):
         """
         Добавляет к колонке column i колонок
         
-        @param column: строковое представление колонки
-        @type column: str
-        @param i: число дополнительных колонок
-        @type i: int
+        :param column: строковое представление колонки
+        :type column: str
+        :param i: число дополнительных колонок
+        :type i: int
         """
         return cls.number_to_column(cls.column_to_number(column) + i)
 
@@ -242,10 +242,10 @@ class ColumnHelper(object):
         """
         Разница (расстояние) между двумя колонками
         
-        @param col1: строковое представление первой колонки
-        @type col1: str
-        @param col2: строковое представление второй колонки
-        @type col2: str
+        :param col1: строковое представление первой колонки
+        :type col1: str
+        :param col2: строковое представление второй колонки
+        :type col2: str
         """
         return cls.column_to_number(col1) - cls.column_to_number(col2)
 
@@ -255,8 +255,8 @@ def get_addr_cell(text):
     Возвращает адрес ячейки
     То есть из представления 'AZ12' выдается ('AZ', 12)
     
-    @param text: полное строковое представление ячейки
-    @type text: str
+    :param text: полное строковое представление ячейки
+    :type text: str
     """
     for i, s in enumerate(text):
         if s.isdigit():
@@ -281,8 +281,8 @@ def date_to_float(date):
     ps: Спасибо Вадиму, который предотвратил распространение кастылей,
     типо кастомного форматирования параметров
     
-    @param date: Дата-время
-    @type date: datetime.datetime
+    :param date: Дата-время
+    :type date: datetime.datetime
     """
     assert isinstance(date, datetime)
 

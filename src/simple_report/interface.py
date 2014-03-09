@@ -30,14 +30,14 @@ class IDocumentReport(IReport):
         """
         Генерирует выходной файл в нужном формате
         
-        @param dst_file_path: путь до выходного файла
-        @type dst_file_path: str
-        @param params: словарь ключ: параметр в шаблоне,
+        :param dst_file_path: путь до выходного файла
+        :type dst_file_path: str
+        :param params: словарь ключ: параметр в шаблоне,
                        значение: заменяющая строка
                 
-        @type params: dict
-        @param file_type: тип файла
-        @type file_type: str
+        :type params: dict
+        :param file_type: тип файла
+        :type file_type: str
         """
 
     @abstractmethod
@@ -61,8 +61,8 @@ class ISpreadsheetReport(IReport):
         """
         Возвращает секцию по имени
         
-        @param section_name: имя секции
-        @type section_name: str
+        :param section_name: имя секции
+        :type section_name: str
         """
 
     @abstractmethod
@@ -70,10 +70,10 @@ class ISpreadsheetReport(IReport):
         """
         Генерирует выходной файл в нужном формате
         
-        @param dst_file_path: путь до выходного файла
-        @type dst_file_path: str
-        @param file_type: тип файла
-        @type file_type: str
+        :param dst_file_path: путь до выходного файла
+        :type dst_file_path: str
+        :param file_type: тип файла
+        :type file_type: str
         """
 
 
@@ -94,10 +94,10 @@ class ISpreadsheetSection(object):
         """
         Записать данные в секцию
         
-        @param params: словарь параметров
-        @type params: dict
-        @param oriented: направление вывода секций
-        @type oriented: int
+        :param params: словарь параметров
+        :type params: dict
+        :param oriented: направление вывода секций
+        :type oriented: int
         """
 
 

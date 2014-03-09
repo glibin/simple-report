@@ -30,8 +30,8 @@ class Comments(OpenXMLFile):
     def __init__(self, sheet_data, *args, **kwargs):
         """
         
-        @param sheet_data: данные для листа 
-        @type sheet_data: xlsx.section.SheetData
+        :param sheet_data: данные для листа 
+        :type sheet_data: xlsx.section.SheetData
         """
         super(Comments, self).__init__(*args, **kwargs)
 
@@ -59,8 +59,8 @@ class Comments(OpenXMLFile):
         """
         Распознаем секции
         
-        @param comment_list: Список комментариев
-        @type comment_list: iterable
+        :param comment_list: Список комментариев
+        :type comment_list: iterable
         """
 
         for comment in comment_list:
@@ -111,8 +111,8 @@ class Comments(OpenXMLFile):
         """
         Возвращает из наименования ++A - название секции
         
-        @param text: комментарий
-        @type text: basestring
+        :param text: комментарий
+        :type text: basestring
         """
         for i, s in enumerate(text):
             if s.isalpha():
@@ -124,8 +124,8 @@ class Comments(OpenXMLFile):
         """
         Получение секции по имени
         
-        @param section_name:
-        @type section_name:
+        :param section_name:
+        :type section_name:
         """
         try:
             section = self.sections[section_name]
@@ -188,14 +188,14 @@ class WorkbookSheet(ReletionOpenXMLFile):
             *args, **kwargs):
         """
         
-        @param shared_table:
-        @type shared_table:
-        @param tags:
-        @type tags:
-        @param name:
-        @type name:
-        @param sheet_id:
-        @type sheet_id:
+        :param shared_table:
+        :type shared_table:
+        :param tags:
+        :type tags:
+        :param name:
+        :type name:
+        :param sheet_id:
+        :type sheet_id:
         """
         super(WorkbookSheet, self).__init__(*args, **kwargs)
         self.name = name
@@ -303,8 +303,8 @@ class Workbook(ReletionOpenXMLFile):
     def __init__(self, tags, *args, **kwargs):
         """
         
-        @param tags:
-        @type tags:
+        :param tags:
+        :type tags:
         """
         super(Workbook, self).__init__(*args, **kwargs)
 
@@ -371,14 +371,14 @@ class Workbook(ReletionOpenXMLFile):
     def _get_worksheet(self, rel_id, target, name, sheet_id):
         """
         Получение листа книги
-        @param rel_id:
-        @type rel_id:
-        @param target:
-        @type target:
-        @param name:
-        @type name:
-        @param sheet_id:
-        @type sheet_id:
+        :param rel_id:
+        :type rel_id:
+        :param target:
+        :type target:
+        :param name:
+        :type name:
+        :param sheet_id:
+        :type sheet_id:
         """
         worksheet = WorkbookSheet.create(self.shared_table, self.tags,
             name, sheet_id, rel_id, *self._get_path(target))
@@ -388,10 +388,10 @@ class Workbook(ReletionOpenXMLFile):
         """
         Получение общих строк
         
-        @param _id: идентификатор строки
-        @type _id:
-        @param target:
-        @type target:
+        :param _id: идентификатор строки
+        :type _id:
+        :param target:
+        :type target:
         """
 
         return SharedStrings.create(_id, *self._get_path(target))

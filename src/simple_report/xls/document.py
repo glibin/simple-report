@@ -18,15 +18,15 @@ class DocumentXLS(BaseDocument, SpreadsheetDocument):
     @property
     def workbook(self):
         """
-        @summary: Получение рабочей книги
+         Получение рабочей книги
         @result: рабочая книга
         """
         return self._workbook
 
     def build(self, dst):
         """
-        @summary: Сборка отчета
-        @param dst: путь до выходного файла
+         Сборка отчета
+        :param dst: путь до выходного файла
         @result:
         """
         self._workbook.build(dst)

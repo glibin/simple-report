@@ -25,7 +25,7 @@ class AbstractCursor(object):
     @property
     def row(self):
         """
-        @summary: Строка
+         Строка
         @result: номер строки
         """
         return self._row
@@ -118,10 +118,10 @@ class AbstractCalculateNextCursor(object):
     @abstractmethod
     def get_next_column(self, current_col, end_col, begin_col):
         """
-        @summary: Вычисление следующей колонки
-        @param current_col: текущая колонка
-        @param end_col: конечная колонка
-        @param begin_col: начальная колонка
+         Вычисление следующей колонки
+        :param current_col: текущая колонка
+        :param end_col: конечная колонка
+        :param begin_col: начальная колонка
         @result: следующая колонка
         """
 
@@ -140,8 +140,8 @@ class AbstractCalculateNextCursor(object):
     @abstractmethod
     def calculate_indent(self, column, w):
         """
-        @summary: Подсчет сдвига колонки
-        @param column: колонка
-        @param w: ширина сдвига
+         Подсчет сдвига колонки
+        :param column: колонка
+        :param w: ширина сдвига
         @result: колонка после сдвига
         """

@@ -16,7 +16,7 @@ class BaseDocument(object):
     @abstractmethod
     def build(self):
         """
-        @summary: Сборка документа
+         Сборка документа
         @result:
         """
 

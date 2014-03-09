@@ -24,8 +24,8 @@ class OpenXMLFile(object):
 
     def _get_path(self, target):
         """
-        @summary: получение путей файла
-        @param target: целевой путь
+         получение путей файла
+        :param target: целевой путь
         @result: относительный путь, название файла, полный путь
 
             """
@@ -38,7 +38,7 @@ class OpenXMLFile(object):
 
     def get_root(self):
         """
-        @summary: Получение корневого элемента
+         Получение корневого элемента
         @result: корневой элемент
         """
         return self._root
@@ -46,9 +46,9 @@ class OpenXMLFile(object):
     @classmethod
     def from_file(cls, file_path):
         """
-        @summary: Парсинг файла
-        @param cls:
-        @param file_path: путь до файла
+         Парсинг файла
+        :param cls:
+        :param file_path: путь до файла
         @result: корневой элемент
         """
         assert file_path
@@ -138,10 +138,10 @@ class CommonProperties(ReletionOpenXMLFile):
     @classmethod
     def create(cls, folder, tags):
         """
-        @summary: Получение экземпляра класса
-        @param cls: класс
-        @param folder: путь до директории с распакованным XML-документом
-        @param tags: теги
+         Получение экземпляра класса
+        :param cls: класс
+        :param folder: путь до директории с распакованным XML-документом
+        :param tags: теги
         @result: Экземпляр класса
         """
 
