@@ -13,6 +13,7 @@
 
    README
    examples
+   source
 
 
 Индекс
