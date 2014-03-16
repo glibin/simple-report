@@ -580,6 +580,26 @@ class TestLinuxXLSX(TestXLSX, TestOO, TestPKO, TestPagebreaks,
         dst = os.path.join(self.dst_dir, res_file_name)
         report.build(dst)
 
+    def test_simple_example(self):
+        """
+
+        """
+
+        file_name = 'test_simple.xlsx'
+        template_name = self.test_files[file_name]
+        report = SpreadsheetReport(template_name)
+
+        header = report.get_section('header')
+        header.flush({
+            'author': u'BARS Group',
+            'today': datetime.now().strftime('%d.%m.%Y')
+        })
+
+        res_file_name = 'res_simple.xlsx'
+        dst = os.path.join(self.dst_dir, res_file_name)
+        report.build(dst)
+
+
     def test_operations_journal(self):
         """
 
@@ -767,7 +787,7 @@ class TestLinuxDOCX(unittest.TestCase):
         res_file_name = 'res-' + template_name
         dst = os.path.join(self.dst_dir, res_file_name)
 
-        doc.build(dst, {'Employee_name': u'Иванов И.И.',
+        doc.build(dst, {'Employee_name': u'Иванова И.И.',
                         'region_name': u'Казань'})
         self.assertEqual(os.path.exists(dst), True)
 
@@ -960,8 +980,6 @@ class TestLinuxDOCX(unittest.TestCase):
             "tfoms_to_director_fio": "TFOMS_TO_DIR_FIO"
         }
         report.build(dst, params)
-
-
 
 
 class TestUtils(unittest.TestCase):
