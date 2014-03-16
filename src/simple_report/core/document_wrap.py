@@ -17,7 +17,7 @@ class BaseDocument(object):
     def build(self):
         """
          Сборка документа
-        @result:
+        :result:
         """
 
 

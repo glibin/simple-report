@@ -62,7 +62,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         :param oriented: направление вывода секции
         :param used_formulas: используемые формулы - нужны для записи
         простых формул в отчет
-        @result: None
+        :result: None
         """
         for k, v in params.items():
             if v is None:
@@ -265,7 +265,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
     def get_all_parameters(self):
         """
          Получение всех параметров секции.
-        @result: None
+        :result: None
         """
 
     def get_cell_final_type(self, value, cell_type):
@@ -288,7 +288,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
          Возвращаем тип значения для выходного элемента
         :param value: значение
         :param default_type: тип по умолчанию
-        @result: тип ячейки
+        :result: тип ячейки
         """
 
         if isinstance(value, basestring):
@@ -321,7 +321,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         :param text:
         :param runlist:
         :param default_font:
-        @result:
+        :result:
         """
         rtl = []
         len_runlist = len(runlist)
@@ -349,7 +349,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         """
          Получение шрифта по индексу
         :param font_index: индекс шрифта
-        @result: шрифт
+        :result: шрифт
         """
         if not hasattr(self, 'fonts'):
             self.fonts = {}
@@ -364,7 +364,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         """
          Создание шрифта
         :param rd_font_index: индекс шрифта в исходном файле
-        @result: шрифт в выходном файле
+        :result: шрифт в выходном файле
         """
         font_list = self.writer.rdbook.font_list
         rdf = font_list[rd_font_index]
@@ -400,7 +400,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         :param runlist:
         :param rdrowx: строка в исходном файле
         :param rdcolx: колонка в исходном файле
-        @result:
+        :result:
         """
         wtcolx, wtrowx = write_coords
         if cell_type == EXCEL_IMAGE_TYPE:
@@ -463,7 +463,7 @@ class MergeXLS(AbstractMerge):
         """
          Подсчет колонок слияния
         :param column: текущая колонка
-        @result: (1 колонка секции, 2 колонка секции)
+        :result: (1 колонка секции, 2 колонка секции)
         """
 
         first_section_column = column - self.section.get_width()

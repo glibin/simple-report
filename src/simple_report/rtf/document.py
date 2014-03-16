@@ -28,7 +28,7 @@ class DocumentRTF(BaseDocument):
         """
         Подстановка параметров
         :param params: словарь с параметрами отчета
-        @result: None
+        :result: None
         """
         assert isinstance(params, dict), 'wrong params type'
         self.converted_dictionary = convert_dict(params)

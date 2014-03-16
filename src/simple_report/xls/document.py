@@ -19,7 +19,7 @@ class DocumentXLS(BaseDocument, SpreadsheetDocument):
     def workbook(self):
         """
          Получение рабочей книги
-        @result: рабочая книга
+        :result: рабочая книга
         """
         return self._workbook
 
@@ -27,7 +27,7 @@ class DocumentXLS(BaseDocument, SpreadsheetDocument):
         """
          Сборка отчета
         :param dst: путь до выходного файла
-        @result:
+        :result:
         """
         self._workbook.build(dst)
 

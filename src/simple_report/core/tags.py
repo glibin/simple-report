@@ -26,6 +26,6 @@ class TemplateTags(object):
         """
          Получение значений из словаря тегов
         :param key: ключ словаря
-        @result: значение словаря
+        :result: значение словаря
         """
         return self.tags[key]

@@ -32,7 +32,7 @@ class CalculateNextCursorXLS(AbstractCalculateNextCursor):
         :param current_column: текущая колонка
         :param end_col: конечная колонка
         :param begin_col: начальная колонка
-        @result: следующая колонка
+        :result: следующая колонка
         """
 
         return current_column + end_col - begin_col + 1
@@ -40,7 +40,7 @@ class CalculateNextCursorXLS(AbstractCalculateNextCursor):
     def get_first_column(self):
         """
          Получение первой колонки
-        @result: номер первой колонки
+        :result: номер первой колонки
         """
         # Колонки нумеруются и номер первой нуль.
         return 0
@@ -48,7 +48,7 @@ class CalculateNextCursorXLS(AbstractCalculateNextCursor):
     def get_first_row(self):
         """
          Получение первой строки
-        @result: номер первой строки
+        :result: номер первой строки
         """
         return 0
 
@@ -57,7 +57,7 @@ class CalculateNextCursorXLS(AbstractCalculateNextCursor):
          Вычисление сдвига
         :param column: колонка
         :param w: ширина сдвига
-        @result: разница между номером колонки и шириной сдвига
+        :result: разница между номером колонки и шириной сдвига
         """
 
         return column - w
