@@ -392,7 +392,8 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
     ):
         """
          Выводим в ячейку с координатами `write_coords`
-        значение `value`.
+         значение `value`.
+
         :param write_coords: координаты ячейки
         :param value: значение
         :param style: стиль вывода
@@ -400,7 +401,6 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         :param runlist:
         :param rdrowx: строка в исходном файле
         :param rdcolx: колонка в исходном файле
-        :result:
         """
         wtcolx, wtrowx = write_coords
         if cell_type == EXCEL_IMAGE_TYPE:
