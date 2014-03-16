@@ -41,7 +41,7 @@ class Wordprocessing(ReletionOpenXMLFile):
         """
          Подстановка параметров
         :param params: параметры подстановки
-        @result: None
+        :result: None
         """
         #
         self.merge_same_nodes()
@@ -61,7 +61,7 @@ class Wordprocessing(ReletionOpenXMLFile):
         """
          Слияние одинаковых нод - нужно, т.к. редакторы DOCX
         привносят свои специфичные изменения, которые нам не нужны
-        @result:
+        :result:
         """
         paragraphs = list(self._root.xpath(
             './/{0}:p'.format('w'), namespaces={'w': self.NS_W}
@@ -144,7 +144,7 @@ class Wordprocessing(ReletionOpenXMLFile):
     def set_docx_table_sections(self):
         """
          установка секций таблиц в документах DOCX
-        @result: None
+        :result: None
         """
         tables = self.get_tables()
         for table in tables:
@@ -190,7 +190,7 @@ class Wordprocessing(ReletionOpenXMLFile):
         """
          Получение секции таблицы в документе DOCX по имени
         :param section_name: имя секции
-        @result: секция
+        :result: секция
         """
         if not self.table_sections:
             self.set_docx_table_sections()

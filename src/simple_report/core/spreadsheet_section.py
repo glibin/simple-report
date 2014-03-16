@@ -24,13 +24,13 @@ class SpreadsheetSection(object):
     def get_width(self):
         """
         @summary получение ширины секции
-        @result: ширина секции
+        :result: ширина секции
         """
 
     def get_indent(self):
         """
          получение полного сдвига
-        @result: сдвиг с учетом дочерних секций
+        :result: сдвиг с учетом дочерних секций
         """
 
         indent = self.get_width()
@@ -80,7 +80,7 @@ class AbstractMerge(object):
          Вычисление столбца, строки которого будем мержить.
         По сути вернуть предыдущий столбец
         :param column: предыдущая колонка
-        @result: новая колонка
+        :result: новая колонка
         """
 
     @abc.abstractmethod

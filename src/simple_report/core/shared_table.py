@@ -61,14 +61,14 @@ class SharedStringsTable(object):
         """
         
         :param index: индекс
-        @result: значение ячейки по индексу
+        :result: значение ячейки по индексу
         """
         return self.elements[index]
 
     def to_xml(self):
         u"""
          Переводит таблицу в xml
-        @result: корневой узел xml
+        :result: корневой узел xml
         """
         root = Element('sst', {'count': str(len(self.new_elements_list)),
                                'uniqueCount': str(self.uniq_elements)},

@@ -26,7 +26,7 @@ class AbstractCursor(object):
     def row(self):
         """
          Строка
-        @result: номер строки
+        :result: номер строки
         """
         return self._row
 
@@ -122,7 +122,7 @@ class AbstractCalculateNextCursor(object):
         :param current_col: текущая колонка
         :param end_col: конечная колонка
         :param begin_col: начальная колонка
-        @result: следующая колонка
+        :result: следующая колонка
         """
 
     @abstractmethod
@@ -143,5 +143,5 @@ class AbstractCalculateNextCursor(object):
          Подсчет сдвига колонки
         :param column: колонка
         :param w: ширина сдвига
-        @result: колонка после сдвига
+        :result: колонка после сдвига
         """

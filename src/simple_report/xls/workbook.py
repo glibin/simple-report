@@ -28,7 +28,7 @@ class WorkbookSheet():
         """
          Получение секции по имени
         :param name: имя секции
-        @result: секция
+        :result: секция
         """
 
         assert name, 'Section name is empty'
@@ -82,14 +82,14 @@ class WorkbookSheet():
     def get_sections(self):
         """
          Получение всех секций
-        @result: словарь секций
+        :result: словарь секций
         """
         return self.sections
 
     def get_name(self):
         """
          Получение названия листа
-        @result: название листа
+        :result: название листа
         """
         return self.sheet.name
 
@@ -120,7 +120,7 @@ class Workbook(object):
     def init_active_sheet(self):
         """
          инициализация активного листа
-        @result: None
+        :result: None
         """
         self._active_sheet = self.sheets[0]
         self.xlwt_writer.sheet(self._active_sheet.sheet, self._active_sheet.sheet.name)
@@ -161,7 +161,7 @@ class Workbook(object):
         """
          Получение секции по имени
         :param name: имя секции
-        @result: секция
+        :result: секция
         """
         if not hasattr(self, '_active_sheet'):
             self._active_sheet = self.sheets[0]
@@ -171,7 +171,7 @@ class Workbook(object):
     def get_sections(self):
         """
          Получение всех секций
-        @result: словарь с секциями
+        :result: словарь с секциями
         """
 
         workbook_sections = {}
@@ -220,7 +220,7 @@ class Workbook(object):
         """
          Сборка книги
         :param dest_file: выходной путь
-        @result: None
+        :result: None
         """
 
         self.configure_writer()
