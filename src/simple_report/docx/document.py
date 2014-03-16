@@ -27,8 +27,9 @@ class DocumentDOCX(DocumentOpenXML):
     def build(self, dst_file):
         """
         Сборка отчета
-        :param dst_file: путь до выходного файла
-        :type dst_file: str
+
+        :param: dst_file: путь до выходного файла
+        :type: dst_file: str
         """
         self.word.build()
         super(DocumentDOCX, self).build(dst_file)
@@ -48,7 +49,8 @@ class DocumentDOCX(DocumentOpenXML):
     def get_section(self, section_name):
         """
         Получение секции из таблицы в docx
-        :param section_name: название секции
-        :type section_name: str
+
+        :param: section_name: название секции
+        :type: section_name: str
         """
         return self.word.get_section(section_name)
