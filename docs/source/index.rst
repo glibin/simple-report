@@ -13,6 +13,7 @@
 
    README
    examples
+   complex_xls
    source
 
 

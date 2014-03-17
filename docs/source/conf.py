@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import datetime
 import sys
 import os
 sys.path.insert(0, os.path.abspath('../../src/'))
@@ -48,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'simple-report'
-copyright = u'2014, BARS Group'
+copyright = u'2012 - %s, BARS Group' % datetime.date.today().year
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
