@@ -6,7 +6,8 @@ Created on 24.11.2011
 '''
 
 from simple_report.core.document_wrap import DocumentOpenXML
-from simple_report.docx.wordprocessing_ml import CommonPropertiesDOCX
+from simple_report.docx.wordprocessing_ml import (
+    CommonPropertiesDOCX, ContentTypesXMLFile, DocumentRelsXMLFile)
 
 
 class DocumentDOCX(DocumentOpenXML):
@@ -19,6 +20,13 @@ class DocumentDOCX(DocumentOpenXML):
         self.common_properties = CommonPropertiesDOCX.create(
             self.extract_folder, self._tags
         )
+        self.content_types = ContentTypesXMLFile.create(
+            self.extract_folder, self._tags
+        )
+        self.main_rels = DocumentRelsXMLFile.create(
+            self.extract_folder, self._tags
+        )
+        self.word.doc_rels = self.main_rels
 
     @property
     def word(self):
@@ -32,6 +40,8 @@ class DocumentDOCX(DocumentOpenXML):
         :type: dst_file: str
         """
         self.word.build()
+        self.content_types.build()
+        self.main_rels.build()
         super(DocumentDOCX, self).build(dst_file)
 
     def set_params(self, *args, **kwargs):

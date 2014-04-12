@@ -1,12 +1,14 @@
 #!coding:utf-8
+
 import copy
-from lxml.etree import tostring
+import os
+from lxml.etree import tostring, SubElement
 from simple_report.core import XML_DEFINITION
 from simple_report.core.exception import (
     SectionNotFoundException, SectionException)
 from simple_report.core.xml_wrap import (
-    ReletionOpenXMLFile, CommonProperties)
-
+    ReletionOpenXMLFile, CommonProperties, OpenXMLFile)
+from simple_report.docx.drawing import DocxImage, insert_image
 
 __author__ = 'prefer'
 
@@ -48,7 +50,7 @@ class Wordprocessing(ReletionOpenXMLFile):
         text_nodes = self._root.xpath(
             self.XPATH_QUERY.format('w'), namespaces={'w': self.NS_W}
         )
-        self._set_params(text_nodes, params)
+        self._set_params(text_nodes, params, self.doc_rels)
 
     def get_signature(self, node):
         signature = []
@@ -97,7 +99,7 @@ class Wordprocessing(ReletionOpenXMLFile):
                             old_node = (par_node, node)
 
     @classmethod
-    def _set_params(cls, text_nodes, params):
+    def _set_params(cls, text_nodes, params, doc_rels=None):
 
         def sorting_key((k, v)):
             if not isinstance(k, basestring):
@@ -111,8 +113,12 @@ class Wordprocessing(ReletionOpenXMLFile):
                     # node.text[-1] == '#':
                     text_to_replace = '#%s#' % key_param
                     if text_to_replace in node.text:
-                        node.text = node.text.replace(
-                            text_to_replace, unicode(value))
+                        if isinstance(value, DocxImage):
+                            insert_image(
+                                node, value, text_to_replace, doc_rels)
+                        else:
+                            node.text = node.text.replace(
+                                text_to_replace, unicode(value))
                     else:
                         node.text = node.text.replace(
                             key_param, unicode(value))
@@ -195,11 +201,143 @@ class Wordprocessing(ReletionOpenXMLFile):
         if not self.table_sections:
             self.set_docx_table_sections()
         section = self.table_sections.get(section_name)
+        section.doc_rels = self.doc_rels
         if section is None:
             raise SectionNotFoundException(
                 'Section named {0} has not been found'.format(section_name)
             )
         return section
+
+
+class DocumentRelsXMLFile(OpenXMLFile):
+    NS = ""
+    FILENAME = "document.xml.rels"
+
+    def __init__(self, tags, *args, **kwargs):
+        super(DocumentRelsXMLFile, self).__init__(*args, **kwargs)
+        file_path = os.path.join(
+            self.current_folder,
+            'word',
+            '_rels',
+            self.file_name
+        )
+        self._root = None
+        self.max_rid = 0
+        max_rid = 0
+        if os.path.exists(file_path):
+            self._root = self.from_file(file_path)
+            for child in self._root:
+                # print child.tag, dict(child.attrib), 'child'
+                attrib = dict(child.attrib)
+                rid = attrib.get('Id', '')
+                if rid.startswith('rId'):
+                    max_rid = max([max_rid, int(rid[3:])])
+        self.max_rid = max_rid
+
+    def next_rid(self):
+        self.max_rid = self.max_rid + 1
+        return "rId%s" % self.max_rid
+
+    @classmethod
+    def create(cls, folder, tags):
+        """
+         Получение экземпляра класса
+        :param cls: класс
+        :param folder: путь до директории с распакованным XML-документом
+        :param tags: теги
+        :result: Экземпляр класса
+        """
+
+        reletion_path = os.path.join(folder, 'word', '_rels', cls.FILENAME)
+        rel_id = None # Корневой файл связей
+        file_name = cls.FILENAME
+        return cls(tags, rel_id, folder, file_name, reletion_path, )
+
+    def build(self):
+        with open(self.file_path, 'w') as file_:
+            file_.write(XML_DEFINITION + tostring(self._root))
+
+
+
+class ContentTypesXMLFile(OpenXMLFile):
+    """
+    Типы объектов
+    """
+
+    NS = 'http://schemas.openxmlformats.org/package/2006/content-types'
+
+    FILENAME = '[Content_Types].xml'
+
+    def __init__(self, tags, *args, **kwargs):
+        super(ContentTypesXMLFile, self).__init__(*args, **kwargs)
+
+        assert not self.file_name is None
+
+        file_path = os.path.join(
+            self.current_folder,
+            self.file_name
+        )
+        self.types_root = None
+        if os.path.exists(file_path):
+            self.types_root = self.from_file(file_path)
+
+    def build(self):
+        # root = self.types_root.getroot()
+        root = self.types_root
+        # <Default Extension="jpg" ContentType="image/jpeg" />
+        found_jpg = False
+        found_png = False
+        for child in root:
+            if child.tag == '{%s}Default' % self.NS:
+                attrib = dict(child.attrib)
+                if attrib.get('ContentType') == 'image/jpeg' and attrib.get(
+                    'Extension'
+                ) == 'jpg':
+                    found_jpg = True
+                if attrib.get('ContentType') == 'image/png' and attrib.get(
+                    'Extension'
+                ) == 'png':
+                    found_png = True
+
+        if not found_jpg:
+            SubElement(
+                root, 'Default', attrib={
+                    'ContentType': 'image/jpeg',
+                    'Extension': 'jpg'
+                },
+                # nsmap={
+                #     'w': self.NS
+                # }
+            )
+        if not found_png:
+            SubElement(
+                root, 'Default', attrib={
+                    'ContentType': 'image/png',
+                    'Extension': 'png'
+                },
+                # nsmap={
+                #     'w': self.NS
+                # }
+            )
+
+        with open(self.file_path, 'w') as f:
+            f.write(XML_DEFINITION + tostring(root))
+
+
+    @classmethod
+    def create(cls, folder, tags):
+        """
+         Получение экземпляра класса
+        :param cls: класс
+        :param folder: путь до директории с распакованным XML-документом
+        :param tags: теги
+        :result: Экземпляр класса
+        """
+
+        reletion_path = os.path.join(folder, cls.FILENAME)
+        rel_id = None # Корневой файл связей
+        file_name = '[Content_Types].xml'
+        return cls(tags, rel_id, folder, file_name, reletion_path, )
 
 
 class CommonPropertiesDOCX(CommonProperties):
@@ -235,6 +373,6 @@ class Section(object):
                 './/{0}:tc/{0}:p/{0}:r/{0}:t'.format('w'),
                 namespaces={'w': Wordprocessing.NS_W}
             )
-            Wordprocessing._set_params(text_nodes, params)
+            Wordprocessing._set_params(text_nodes, params, self.doc_rels)
 
             self.table.append(new_row)
