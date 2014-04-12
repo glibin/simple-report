@@ -14,6 +14,7 @@
    README
    examples
    complex_xls
+   complex_docx
    source
 
 
