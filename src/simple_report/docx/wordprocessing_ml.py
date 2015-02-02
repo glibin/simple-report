@@ -168,9 +168,9 @@ class Wordprocessing(ReletionOpenXMLFile):
                 )
                 if not col_nodes:
                     continue
-                col_node = col_nodes[0]
-                if col_node.text and col_node.text[:2] == '#!':
-                    section_name = col_node.text[2:]
+                col_nodes_text = u''.join([x.text for x in col_nodes])
+                if col_nodes_text and col_nodes_text[:2] == '#!':
+                    section_name = col_nodes_text[2:]
                     if section_name in self.table_sections:
                         raise SectionException(
                             ('Section named {0} has been found '
@@ -180,7 +180,7 @@ class Wordprocessing(ReletionOpenXMLFile):
                         )
                     rows_to_delete.append(row_node)
                     # del text_nodes[text_nodes.index(row_node)]
-                elif col_node.text and col_node.text[-2:] == '!#':
+                elif col_nodes_text and col_nodes_text[-2:] == '!#':
                     self.table_sections[section_name] = section
                     section_name = None
                     section = Section(table)
