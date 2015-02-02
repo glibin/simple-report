@@ -168,7 +168,7 @@ class Wordprocessing(ReletionOpenXMLFile):
                 )
                 if not col_nodes:
                     continue
-                col_nodes_text = u''.join([x.text for x in col_nodes])
+                col_nodes_text = u''.join(x.text for x in col_nodes)
                 if col_nodes_text and col_nodes_text[:2] == '#!':
                     section_name = col_nodes_text[2:]
                     if section_name in self.table_sections:
