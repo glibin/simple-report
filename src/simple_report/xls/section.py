@@ -55,7 +55,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
         self.writer = writer
 
     def flush(self, params, oriented=ISpreadsheetSection.LEFT_DOWN,
-              used_formulas=None):
+              used_formulas=None, keep_text_type=KEEP_TEXT_TYPE):
         """
          Запись секции в отчет
         :param params: словарь с параметрами подстановки
@@ -210,7 +210,7 @@ class Section(SpreadsheetSection, ISpreadsheetSection):
                 # если поле текстовое и
                 # стоит настройка "Сохранять текстовые поля"
                 # то не преобразуем текст в число
-                if KEEP_TEXT_TYPE and format_str == TEXT_CELL_FORMAT:
+                if keep_text_type and format_str == TEXT_CELL_FORMAT:
                     pass
                 else:
                     try:
